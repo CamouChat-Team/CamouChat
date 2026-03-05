@@ -7,11 +7,11 @@ name = "tweakio-sdk"
 version = "0.1.5"
 description = "Tweakio-SDK: WhatsApp automation Python library with anti-detection, async storage, and production-grade architecture"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 
-authors = [{ name = "BITS-Rohit", email = "rohit@tweakio.dev" }]
-maintainers = [{ name = "BITS-Rohit", email = "rohit@tweakio.dev" }]
+authors = [{ name = "BITS-Rohit", email = "rohitguptaradheradhe123@gmail.com" }]
+maintainers = [{ name = "BITS-Rohit", email = "rohitguptaradheradhe123@gmail.com" }]
 
 dependencies = [
     "playwright>=1.40.0",
@@ -21,7 +21,7 @@ dependencies = [
     "colorlog>=6.10.1",
     "sqlalchemy>=2.0.48",
     "browserforge>=1.2.4",
-    "platformdirs>=4.9.2"
+    "platformdirs>=4.0.0"
 ]
 
 [project.optional-dependencies]
@@ -56,10 +56,10 @@ source = ["src"]
 
 [tool.black]
 line-length = 100
-target-version = ["py310"]
+target-version = ["py311"]
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 ignore_missing_imports = true
 
 [tool.deptry]
