@@ -3,7 +3,7 @@ import os
 import shutil
 import signal
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 from src.directory import DirectoryManager
 from src.BrowserManager.camoufox_browser import CamoufoxBrowser
@@ -18,11 +18,11 @@ class ProfileManager:
     # p_count is runtime only & class variable
     p_count: int = 0
 
-    def __init__(self, app_name: str = "tweakio"):
+    def __init__(self, app_name: str = "tweakio") -> None:
         self.app_name = app_name
         self.directory = DirectoryManager(app_name)
 
-    def _generate_metadata(self, platform: Platform, profile_id: str) -> dict:
+    def _generate_metadata(self, platform: Platform, profile_id: str) -> Dict[str, Any]:
         now = datetime.now().isoformat()
 
         return {
@@ -54,16 +54,16 @@ class ProfileManager:
         }
 
     @classmethod
-    def __inc__(cls):
+    def __inc__(cls) -> None:
         cls.p_count += 1
 
     @classmethod
-    def __dec__(cls):
+    def __dec__(cls) -> None:
         if cls.p_count > 0:
             cls.p_count -= 1
 
     @classmethod
-    def __p_count__(cls):
+    def __p_count__(cls) -> int:
         return cls.p_count
 
     def create_profile(self, platform: Platform, profile_id: str) -> ProfileInfo:

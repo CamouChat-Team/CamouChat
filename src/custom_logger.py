@@ -48,7 +48,7 @@ class TweakioLoggerAdapter(logging.LoggerAdapter):
     Logger adapter that injects contextual information like profile_id and process_id.
     """
     def process(self, msg: Any, kwargs: Any) -> tuple[Any, Any]:
-        extra = self.extra.copy() if self.extra else {}
+        extra = dict(self.extra) if self.extra else {}
         if "extra" in kwargs:
             extra.update(kwargs["extra"])
         kwargs["extra"] = extra
@@ -120,7 +120,7 @@ class TweakioLogger:
         )
 
     @classmethod
-    def _add_console_handler(cls, logger: logging.Logger):
+    def _add_console_handler(cls, logger: logging.Logger) -> None:
         """Adds a console handler to the logger."""
         if ColoredFormatter:
             console_formatter = ColoredFormatter(
@@ -141,7 +141,7 @@ class TweakioLogger:
         logger.addHandler(console_handler)
 
     @classmethod
-    def _add_file_handler(cls, logger: logging.Logger, log_file: Path, use_json: bool):
+    def _add_file_handler(cls, logger: logging.Logger, log_file: Path, use_json: bool) -> None:
         """Adds a concurrent rotating file handler to the logger."""
         os.makedirs(log_file.parent, exist_ok=True)
         
@@ -152,6 +152,7 @@ class TweakioLogger:
             backupCount=cls.BACKUP_COUNT
         )
         
+        file_formatter: logging.Formatter
         if use_json:
             file_formatter = JSONFormatter()
         else:

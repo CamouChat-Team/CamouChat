@@ -1,9 +1,10 @@
 """Camoufox Browser integration """
 from __future__ import annotations
 
-import logging
 import os
-from typing import Optional, Dict
+import logging
+from typing import Optional, Dict, Union, Any
+from logging import Logger, LoggerAdapter
 
 import camoufox.exceptions
 from browserforge.fingerprints import Fingerprint
@@ -33,7 +34,7 @@ class CamoufoxBrowser(BrowserInterface):
             self,
             config : BrowserConfig,
             profileInfo : ProfileInfo,
-            log: Optional[logging.Logger] = None
+            log: Optional[Union[Logger, LoggerAdapter]] = None
 
     ) -> None:
         """
@@ -45,6 +46,7 @@ class CamoufoxBrowser(BrowserInterface):
         self.profileInfo = profileInfo
         self.BrowserForge = config.fingerprint_obj # streamline the same flow
         self.browser: Optional[BrowserContext] = None
+        self.log: Union[Logger, LoggerAdapter]
         
         # Use provided logger or get specialized browser logger
         if log is None:
@@ -135,6 +137,20 @@ class CamoufoxBrowser(BrowserInterface):
         except Exception as e:
             self.log.error("Failed to create new page", exc_info=True)
             raise BrowserException("Could not create a new page") from e
+
+    async def close_browser(self) -> bool:
+        """Close the browser context. Returns True if successful."""
+        if self.browser is None:
+            return True
+        try:
+            pid = os.getpid()
+            await self.browser.__aexit__(None, None, None)
+            self.Map.pop(pid, None)
+            self.browser = None
+            return True
+        except Exception as e:
+            self.log.error(f"Failed to close browser: {e}")
+            return False
 
     @classmethod
     async def close_browser_by_pid(cls, pid: int) -> bool:

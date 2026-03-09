@@ -23,7 +23,7 @@ class Login(LoginInterface):
             page: Page,
             UIConfig: WebSelectorConfig,
             log: logging.Logger
-    ) :
+    ) -> None:
         if page is None:
             raise ValueError("page must not be None")
 
@@ -159,11 +159,15 @@ class Login(LoginInterface):
 
         return True
 
-    async def logout(self, state_dir: str) -> bool:
+    async def logout(self, **kwargs) -> bool:
         """Clear session data from the specified directory."""
+        state_dir: Optional[str] = kwargs.get("state_dir")
+        if not state_dir:
+            self.log.error("Logout failed: state_dir is required in kwargs")
+            return False
+
         try:
             path = Path(state_dir)
-
             if not path.exists() or not path.is_dir():
                 self.log.warning(f"Logout skipped: invalid path {state_dir}")
                 return False
@@ -176,7 +180,6 @@ class Login(LoginInterface):
 
             self.log.info(f"Logout cleanup successful for {state_dir}")
             return True
-
         except Exception as e:
             self.log.error(f"Logout cleanup failed: {e}", exc_info=True)
             return False
