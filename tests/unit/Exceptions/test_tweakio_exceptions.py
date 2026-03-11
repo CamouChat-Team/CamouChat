@@ -2,10 +2,11 @@ from src.Exceptions import (
     ChatNotFoundError,
     ChatClickError,
     MessageNotFoundError,
-    AuthenticationError
+    AuthenticationError,
 )
 
 import pytest
+
 
 def test_chat_not_found_error():
     """Test ChatNotFoundError can be raised and caught."""

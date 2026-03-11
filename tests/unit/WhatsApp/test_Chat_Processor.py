@@ -7,17 +7,22 @@ import logging
 from unittest.mock import Mock, AsyncMock
 
 import pytest
-from playwright.async_api import Page, Locator, ElementHandle, TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import (
+    Page,
+    Locator,
+    ElementHandle,
+    TimeoutError as PlaywrightTimeoutError,
+)
 
 from src.Exceptions import ChatNotFoundError, ChatClickError, ChatProcessorError, ChatUnreadError
 from src.WhatsApp.DerivedTypes.Chat import whatsapp_chat
 from src.WhatsApp.chat_processor import ChatProcessor
 from src.WhatsApp.web_ui_config import WebSelectorConfig
 
-
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def mock_logger():
@@ -45,6 +50,7 @@ def chat_processor_instance(mock_page, mock_logger, mock_ui_config):
 # TESTS
 # ============================================================================
 
+
 @pytest.mark.asyncio
 async def test_init_page_none(mock_logger, mock_ui_config):
     """Test initialization fails if page is None."""
@@ -61,7 +67,7 @@ async def test_fetch_chats_success(chat_processor_instance, mock_ui_config):
     mock_element_0 = AsyncMock(spec=ElementHandle)
     mock_element_1 = AsyncMock(spec=ElementHandle)
     mock_locator.nth.side_effect = lambda i: [mock_element_0, mock_element_1][i]
-    
+
     # Configure UIConfig
     mock_ui_config.chat_items.return_value = mock_locator
     mock_ui_config.getChatName = AsyncMock(side_effect=["Chat A", "Chat B"])
@@ -95,10 +101,10 @@ async def test_click_chat_success(chat_processor_instance):
     mock_chat = Mock(spec=whatsapp_chat)
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
-    
+
     mock_chat.chatUI = mock_ui
     mock_ui.element_handle.return_value = mock_element
-    
+
     # For Locator check branch
     mock_chat.chatUI = mock_ui
 
@@ -139,21 +145,21 @@ async def test_is_unread_count(chat_processor_instance):
     mock_chat = Mock(spec=whatsapp_chat)
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
-    
+
     mock_chat.chatUI = mock_ui
     mock_ui.element_handle.return_value = mock_element
-    
+
     # Mock badge chain
     mock_badge = AsyncMock(spec=ElementHandle)
     mock_span = AsyncMock(spec=ElementHandle)
     mock_span.inner_text.return_value = "5"
-    
+
     mock_element.query_selector.side_effect = lambda s: mock_badge if "unread" in s else None
     mock_badge.query_selector.return_value = mock_span
 
     # Execution
     result = await chat_processor_instance.is_unread(chat=mock_chat)
-    
+
     # Verification
     assert result == 1
 
@@ -164,10 +170,10 @@ async def test_is_unread_no_badge(chat_processor_instance):
     mock_chat = Mock(spec=whatsapp_chat)
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
-    
+
     mock_chat.chatUI = mock_ui
     mock_ui.element_handle.return_value = mock_element
-    
+
     # query_selector returns None (no badge)
     mock_element.query_selector.return_value = None
 
@@ -181,20 +187,22 @@ async def test_do_unread_success(chat_processor_instance, mock_page):
     mock_chat = Mock(spec=whatsapp_chat)
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
-    
+
     mock_chat.chatUI = mock_ui
     mock_ui.element_handle.return_value = mock_element
-    
+
     # Mock context menu
     mock_menu = AsyncMock(spec=ElementHandle)
     mock_unread_option = AsyncMock(spec=ElementHandle)
-    
+
     mock_page.query_selector.side_effect = lambda sel: mock_menu if "application" in sel else None
-    mock_menu.query_selector.side_effect = lambda sel: mock_unread_option if "mark.*as.*unread" in str(sel) else None
+    mock_menu.query_selector.side_effect = lambda sel: (
+        mock_unread_option if "mark.*as.*unread" in str(sel) else None
+    )
 
     # Execution
     result = await chat_processor_instance.do_unread(chat=mock_chat)
-    
+
     # Verification
     assert result is True
     mock_element.click.assert_called_with(button="right")
@@ -207,21 +215,22 @@ async def test_do_unread_not_found(chat_processor_instance):
     with pytest.raises(ChatNotFoundError, match="none passed"):
         await chat_processor_instance.do_unread(chat=None)
 
+
 @pytest.mark.asyncio
 async def test_do_unread_already_unread(chat_processor_instance, mock_page, mock_logger):
     """Test do_unread when chat is already unread (option not found, but 'read' is found)."""
     mock_chat = Mock(spec=whatsapp_chat)
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
-    
+
     mock_chat.chatUI = mock_ui
     mock_ui.element_handle.return_value = mock_element
 
     mock_menu = AsyncMock(spec=ElementHandle)
-    mock_read_option = AsyncMock(spec=ElementHandle) # "Mark as read" exists
+    mock_read_option = AsyncMock(spec=ElementHandle)  # "Mark as read" exists
 
     mock_page.query_selector.side_effect = lambda sel: mock_menu if "application" in sel else None
-    
+
     # Logic: First query for "mark.*as.*unread" returns None.
     # Second query for "mark.*as.*read" returns mock_read_option.
     def menu_query_side_effect(selector):
@@ -230,12 +239,13 @@ async def test_do_unread_already_unread(chat_processor_instance, mock_page, mock
         if "mark.*as.*read" in str(selector):
             return mock_read_option
         return None
-        
+
     mock_menu.query_selector.side_effect = menu_query_side_effect
 
     await chat_processor_instance.do_unread(chat=mock_chat)
 
     mock_logger.info.assert_called_with("whatsApp chat loader / [do_unread] Chat already unread")
+
 
 @pytest.mark.asyncio
 async def test_do_unread_option_missing(chat_processor_instance, mock_page, mock_logger):
@@ -248,11 +258,13 @@ async def test_do_unread_option_missing(chat_processor_instance, mock_page, mock
 
     mock_menu = AsyncMock(spec=ElementHandle)
     mock_page.query_selector.return_value = mock_menu
-    mock_menu.query_selector.return_value = None # No options found
+    mock_menu.query_selector.return_value = None  # No options found
 
     await chat_processor_instance.do_unread(chat=mock_chat)
 
-    mock_logger.info.assert_called_with("whatsApp chat loader / [do_unread] Context menu option not found ❌")
+    mock_logger.info.assert_called_with(
+        "whatsApp chat loader / [do_unread] Context menu option not found ❌"
+    )
 
 
 @pytest.mark.asyncio
@@ -263,7 +275,7 @@ async def test_do_unread_timeout(chat_processor_instance, mock_page):
     mock_element = AsyncMock(spec=ElementHandle)
     mock_chat.chatUI = mock_ui
     mock_ui.element_handle.return_value = mock_element
-    
+
     mock_element.click.side_effect = PlaywrightTimeoutError("Timeout")
 
     with pytest.raises(ChatUnreadError, match="Timeout while checking unread badge"):

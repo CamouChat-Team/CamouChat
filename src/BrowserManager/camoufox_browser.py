@@ -1,4 +1,5 @@
-"""Camoufox Browser integration """
+"""Camoufox Browser integration"""
+
 from __future__ import annotations
 
 import logging
@@ -16,7 +17,6 @@ from src.Interfaces.browser_interface import BrowserInterface
 from src.BrowserManager.browser_config import BrowserConfig
 
 
-
 class CamoufoxBrowser(BrowserInterface):
     """
     Camoufox browser implementation with fingerprint support.
@@ -24,16 +24,12 @@ class CamoufoxBrowser(BrowserInterface):
     Handles browser lifecycle, fingerprint loading, and retry logic for IP issues.
     Uses dependency injection for logging and fingerprint generation.
     """
+
     # handles Multiple Profiles to multi browser context handling
-    Map : Dict[int , BrowserContext] = {}
+    Map: Dict[int, BrowserContext] = {}
 
     def __init__(
-
-            self,
-            config : BrowserConfig,
-            profileInfo : ProfileInfo,
-            log: logging.Logger
-
+        self, config: BrowserConfig, profileInfo: ProfileInfo, log: logging.Logger
     ) -> None:
         """
         :param cache_dir_path: saves the browser cache dir
@@ -50,7 +46,7 @@ class CamoufoxBrowser(BrowserInterface):
         """
         self.config = config
         self.profileInfo = profileInfo
-        self.BrowserForge = config.fingerprint_obj # streamline the same flow
+        self.BrowserForge = config.fingerprint_obj  # streamline the same flow
         self.browser: Optional[BrowserContext] = None
         self.log = log
 
@@ -68,7 +64,9 @@ class CamoufoxBrowser(BrowserInterface):
             raise BrowserException("Fingerprint path is missing from the browser instance.")
 
         if not self.config.headless:
-            self.log.info("Opening Browser into visible Mode. Change headless to True for Invisible Browser.")
+            self.log.info(
+                "Opening Browser into visible Mode. Change headless to True for Invisible Browser."
+            )
 
     async def get_instance(self) -> BrowserContext:
         if self.browser is None:
@@ -85,12 +83,10 @@ class CamoufoxBrowser(BrowserInterface):
         if tries > 5:
             raise BrowserException("Max Camoufox IP retry attempts exceeded")
 
-        fg: Fingerprint = self.BrowserForge.get_fg(
-            profile_path=self.profileInfo.fingerprint_path
-        )
+        fg: Fingerprint = self.BrowserForge.get_fg(profile_path=self.profileInfo.fingerprint_path)
 
         try:
-            self.browser = await AsyncCamoufox(
+            browser = await AsyncCamoufox(
                 **launch_options(
                     locale=self.config.locale,
                     headless=self.config.headless,
@@ -106,12 +102,11 @@ class CamoufoxBrowser(BrowserInterface):
                 user_data_dir=self.profileInfo.cache_dir,
             ).__aenter__()
 
-            return self.browser
+            self.browser = browser  # type: ignore[assignment]
+            return self.browser  # type: ignore[return-value]
 
         except camoufox.exceptions.InvalidIP:
-            self.log.warning(
-                f"Camoufox IP failed (attempt {tries}/5). Retrying..."
-            )
+            self.log.warning(f"Camoufox IP failed (attempt {tries}/5). Retrying...")
             return await self.__GetBrowser__(tries=tries + 1)
 
         except Exception as e:

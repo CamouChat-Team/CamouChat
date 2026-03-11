@@ -1,4 +1,5 @@
 """Abstract base class for chat processors."""
+
 from __future__ import annotations
 
 import logging
@@ -16,7 +17,9 @@ class ChatProcessorInterface(ABC):
 
     capabilities: Dict[str, bool]
 
-    def __init__(self, log: logging.Logger, page: Page, UIConfig: WebSelectorConfig, **kwargs) -> None:
+    def __init__(
+        self, log: logging.Logger, page: Page, UIConfig: WebSelectorConfig, **kwargs
+    ) -> None:
         self.log = log
         self.page = page
         self.UIConfig = UIConfig

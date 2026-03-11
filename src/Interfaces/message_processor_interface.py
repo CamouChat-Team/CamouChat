@@ -1,4 +1,5 @@
 """Abstract base class for message processors."""
+
 from __future__ import annotations
 
 import logging
@@ -18,13 +19,13 @@ class MessageProcessorInterface(ABC):
     """Base interface for message extraction and processing."""
 
     def __init__(
-            self,
-            log: logging.Logger,
-            page: Page,
-            UIConfig: WebSelectorConfig,
-            storage_obj: Optional[StorageInterface] = None,
-            filter_obj: Optional[MessageFilter] = None
-    ) :
+        self,
+        log: logging.Logger,
+        page: Page,
+        UIConfig: WebSelectorConfig,
+        storage_obj: Optional[StorageInterface] = None,
+        filter_obj: Optional[MessageFilter] = None,
+    ):
         self.storage = storage_obj
         self.filter = filter_obj
         self.log = log
@@ -37,6 +38,8 @@ class MessageProcessorInterface(ABC):
         ...
 
     @abstractmethod
-    async def Fetcher(self, chat: ChatInterface, retry: int, *args, **kwargs) -> List[MessageInterface]:
+    async def Fetcher(
+        self, chat: ChatInterface, retry: int, *args, **kwargs
+    ) -> List[MessageInterface]:
         """Fetch messages from a chat with storage and filtering."""
         ...

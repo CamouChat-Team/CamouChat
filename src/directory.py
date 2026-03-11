@@ -8,10 +8,7 @@ class DirectoryManager:
 
     def __init__(self, app_name: str = "CamouChat"):
         """Initialize DirectoryManager with an application name."""
-        self.dirs = PlatformDirs(
-            appname=app_name,
-            appauthor="BITS-Rohit"
-        )
+        self.dirs = PlatformDirs(appname=app_name, appauthor="BITS-Rohit")
 
         self.root_dir = Path(self.dirs.user_data_dir)
         self.cache_dir = Path(self.dirs.user_cache_dir)

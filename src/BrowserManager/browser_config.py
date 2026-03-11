@@ -31,12 +31,12 @@ class BrowserConfig:
     @classmethod
     def from_dict(cls, data: Dict) -> BrowserConfig:
         """dict should expose exact same name in the above given params."""
-        return (
-            cls(platform=data["platform"],
-                locale=data["locale"],
-                enable_cache=data["enable_cache"],
-                headless=data["headless"],
-                prefs=data["prefs"],
-                addons=data["addons"],
-                fingerprint_obj=data["fingerprint_obj"],))
-
+        return cls(
+            platform=data["platform"],
+            locale=data["locale"],
+            enable_cache=data["enable_cache"],
+            headless=data["headless"],
+            prefs=data["prefs"],
+            addons=data["addons"],
+            fingerprint_obj=data["fingerprint_obj"],
+        )

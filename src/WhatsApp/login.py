@@ -1,4 +1,5 @@
 """WhatsApp Web login handler supporting QR and phone number authentication."""
+
 from __future__ import annotations
 
 import asyncio
@@ -18,12 +19,7 @@ from src.WhatsApp.web_ui_config import WebSelectorConfig
 class Login(LoginInterface):
     """Handles WhatsApp Web authentication via QR code or phone number."""
 
-    def __init__(
-            self,
-            page: Page,
-            UIConfig: WebSelectorConfig,
-            log: logging.Logger
-    ) :
+    def __init__(self, page: Page, UIConfig: WebSelectorConfig, log: logging.Logger):
         if page is None:
             raise ValueError("page must not be None")
 
@@ -81,10 +77,7 @@ class Login(LoginInterface):
         self.log.info("Waiting for QR scan (%s seconds)...", wait_time // 1000)
 
         try:
-            await self.UIConfig.chat_list().wait_for(
-                timeout=wait_time,
-                state="visible"
-            )
+            await self.UIConfig.chat_list().wait_for(timeout=wait_time, state="visible")
             if await canvas.is_visible():
                 raise LoginError("QR not scanned within allowed time.")
             return True
@@ -98,10 +91,7 @@ class Login(LoginInterface):
 
         self.log.info("Starting code-based login...")
 
-        btn = self.page.get_by_role(
-            "button",
-            name=re.compile("log.*in.*phone number", re.I)
-        )
+        btn = self.page.get_by_role("button", name=re.compile("log.*in.*phone number", re.I))
         if await btn.count() == 0:
             raise LoginError("Login-with-phone-number button not found.")
 
@@ -159,7 +149,7 @@ class Login(LoginInterface):
 
         return True
 
-    async def logout(self, state_dir: str) -> bool:
+    async def logout(self, state_dir: str, **kwargs) -> bool:  # type: ignore[override]
         """Clear session data from the specified directory."""
         try:
             path = Path(state_dir)

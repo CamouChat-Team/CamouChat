@@ -95,9 +95,7 @@ class TestMessageEncryptor:
         nonce1, ciphertext1 = encryptor.encrypt_message("message", "id1")
         nonce2, ciphertext2 = encryptor.encrypt_message("message", "id2")
         # Same message with different IDs should produce different ciphertext
-        assert ciphertext1 != ciphertext2, (
-            "Different IDs should produce different ciphertext"
-        )
+        assert ciphertext1 != ciphertext2, "Different IDs should produce different ciphertext"
 
     def test_encrypt_empty_message_raises_error(self):
         """Test that empty message raises ValueError."""
@@ -205,9 +203,7 @@ class TestEncryptionIntegration:
         decryptor = MessageDecryptor(key)
         decoded_ciphertext = base64.b64decode(encoded_ciphertext)
         decoded_nonce = base64.b64decode(encoded_nonce)
-        plaintext = decryptor.decrypt_message(
-            decoded_nonce, decoded_ciphertext, "msg_123"
-        )
+        plaintext = decryptor.decrypt_message(decoded_nonce, decoded_ciphertext, "msg_123")
 
         assert plaintext == "Secret message", "Full workflow should work correctly"
 
@@ -226,6 +222,4 @@ class TestEncryptionIntegration:
             plaintext = decryptor.decrypt_message(nonce, ciphertext)
             results.append(plaintext)
 
-        assert results == messages, (
-            "All messages should be encrypted and decrypted correctly"
-        )
+        assert results == messages, "All messages should be encrypted and decrypted correctly"

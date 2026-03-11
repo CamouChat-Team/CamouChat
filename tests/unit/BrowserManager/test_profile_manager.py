@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.resolve()))
 
 from src.BrowserManager.profile_manager import ProfileManager
 
+
 def test_profile_manager_manual():
 
     pm = ProfileManager()
@@ -22,7 +23,6 @@ def test_profile_manager_manual():
         pass
 
     print("Profiles:", pm.list_profiles("whatsapp"))
-
 
     pm.create_backup("whatsapp", "test2")
 

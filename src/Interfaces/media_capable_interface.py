@@ -1,4 +1,5 @@
 """Abstract base class for media upload functionality."""
+
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from src.Interfaces.web_ui_selector import WebUISelectorCapable
 
 class MediaType(str, Enum):
     """Supported media types for upload."""
+
     TEXT = "text"
     IMAGE = "image"
     VIDEO = "video"
@@ -22,6 +24,7 @@ class MediaType(str, Enum):
 @dataclass(frozen=True)
 class FileTyped:
     """File metadata for media upload."""
+
     uri: str
     name: str
     mime_type: Optional[str] = None
@@ -32,7 +35,7 @@ class MediaCapableInterface(ABC):
     """Base interface for media upload operations."""
 
     @abstractmethod
-    def __init__(self, page: Page, log: logging.Logger, UIConfig: WebUISelectorCapable, **kwargs) :
+    def __init__(self, page: Page, log: logging.Logger, UIConfig: WebUISelectorCapable, **kwargs):
         self.page = page
         self.log = log
         self.UIConfig = UIConfig

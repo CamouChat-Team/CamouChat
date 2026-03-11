@@ -13,7 +13,7 @@ from playwright.async_api import BrowserContext, Page
 class BrowserInterface(ABC):
     """
     Base interface for browser operations.
-    
+
     Implementations handle browser initialization, page management, and cleanup.
     """
 
@@ -22,9 +22,10 @@ class BrowserInterface(ABC):
         """Get or create the browser context instance."""
         ...
 
+    @classmethod
     @abstractmethod
-    async def close_browser(self) -> bool:
-        """Close the browser context. Returns True if successful."""
+    async def close_browser_by_pid(cls, pid: int) -> bool:
+        """Close the browser context by process ID. Returns True if successful."""
         ...
 
     @abstractmethod

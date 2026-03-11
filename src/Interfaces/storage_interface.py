@@ -1,4 +1,5 @@
 """Storage Interface - Abstract base for all storage implementations."""
+
 from __future__ import annotations
 
 import asyncio
@@ -12,7 +13,7 @@ from src.Interfaces.message_interface import MessageInterface
 class StorageInterface(ABC):
     """
     Abstract base class for storage implementations.
-    
+
     All storage backends (SQLite, PostgreSQL, MongoDB, etc.) must implement
     this interface to ensure consistent behavior across the SDK.
     """
@@ -20,7 +21,7 @@ class StorageInterface(ABC):
     def __init__(self, queue: asyncio.Queue, log: logging.Logger, **kwargs) -> None:
         """
         Initialize storage with a queue for batch operations.
-        
+
         Args:
             queue: Async queue for message batching
             log: Logger instance
@@ -48,7 +49,7 @@ class StorageInterface(ABC):
     async def enqueue_insert(self, msgs: List[MessageInterface], **kwargs) -> None:
         """
         Add messages to queue for batch insertion.
-        
+
         Args:
             msgs: List of messages to insert
         """
@@ -58,7 +59,7 @@ class StorageInterface(ABC):
     async def _insert_batch_internally(self, msgs: List[MessageInterface], **kwargs) -> None:
         """
         Internal method to insert a batch of messages.
-        
+
         Args:
             msgs: List of messages to insert
         """
@@ -68,10 +69,23 @@ class StorageInterface(ABC):
     def check_message_if_exists(self, msg_id: str, **kwargs) -> bool:
         """
         Check if a message exists by ID.
-        
+
         Args:
             msg_id: Message identifier
-            
+
+        Returns:
+            True if message exists, False otherwise
+        """
+        ...
+
+    @abstractmethod
+    async def check_message_if_exists_async(self, msg_id: str, **kwargs) -> bool:
+        """
+        Check if a message exists by ID asynchronously.
+
+        Args:
+            msg_id: Message identifier
+
         Returns:
             True if message exists, False otherwise
         """
@@ -81,10 +95,10 @@ class StorageInterface(ABC):
     def get_all_messages(self, **kwargs) -> List[Dict[str, Any]]:
         """
         Retrieve all messages from storage.
-        
+
         Args:
             **kwargs: Optional limit, offset for pagination
-            
+
         Returns:
             List of message dictionaries
         """

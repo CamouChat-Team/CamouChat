@@ -12,9 +12,11 @@ from src.Interfaces.message_interface import MessageInterface
 
 from src.Exceptions.base import MessageFilterError
 
+
 @dataclass
 class State:
     """Chat State"""
+
     defer_since: Optional[float]
     last_seen: Optional[float]
     window_start: float = field(default_factory=time.time)
@@ -31,6 +33,7 @@ class State:
 @dataclass
 class BindData:
     """Bind Data for the Queue Filtering"""
+
     chat: ChatInterface
     Messages: List[MessageInterface]
     seen: float
@@ -51,18 +54,18 @@ class MessageFilter:
     """Decided which one to deliver  -- defer -- drop."""
 
     def __init__(
-            self,
-            LimitTime: int = 3600,
-            Max_Messages_Per_Window: int = 10,
-            Window_Seconds: int = 60,
+        self,
+        LimitTime: int = 3600,
+        Max_Messages_Per_Window: int = 10,
+        Window_Seconds: int = 60,
     ):
         self.LimitTime = LimitTime
         self.Max_Messages_Per_Window = Max_Messages_Per_Window
         self.Window_Seconds = Window_Seconds
 
     def apply(
-            self,
-            messages: List[MessageInterface],
+        self,
+        messages: List[MessageInterface],
     ) -> List[MessageInterface]:
         """
         Applies the filter on any set of Messages.
@@ -85,9 +88,7 @@ class MessageFilter:
 
         # Check Single-same chat or not in List[messages]
         if not all(m.parent_chat == messages[0].parent_chat for m in messages):
-            raise MessageFilterError(
-                "MessageFilter.apply expects messages from a single chat"
-            )
+            raise MessageFilterError("MessageFilter.apply expects messages from a single chat")
 
         chat: ChatInterface = messages[0].parent_chat
         chat_key = chat._chat_key()

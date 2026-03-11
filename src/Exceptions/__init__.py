@@ -5,6 +5,7 @@ Defines structured exceptions for chat operations, message handling,
 authentication, storage, and platform-specific errors. All exceptions
 inherit from TweakioError for consistent error handling.
 """
+
 from src.Exceptions.base import (
     TweakioError,
     AuthenticationError,
@@ -12,7 +13,7 @@ from src.Exceptions.base import (
     HumanizedOperationError,
     MessageFilterError,
     StorageError,
-    BrowserException
+    BrowserException,
 )
 from src.Exceptions.whatsapp import (
     ChatError,
@@ -56,5 +57,5 @@ __all__ = [
     "ElementNotFoundError",
     "HumanizedOperationError",
     "StorageError",
-    "MessageFilterError"
+    "MessageFilterError",
 ]

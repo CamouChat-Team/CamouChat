@@ -10,10 +10,10 @@ from playwright.async_api import Page, Locator, ElementHandle
 
 from src.WhatsApp.web_ui_config import WebSelectorConfig
 
-
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def mock_page():
@@ -28,6 +28,7 @@ def config_instance(mock_page):
 # ============================================================================
 # TESTS
 # ============================================================================
+
 
 @pytest.mark.asyncio
 async def test_init_page_none():
@@ -61,7 +62,7 @@ async def test_get_message_text_selectable(config_instance):
     """Test get_message_text extracts text from span."""
     mock_element = AsyncMock(spec=ElementHandle)
     mock_span = AsyncMock(spec=ElementHandle)
-    
+
     mock_element.query_selector.return_value = mock_span
     mock_span.is_visible.return_value = True
     mock_span.text_content.return_value = "Hello World"
@@ -77,9 +78,9 @@ async def test_get_message_text_fallback(config_instance):
     # query_selector returns None for the span
     mock_element.query_selector.return_value = None
     mock_element.inner_text.return_value = "Fallback Text"
-    
+
     text = await WebSelectorConfig.get_message_text(mock_element)
-    
+
     assert text == "Fallback Text"
     mock_element.inner_text.assert_called_once()
 
@@ -99,7 +100,7 @@ async def test_is_message_out_element_handle(config_instance):
 @pytest.mark.asyncio
 async def test_is_message_out_locator(config_instance):
     """Test is_message_out with Locator."""
-    mock_msg = Mock(spec=Locator) 
+    mock_msg = Mock(spec=Locator)
     mock_out_loc = AsyncMock(spec=Locator)
     mock_out_loc.is_visible.return_value = True
     mock_msg.locator.return_value = mock_out_loc

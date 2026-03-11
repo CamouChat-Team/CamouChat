@@ -29,7 +29,6 @@ class ProfileManager:
         self.app_name = app_name
         self.directory = DirectoryManager(app_name)
 
-
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -40,7 +39,6 @@ class ProfileManager:
             "profile_id": profile_id,
             "platform": platform,
             "version": "0.6",
-
             "created_at": now,
             "last_used": now,
             "paths": {
@@ -59,8 +57,8 @@ class ProfileManager:
             "encryption": {
                 "enabled": False,
                 "algorithm": "AES-256-GCM",
-                "key_file": "encryption.key",   # relative path inside profile_dir
-                "created_at": None,              # set when enable_encryption() is called
+                "key_file": "encryption.key",  # relative path inside profile_dir
+                "created_at": None,  # set when enable_encryption() is called
             },
             "status": {
                 "is_active": False,
@@ -195,9 +193,9 @@ class ProfileManager:
         key_file: Path = self.directory.get_key_file_path(platform, profile_id)
         key_file.write_text(encoded_key, encoding="utf-8")
         try:
-            os.chmod(key_file, 0o600)   # -rw------- on Linux/macOS
+            os.chmod(key_file, 0o600)  # -rw------- on Linux/macOS
         except OSError:
-            pass    # Windows: chmod is a no-op, skip silently
+            pass  # Windows: chmod is a no-op, skip silently
 
         # Update metadata encryption block — NO key material stored here
         metadata["encryption"]["enabled"] = True
@@ -264,9 +262,7 @@ class ProfileManager:
         metadata = self._read_metadata(platform, profile_id)
 
         if not metadata["encryption"].get("enabled"):
-            raise ValueError(
-                f"Encryption is not enabled for profile '{profile_id}'."
-            )
+            raise ValueError(f"Encryption is not enabled for profile '{profile_id}'.")
 
         # Securely remove the key file
         key_file: Path = self.directory.get_key_file_path(platform, profile_id)
@@ -339,7 +335,9 @@ class ProfileManager:
 
         ProfileManager.__dec__()
 
-    def activate_profile(self, platform: Platform, profile_id: str, browser_obj: CamoufoxBrowser) -> None:
+    def activate_profile(
+        self, platform: Platform, profile_id: str, browser_obj: CamoufoxBrowser
+    ) -> None:
         """
         Activate a profile. Raises if already active with a live PID.
         Automatically forces headless=True when multiple profiles are running.
@@ -347,9 +345,7 @@ class ProfileManager:
         profile_dir = self.directory.get_profile_dir(platform, profile_id)
 
         if not profile_dir.exists():
-            raise ValueError(
-                f"Profile '{profile_id}' does not exist for platform '{platform}'."
-            )
+            raise ValueError(f"Profile '{profile_id}' does not exist for platform '{platform}'.")
 
         metadata_file = profile_dir / "metadata.json"
 

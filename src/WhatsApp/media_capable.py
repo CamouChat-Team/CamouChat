@@ -1,4 +1,5 @@
 """WhatsApp media upload functionality."""
+
 from __future__ import annotations
 
 import asyncio
@@ -9,13 +10,15 @@ from playwright.async_api import Page, Locator, FileChooser, TimeoutError as Pla
 
 from src.Exceptions.whatsapp import MenuError, MediaCapableError, WhatsAppError
 from src.Interfaces.media_capable_interface import MediaCapableInterface, MediaType, FileTyped
-from src.Interfaces.web_ui_selector import WebUISelectorCapable
+from src.WhatsApp.web_ui_config import WebSelectorConfig
 
 
 class MediaCapable(MediaCapableInterface):
     """Handles media file uploads to WhatsApp chats."""
 
-    def __init__(self, page: Page, log: logging.Logger, UIConfig: WebUISelectorCapable) :
+    UIConfig: WebSelectorConfig
+
+    def __init__(self, page: Page, log: logging.Logger, UIConfig: WebSelectorConfig):
         super().__init__(page=page, log=log, UIConfig=UIConfig)
         if self.page is None:
             raise ValueError("page must not be None")
@@ -45,7 +48,7 @@ class MediaCapable(MediaCapableInterface):
 
             async with self.page.expect_file_chooser() as fc:
                 await target.click(timeout=3000)
-            chooser: FileChooser = fc.value
+            chooser: FileChooser = await fc.value
 
             p = Path(file.uri)
             if not p.exists() or not p.is_file():

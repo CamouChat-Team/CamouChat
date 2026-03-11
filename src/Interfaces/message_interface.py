@@ -1,4 +1,5 @@
 """Message Interface Protocol, Every Message Class have to Implement this interface"""
+
 from typing import Protocol, Optional, Union
 
 from playwright.async_api import ElementHandle, Locator
@@ -16,5 +17,4 @@ class MessageInterface(Protocol):
     message_ui: Optional[Union[ElementHandle, Locator]]
     message_id: Optional[str]
 
-
-def _message_key() -> str: ...
+    def _message_key(self) -> str: ...

@@ -104,4 +104,4 @@ ignore_missing_imports = true
 ignore = ["DEP002"]
 
 [tool.deptry.per_rule_ignores]
-DEP001 = ["Quartz"]
+DEP001 = ["Quartz", "src"]

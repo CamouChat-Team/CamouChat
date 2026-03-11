@@ -155,9 +155,7 @@ class MessageProcessor(MessageProcessorInterface):
                 wrapped_list.append(
                     whatsapp_message(
                         message_ui=msg,
-                        direction="in"
-                        if await msg.locator(".message-in").count() > 0
-                        else "out",
+                        direction="in" if await msg.locator(".message-in").count() > 0 else "out",
                         raw_data=text,
                         parent_chat=chat,
                         data_id=data_id,
@@ -168,7 +166,7 @@ class MessageProcessor(MessageProcessorInterface):
         except WhatsAppError as e:
             raise MessageProcessorError("failed to wrap messages") from e
 
-    async def Fetcher(
+    async def Fetcher(  # type: ignore[override]
         self, chat: whatsapp_chat, retry: int, *args, **kwargs
     ) -> List[whatsapp_message]:
         """Fetch, optionally encrypt, store, and filter messages from a chat."""
@@ -196,9 +194,7 @@ class MessageProcessor(MessageProcessorInterface):
                                 msg.encryption_nonce = base64.b64encode(nonce).decode("utf-8")
                                 msg.raw_data = ""
                             except Exception as e:
-                                self.log.warning(
-                                    f"Failed to encrypt message {msg.message_id}: {e}"
-                                )
+                                self.log.warning(f"Failed to encrypt message {msg.message_id}: {e}")
                         else:
                             self.log.debug(
                                 f"Skipping body encryption for non-text message {msg.message_id}"
@@ -209,9 +205,7 @@ class MessageProcessor(MessageProcessorInterface):
                         msg.parent_chat_name_index = chat_hmac
 
                 await self.storage.enqueue_insert(new_msgs)
-                self.log.debug(
-                    f"Enqueued {len(new_msgs)}/{len(msgList)} new messages for storage."
-                )
+                self.log.debug(f"Enqueued {len(new_msgs)}/{len(msgList)} new messages for storage.")
 
         if self.filter:
             msgList = self.filter.apply(msgList)

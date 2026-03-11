@@ -14,10 +14,10 @@ from src.Interfaces.media_capable_interface import MediaType, FileTyped
 from src.WhatsApp.media_capable import MediaCapable
 from src.WhatsApp.web_ui_config import WebSelectorConfig
 
-
 # ============================================================================
 # FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def mock_logger():
@@ -47,6 +47,7 @@ def media_capable_instance(mock_page, mock_logger, mock_ui_config):
 # ============================================================================
 # TESTS
 # ============================================================================
+
 
 @pytest.mark.asyncio
 async def test_init_page_none(mock_logger, mock_ui_config):
@@ -97,11 +98,11 @@ async def test_add_media_success(media_capable_instance, mock_ui_config, tmp_pat
     # Setup FileChooser mock
     mock_fc_info = Mock(spec=FileChooser)
     mock_fc_info.set_files = AsyncMock()
-    
+
     # Mock Context Manager
     mock_cm = AsyncMock()
     mock_cm.__aenter__.return_value.value = mock_fc_info
-    
+
     # expect_file_chooser() returns this context manager
     media_capable_instance.page.expect_file_chooser.return_value = mock_cm
 
@@ -118,9 +119,11 @@ async def test_add_media_success(media_capable_instance, mock_ui_config, tmp_pat
 async def test_add_media_file_not_found(media_capable_instance):
     """Test add_media raises error for invalid file path."""
     media_capable_instance.menu_clicker = AsyncMock()
-    
-    media_capable_instance._getOperational = AsyncMock(return_value=AsyncMock(is_visible=AsyncMock(return_value=True)))
-    
+
+    media_capable_instance._getOperational = AsyncMock(
+        return_value=AsyncMock(is_visible=AsyncMock(return_value=True))
+    )
+
     # Setup CM
     mock_cm = AsyncMock()
     mock_cm.__aenter__.return_value = Mock(value=Mock())
@@ -139,12 +142,12 @@ async def test_get_operational_locators(media_capable_instance, mock_ui_config):
     await media_capable_instance._getOperational(MediaType.IMAGE)
     mock_ui_config.photos_videos.assert_called_once()
     mock_ui_config.reset_mock()
-    
+
     # AUDIO
     await media_capable_instance._getOperational(MediaType.AUDIO)
     mock_ui_config.audio.assert_called_once()
     mock_ui_config.reset_mock()
-    
+
     # DOCUMENT
     await media_capable_instance._getOperational(MediaType.DOCUMENT)
     mock_ui_config.document.assert_called_once()

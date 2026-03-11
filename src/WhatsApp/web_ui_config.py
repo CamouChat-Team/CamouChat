@@ -6,6 +6,7 @@ Conventions:
 - All other elements returned are of the type `Locator`.
 - Utility functions are written to extract attributes or recognize content like images, videos, or quoted messages.
 """
+
 import re
 import logging
 from typing import Union, Optional
@@ -18,8 +19,8 @@ from src.Interfaces.web_ui_selector import WebUISelectorCapable
 class WebSelectorConfig(WebUISelectorCapable):
     """Generic Custom Class , Different from every Platform"""
 
-    def __init__(self, page: Page, log : logging.Logger) :
-        super().__init__(page=page,log=log)
+    def __init__(self, page: Page, log: logging.Logger):
+        super().__init__(page=page, log=log)
         if self.page is None:
             raise ValueError("page must not be None")
 
@@ -29,11 +30,11 @@ class WebSelectorConfig(WebUISelectorCapable):
         return self.page.get_by_role("grid", name=re.compile("chat list", re.I))
 
     def message_chat_panel(self) -> Locator:
-        """ Gives the message container panel"""
+        """Gives the message container panel"""
         return self.page.locator("div[id='main']").get_by_role("application").first
 
     def new_chat_chat_list_panel(self) -> Locator:
-        """ Return the locator for the new chat on the chat list upper panel"""
+        """Return the locator for the new chat on the chat list upper panel"""
         return self.page.get_by_role("button", name=re.compile("new chat", re.I)).first
 
     def searchBox_chatList_panel(self) -> Locator:
@@ -49,7 +50,7 @@ class WebSelectorConfig(WebUISelectorCapable):
         return self.page.get_by_role("heading", name="WhatsApp").first
 
     def chat_list_filters_ALL(self) -> Locator:
-        """Return the chat list filter : ALL """
+        """Return the chat list filter : ALL"""
         return self.page.locator("#all-filter")
 
     def chat_list_filters_Unread(self) -> Locator:
@@ -136,7 +137,9 @@ class WebSelectorConfig(WebUISelectorCapable):
         Returns the profile header button locator used to open contact details.
         Used when a chat is opened and the top bar includes profile/name/media access.
         """
-        return self.page.locator("header").get_by_role("button", name=re.compile("profile details", re.I))
+        return self.page.locator("header").get_by_role(
+            "button", name=re.compile("profile details", re.I)
+        )
 
     def qr_canvas(self) -> Locator:
         """Returns the QR canvas image for login."""
@@ -146,19 +149,27 @@ class WebSelectorConfig(WebUISelectorCapable):
 
     def _side_Bar_chats(self) -> Locator:
         """Returns the sidebar button locator for 'Chats'."""
-        return self.page.locator("header").first.get_by_role("button", name=re.compile("chats", re.I))
+        return self.page.locator("header").first.get_by_role(
+            "button", name=re.compile("chats", re.I)
+        )
 
     def _side_Bar_status(self) -> Locator:
         """Returns the sidebar button locator for 'Status Updates'."""
-        return self.page.locator("header").first.get_by_role("button", name=re.compile("updates in status", re.I))
+        return self.page.locator("header").first.get_by_role(
+            "button", name=re.compile("updates in status", re.I)
+        )
 
     def _side_Bar_channels(self) -> Locator:
         """Returns the sidebar button locator for 'Channels'."""
-        return self.page.locator("header").first.get_by_role("button", name=re.compile("channels", re.I))
+        return self.page.locator("header").first.get_by_role(
+            "button", name=re.compile("channels", re.I)
+        )
 
     def _side_Bar_Communities(self) -> Locator:
         """Returns the sidebar button locator for 'Communities'."""
-        return self.page.locator("header").first.get_by_role("button", name=re.compile("communities", re.I))
+        return self.page.locator("header").first.get_by_role(
+            "button", name=re.compile("communities", re.I)
+        )
 
     # -------------------- Messages Section -------------------- #
 
@@ -185,7 +196,6 @@ class WebSelectorConfig(WebUISelectorCapable):
             if message_element is None:
                 return ""
 
-
         span = await message_element.query_selector("span[data-testid='selectable-text']")
         if not span:
             # Fallback to inner_text directly if span not found
@@ -196,10 +206,10 @@ class WebSelectorConfig(WebUISelectorCapable):
             return text or ""
         return ""
 
-
     @staticmethod
     async def is_message_out(message: Union[ElementHandle, Locator]) -> bool:
         """Returns True if the message is outgoing (sent by bot)."""
+        element: Union[ElementHandle, Locator, None]
         if isinstance(message, ElementHandle):
             element = await message.query_selector(".message-out")
         else:
@@ -220,8 +230,12 @@ class WebSelectorConfig(WebUISelectorCapable):
         """
         It is a locator for the plus icon in the message box for opening menu with options like : image , videos ,documents to send
         """
-        return self.page.get_by_role("button").locator("span[data-icon]").filter(
-            has_text=re.compile("plus-rounded", re.I)).first
+        return (
+            self.page.get_by_role("button")
+            .locator("span[data-icon]")
+            .filter(has_text=re.compile("plus-rounded", re.I))
+            .first
+        )
 
     def document(self) -> Locator:
         """Safely locates the 'Document' upload option in the menu"""
@@ -345,9 +359,9 @@ class WebSelectorConfig(WebUISelectorCapable):
     async def isSticker(message: ElementHandle) -> bool:
         """Returns True if any sticker type is detected using XPath."""
         return (
-                await WebSelectorConfig.is_animated_sticker(message)
-                or await WebSelectorConfig.is_plain_sticker(message)
-                or await WebSelectorConfig.is_lottie_animation_sticker(message)
+            await WebSelectorConfig.is_animated_sticker(message)
+            or await WebSelectorConfig.is_plain_sticker(message)
+            or await WebSelectorConfig.is_lottie_animation_sticker(message)
         )
 
     # -------------------- Quoted Message Utilities -------------------- #
@@ -360,10 +374,12 @@ class WebSelectorConfig(WebUISelectorCapable):
         return quoted
 
     @staticmethod
-    def get_QuotedText_handle(message: ElementHandle) -> str:
-        """Returns the handle for the quoted-mention span inside a quoted message."""
-        quoted = WebSelectorConfig.isQuotedText(message)
-        return quoted.is_visible() if quoted else ""
+    async def get_QuotedText_handle(message: ElementHandle) -> bool:
+        """Returns True if the quoted-mention span is visible inside a quoted message."""
+        quoted = await WebSelectorConfig.isQuotedText(message)
+        if quoted:
+            return await quoted.is_visible()
+        return False
 
     # -- System -- #
 
@@ -412,7 +428,9 @@ class WebSelectorConfig(WebUISelectorCapable):
 
     async def disappearing_messages(self) -> Optional[ElementHandle]:
         dialog = await self.page.query_selector("div[role='dialog']")
-        return await dialog.query_selector("li:has-text('disappearing messages')") if dialog else None
+        return (
+            await dialog.query_selector("li:has-text('disappearing messages')") if dialog else None
+        )
 
     async def add_to_fav(self) -> Optional[ElementHandle]:
         dialog = await self.page.query_selector("div[role='dialog']")

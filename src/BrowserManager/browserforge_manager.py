@@ -4,12 +4,13 @@ Fingerprint generation and management for BrowserForge.
 Handles creating, loading, and persisting browser fingerprints
 that match the system's actual screen dimensions.
 """
+
 import json
 import logging
 import os
 import pickle
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 
 from browserforge.fingerprints import Fingerprint, FingerprintGenerator
 
@@ -20,12 +21,12 @@ from src.Interfaces.browserforge_capable_interface import BrowserForgeCapable
 class BrowserForgeCompatible(BrowserForgeCapable):
     """
     BrowserForge fingerprint manager.
-    
+
     Generates fingerprints that match system screen size to avoid detection.
     Reuses existing fingerprints from disk when available.
     """
 
-    def __init__(self, log: logging.Logger = None) -> None:
+    def __init__(self, log: Optional[logging.Logger] = None) -> None:
         self.log = log
 
         if log is None:
@@ -45,13 +46,13 @@ class BrowserForgeCompatible(BrowserForgeCapable):
             if os.stat(profile_path).st_size > 0:
                 # Pick the old fg , changing fg for an account enables security issues for platform
                 # Potential in Account Ban
-                with open(profile_path, 'rb') as fh:
+                with open(profile_path, "rb") as fh:
                     fg = pickle.load(fh)
             else:
                 # Create new fg there compatible to the current device.
-                fg: Fingerprint = self.__gen_fg__()
+                fg = self.__gen_fg__()
                 if fg is not None:
-                    with open(profile_path, 'wb') as fh:
+                    with open(profile_path, "wb") as fh:
                         pickle.dump(fg, fh)  # Save to same file
             return fg
         else:
@@ -72,15 +73,18 @@ class BrowserForgeCompatible(BrowserForgeCapable):
             attempt += 1
 
             if abs(w - real_w) / real_w < tolerance and abs(h - real_h) / real_h < tolerance:
-                self.log.info(f"✅ Fingerprint screen OK: {w}x{h}")
+                if self.log:
+                    self.log.info(f"✅ Fingerprint screen OK: {w}x{h}")
                 return fg
 
-            self.log.warning(
-                f"🔁 Invalid fingerprint screen ({w}x{h}) vs real ({real_w}x{real_h}). Regenerating... ({attempt})"
-            )
+            if self.log:
+                self.log.warning(
+                    f"🔁 Invalid fingerprint screen ({w}x{h}) vs real ({real_w}x{real_h}). Regenerating... ({attempt})"
+                )
 
             if attempt >= 10:
-                self.log.warning("⚠️ Using last generated fingerprint after 10 attempts")
+                if self.log:
+                    self.log.warning("⚠️ Using last generated fingerprint after 10 attempts")
                 return fg
 
     @staticmethod
@@ -97,7 +101,8 @@ class BrowserForgeCompatible(BrowserForgeCapable):
         if system == "Windows":
             try:
                 import ctypes
-                user32 = ctypes.windll.user32
+
+                user32 = ctypes.windll.user32  # type: ignore[attr-defined]
                 try:
                     user32.SetProcessDPIAware()
                 except Exception:
@@ -113,9 +118,7 @@ class BrowserForgeCompatible(BrowserForgeCapable):
             try:
                 import subprocess
 
-                out = subprocess.check_output(
-                    ["xdpyinfo"], stderr=subprocess.DEVNULL
-                ).decode()
+                out = subprocess.check_output(["xdpyinfo"], stderr=subprocess.DEVNULL).decode()
 
                 for line in out.splitlines():
                     if "dimensions:" in line:
@@ -140,7 +143,6 @@ class BrowserForgeCompatible(BrowserForgeCapable):
                 Quartz.CGDisplayPixelsHigh(display),
             )
 
-
         # ---------------- Unsupported OS ----------------
         else:
             raise BrowserException(f"Unsupported OS for screen size detection: {system}")
@@ -157,7 +159,9 @@ class BrowserForgeCompatible(BrowserForgeCapable):
             raise BrowserException("saved_fingerprint_path is empty")
 
         try:
-            with open(saved_fingerprint_path, encoding="utf-8") as f:  # default opens in reading mode.
+            with open(
+                saved_fingerprint_path, encoding="utf-8"
+            ) as f:  # default opens in reading mode.
                 data = json.load(f)
 
             if not isinstance(data, dict):

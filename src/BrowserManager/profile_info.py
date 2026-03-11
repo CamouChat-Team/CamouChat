@@ -8,6 +8,7 @@ from src.BrowserManager.platform_manager import Platform
 @dataclass
 class ProfileInfo:
     """Data class for Profiles"""
+
     profile_id: str
     platform: Platform
     version: str
@@ -42,10 +43,8 @@ class ProfileInfo:
             version=metadata["version"],
             created_at=metadata["created_at"],
             last_used=metadata["last_used"],
-
             profile_dir=profile_dir,
             fingerprint_path=profile_dir / "fingerprint.pkl",
-
             cache_dir=directory.get_cache_dir(platform, profile_id),
             media_dir=directory.get_media_dir(platform, profile_id),
             media_images_dir=directory.get_media_images_dir(platform, profile_id),
@@ -53,9 +52,7 @@ class ProfileInfo:
             media_voice_dir=directory.get_media_voice_dir(platform, profile_id),
             media_documents_dir=directory.get_media_documents_dir(platform, profile_id),
             database_path=directory.get_database_path(platform, profile_id),
-
             is_active=metadata["status"]["is_active"],
             last_active_pid=metadata["status"]["last_active_pid"],
-
-            encryption=metadata.get("encryption", {})
+            encryption=metadata.get("encryption", {}),
         )

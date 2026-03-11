@@ -1,6 +1,7 @@
 """
 WhatsApp Chat contracted with ChatInterface Template
 """
+
 from __future__ import annotations
 import time
 from dataclasses import dataclass, field
