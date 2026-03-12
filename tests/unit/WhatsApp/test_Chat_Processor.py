@@ -77,8 +77,8 @@ async def test_fetch_chats_success(chat_processor_instance, mock_ui_config):
 
     # Verification
     assert len(chats) == 2
-    assert chats[0].chatName == "Chat A"
-    assert chats[1].chatName == "Chat B"
+    assert chats[0].chat_name == "Chat A"
+    assert chats[1].chat_name == "Chat B"
     assert isinstance(chats[0], whatsapp_chat)
 
 
@@ -102,11 +102,11 @@ async def test_click_chat_success(chat_processor_instance):
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
 
-    mock_chat.chatUI = mock_ui
+    mock_chat.chat_ui = mock_ui
     mock_ui.element_handle.return_value = mock_element
 
     # For Locator check branch
-    mock_chat.chatUI = mock_ui
+    mock_chat.chat_ui = mock_ui
 
     # Execution
     result = await chat_processor_instance._click_chat(chat=mock_chat)
@@ -133,7 +133,7 @@ async def test_click_chat_retry_fails(chat_processor_instance):
     mock_ui = AsyncMock(spec=Locator)
     # element_handle returns None
     mock_ui.element_handle.return_value = None
-    mock_chat.chatUI = mock_ui
+    mock_chat.chat_ui = mock_ui
 
     with pytest.raises(ChatClickError, match="Error in click the given chat"):
         await chat_processor_instance._click_chat(chat=mock_chat)
@@ -146,7 +146,7 @@ async def test_is_unread_count(chat_processor_instance):
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
 
-    mock_chat.chatUI = mock_ui
+    mock_chat.chat_ui = mock_ui
     mock_ui.element_handle.return_value = mock_element
 
     # Mock badge chain
@@ -171,7 +171,7 @@ async def test_is_unread_no_badge(chat_processor_instance):
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
 
-    mock_chat.chatUI = mock_ui
+    mock_chat.chat_ui = mock_ui
     mock_ui.element_handle.return_value = mock_element
 
     # query_selector returns None (no badge)
@@ -188,7 +188,7 @@ async def test_do_unread_success(chat_processor_instance, mock_page):
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
 
-    mock_chat.chatUI = mock_ui
+    mock_chat.chat_ui = mock_ui
     mock_ui.element_handle.return_value = mock_element
 
     # Mock context menu
@@ -223,7 +223,7 @@ async def test_do_unread_already_unread(chat_processor_instance, mock_page, mock
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
 
-    mock_chat.chatUI = mock_ui
+    mock_chat.chat_ui = mock_ui
     mock_ui.element_handle.return_value = mock_element
 
     mock_menu = AsyncMock(spec=ElementHandle)
@@ -253,7 +253,7 @@ async def test_do_unread_option_missing(chat_processor_instance, mock_page, mock
     mock_chat = Mock(spec=whatsapp_chat)
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
-    mock_chat.chatUI = mock_ui
+    mock_chat.chat_ui = mock_ui
     mock_ui.element_handle.return_value = mock_element
 
     mock_menu = AsyncMock(spec=ElementHandle)
@@ -273,7 +273,7 @@ async def test_do_unread_timeout(chat_processor_instance, mock_page):
     mock_chat = Mock(spec=whatsapp_chat)
     mock_ui = AsyncMock(spec=Locator)
     mock_element = AsyncMock(spec=ElementHandle)
-    mock_chat.chatUI = mock_ui
+    mock_chat.chat_ui = mock_ui
     mock_ui.element_handle.return_value = mock_element
 
     mock_element.click.side_effect = PlaywrightTimeoutError("Timeout")

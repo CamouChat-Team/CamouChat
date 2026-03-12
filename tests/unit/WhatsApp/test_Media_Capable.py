@@ -27,8 +27,8 @@ def mock_logger():
 @pytest.fixture
 def mock_page():
     page = AsyncMock(spec=Page)
-    # expect_file_chooser returns a context manager, not an awaitable itself
-    # So we use Mock, and the return value effectively is the context manager
+    # expect_file_chooser is NOT async itself — it returns a sync object
+    # that acts as an async context manager.
     page.expect_file_chooser = Mock()
     page.keyboard = AsyncMock()
     return page
@@ -99,12 +99,33 @@ async def test_add_media_success(media_capable_instance, mock_ui_config, tmp_pat
     mock_fc_info = Mock(spec=FileChooser)
     mock_fc_info.set_files = AsyncMock()
 
-    # Mock Context Manager
-    mock_cm = AsyncMock()
-    mock_cm.__aenter__.return_value.value = mock_fc_info
+    # In Playwright source: `chooser = await fc.value`
+    # `fc.value` is a Future-like awaitable, not a coroutine function.
+    # Wrap it in a resolved Future so awaiting the attribute works.
+    import asyncio as _asyncio
 
-    # expect_file_chooser() returns this context manager
-    media_capable_instance.page.expect_file_chooser.return_value = mock_cm
+    async def _make_future(val):
+        """Helper: return a Future already resolved with val."""
+        loop = _asyncio.get_event_loop()
+        fut = loop.create_future()
+        fut.set_result(val)
+        return fut
+
+    class FakeFC:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        @property
+        def value(self):
+            loop = _asyncio.get_event_loop()
+            fut = loop.create_future()
+            fut.set_result(mock_fc_info)
+            return fut
+
+    media_capable_instance.page.expect_file_chooser.return_value = FakeFC()
 
     # Execution
     result = await media_capable_instance.add_media(MediaType.IMAGE, file_typed)
@@ -116,18 +137,35 @@ async def test_add_media_success(media_capable_instance, mock_ui_config, tmp_pat
 
 
 @pytest.mark.asyncio
-async def test_add_media_file_not_found(media_capable_instance):
+async def test_add_media_file_not_found(media_capable_instance, mock_ui_config):
     """Test add_media raises error for invalid file path."""
     media_capable_instance.menu_clicker = AsyncMock()
 
-    media_capable_instance._getOperational = AsyncMock(
-        return_value=AsyncMock(is_visible=AsyncMock(return_value=True))
-    )
+    mock_target = AsyncMock(spec=Locator)
+    mock_target.is_visible.return_value = True
+    mock_ui_config.photos_videos.return_value = mock_target
 
-    # Setup CM
-    mock_cm = AsyncMock()
-    mock_cm.__aenter__.return_value = Mock(value=Mock())
-    media_capable_instance.page.expect_file_chooser.return_value = mock_cm
+    # Setup CM — value must be an awaitable attribute (Future)
+    mock_fc_info2 = Mock(spec=FileChooser)
+    mock_fc_info2.set_files = AsyncMock()
+
+    import asyncio as _asyncio2
+
+    class FakeFC2:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        @property
+        def value(self):
+            loop = _asyncio2.get_event_loop()
+            fut = loop.create_future()
+            fut.set_result(mock_fc_info2)
+            return fut
+
+    media_capable_instance.page.expect_file_chooser.return_value = FakeFC2()
 
     file_typed = FileTyped(uri="/invalid/path.png", name="image.png")
 

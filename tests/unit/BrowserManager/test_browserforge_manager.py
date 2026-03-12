@@ -4,7 +4,6 @@ Tests fingerprint generation, loading, and screen size matching.
 """
 
 import logging
-import pickle
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -87,9 +86,7 @@ def test_get_fg_generates_new(browserforge, mock_fingerprint, tmp_path, mock_log
     fg_path = tmp_path / "fingerprint.pkl"
     fg_path.touch()  # Create empty file
 
-    with patch.object(
-        browserforge, "__gen_fg__", return_value=mock_fingerprint
-    ):
+    with patch.object(browserforge, "__gen_fg__", return_value=mock_fingerprint):
         with patch("pickle.dump"):
             result = browserforge.get_fg(fg_path)
 

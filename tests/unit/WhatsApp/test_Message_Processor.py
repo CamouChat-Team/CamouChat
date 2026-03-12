@@ -197,7 +197,7 @@ async def test_fetcher_with_storage_deduplication(
     processor._get_wrapped_Messages = AsyncMock(return_value=[msg1, msg2])
 
     # Mock storage existence check: msg-1 exists, msg-2 is new
-    mock_storage.check_message_if_exists.side_effect = lambda mid: mid == "msg-1"
+    mock_storage.check_message_if_exists_async.side_effect = lambda mid: mid == "msg-1"
 
     # Execution
     await processor.Fetcher(chat=Mock(), retry=1)
@@ -305,4 +305,4 @@ async def test_get_wrapped_messages_no_data_id(
     # Should be empty list
     assert msgs == []
     # Log should indicate skipping
-    mock_logger.debug.assert_any_call("Data ID in WA / get wrapped Messages , None/Empty. Skipping")
+    mock_logger.debug.assert_any_call("Data ID is None/Empty — skipping message.")

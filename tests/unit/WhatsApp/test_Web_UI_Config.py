@@ -21,8 +21,15 @@ def mock_page():
 
 
 @pytest.fixture
-def config_instance(mock_page):
-    return WebSelectorConfig(page=mock_page)
+def mock_logger():
+    import logging
+
+    return Mock(spec=logging.Logger)
+
+
+@pytest.fixture
+def config_instance(mock_page, mock_logger):
+    return WebSelectorConfig(page=mock_page, log=mock_logger)
 
 
 # ============================================================================
@@ -31,9 +38,9 @@ def config_instance(mock_page):
 
 
 @pytest.mark.asyncio
-async def test_init_page_none():
+async def test_init_page_none(mock_logger):
     with pytest.raises(ValueError, match="page must not be None"):
-        WebSelectorConfig(page=None)
+        WebSelectorConfig(page=None, log=mock_logger)
 
 
 @pytest.mark.asyncio

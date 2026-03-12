@@ -92,8 +92,9 @@ async def test_typing_success_long(humanize_fixture):
 
     assert result is True
 
-    # Should verify clipboard Copy usage for EACH line > 50
-    assert mock_clip.copy.call_count == 2
+    # Each paste calls pyperclip.copy twice: once to set, once to restore.
+    # 2 long lines = 4 pyperclip.copy calls total.
+    assert mock_clip.copy.call_count == 4
     humanize.page.keyboard.press.assert_any_call("Control+V")
     humanize.page.keyboard.press.assert_any_call("Shift+Enter")  # Newline handling
 

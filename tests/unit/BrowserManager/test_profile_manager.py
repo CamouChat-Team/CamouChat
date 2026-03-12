@@ -8,25 +8,29 @@ from src.BrowserManager.profile_manager import ProfileManager
 
 
 def test_profile_manager_manual():
+    """Test full ProfileManager lifecycle: create, list, check existence, delete."""
 
     pm = ProfileManager()
 
-    print("Creating profiles...")
-    try:
-        pm.create_profile("whatsapp", "test1")
-    except ValueError:
-        pass
+    # Create two profiles (idempotent – OK if they already exist from a previous run)
+    pm.create_profile("whatsapp", "test1")
+    pm.create_profile("whatsapp", "test2")
 
-    try:
-        pm.create_profile("whatsapp", "test2")
-    except ValueError:
-        pass
+    listing = pm.list_profiles("whatsapp")
+    assert "whatsapp" in listing
+    assert "test1" in listing["whatsapp"]
+    assert "test2" in listing["whatsapp"]
 
-    print("Profiles:", pm.list_profiles("whatsapp"))
+    assert pm.is_profile_exists("whatsapp", "test1")
+    assert pm.is_profile_exists("whatsapp", "test2")
 
-    pm.create_backup("whatsapp", "test2")
+    # Fetch profile info
+    info = pm.get_profile("whatsapp", "test1")
+    assert info.profile_id == "test1"
 
-    print("Deleting test1...")
-    pm.delete_profile("whatsapp", "test1")
+    # Delete both profiles
+    pm.delete_profile("whatsapp", "test1", force=True)
+    pm.delete_profile("whatsapp", "test2", force=True)
 
-    print("Profiles after deletion:", pm.list_profiles("whatsapp"))
+    assert not pm.is_profile_exists("whatsapp", "test1")
+    assert not pm.is_profile_exists("whatsapp", "test2")

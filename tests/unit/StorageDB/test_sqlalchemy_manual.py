@@ -152,39 +152,49 @@ async def test_message_processor_compatibility():
 
     queue = asyncio.Queue()
     storage = SQLAlchemyStorage(
-        queue=queue, log=log, database_url="sqlite+aiosqlite:///compatibility_test.db"
+        queue=queue,
+        log=log,
+        database_url="sqlite+aiosqlite://",
+        batch_size=1,
+        flush_interval=0.1,
     )
 
     async with storage:
-        # Simulate MessageProcessor usage pattern
-        print("\n🔄 Simulating MessageProcessor workflow...")
+        print("\n🔄 Round 1: inserting 2 unique messages...")
 
-        messages = [
+        round1 = [
             MockMessage("mp_msg_1", "First message", "in", "MPChat"),
             MockMessage("mp_msg_2", "Second message", "out", "MPChat"),
-            MockMessage("mp_msg_1", "Duplicate message", "in", "MPChat"),  # Duplicate
+        ]
+        await storage.enqueue_insert(round1)
+        await asyncio.sleep(0.5)  # let writer flush
+
+        count_after_r1 = len(await storage.get_all_messages_async())
+        assert count_after_r1 == 2, f"Expected 2 after round 1, got {count_after_r1}"
+
+        print("\n🔄 Round 2: checking dedup against 1 duplicate + 1 new...")
+
+        round2_candidates = [
+            MockMessage("mp_msg_1", "Duplicate!", "in", "MPChat"),  # already in DB
+            MockMessage("mp_msg_3", "Third message", "in", "MPChat"),  # new
         ]
 
-        # MessageProcessor pattern: check exists, filter new, enqueue
         new_msgs = []
-        for msg in messages:
+        for msg in round2_candidates:
             exists = await storage.check_message_if_exists_async(msg.message_id)
             if not exists:
                 new_msgs.append(msg)
 
-        print(f"  - Total messages: {len(messages)}")
-        print(f"  - New messages: {len(new_msgs)}")
+        print(f"  - Candidates: {len(round2_candidates)},  New: {len(new_msgs)}")
+        assert len(new_msgs) == 1, f"Expected 1 new msg in round 2, got {len(new_msgs)}"
+        assert new_msgs[0].message_id == "mp_msg_3"
 
-        if new_msgs:
-            await storage.enqueue_insert(new_msgs)
-            await asyncio.sleep(2)
-            print(f"✅ Enqueued {len(new_msgs)} new messages")
+        await storage.enqueue_insert(new_msgs)
+        await asyncio.sleep(0.5)
 
-        # Verify deduplication worked
         final_count = len(await storage.get_all_messages_async())
-        print(f"✅ Final message count: {final_count} (duplicates skipped)")
-
-        assert final_count == 2, "Deduplication failed!"
+        print(f"✅ Final message count: {final_count}")
+        assert final_count == 3, f"Deduplication failed! got {final_count}"
 
     print("✅ MessageProcessor compatibility verified")
 

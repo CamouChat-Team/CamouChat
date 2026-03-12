@@ -82,17 +82,22 @@ async def test_is_login_successful_timeout(login_instance, mock_ui_config):
 
 @pytest.mark.asyncio
 async def test_login_existing_session(login_instance, tmp_path):
-    """Test login returns True immediately if session file exists."""
-    # Create dummy session file
-    session_file = tmp_path / "storage_state.json"
-    session_file.write_text("{}")
+    """Test login returns True after navigation (QR method)."""
+    # Mock page.goto and wait_for_load_state
+    login_instance.page.goto = AsyncMock()
+    login_instance.page.wait_for_load_state = AsyncMock()
 
-    # Execution
-    result = await login_instance.login(save_path=session_file)
+    mock_canvas = AsyncMock(spec=Locator)
+    mock_canvas.is_visible.return_value = False  # QR gone = scanned
+    login_instance.UIConfig.qr_canvas.return_value = mock_canvas
 
-    # Verification
+    mock_chats = AsyncMock(spec=Locator)
+    mock_chats.wait_for = AsyncMock()
+    login_instance.UIConfig.chat_list.return_value = mock_chats
+
+    result = await login_instance.login(method=0)
+
     assert result is True
-    # Implementation checks for session file AFTER navigation
     login_instance.page.goto.assert_called()
 
 
@@ -105,18 +110,16 @@ async def test_qr_login_success(login_instance, mock_ui_config, tmp_path):
     mock_ui_config.qr_canvas.return_value = mock_canvas
 
     mock_chats = AsyncMock(spec=Locator)
+    mock_chats.wait_for = AsyncMock()
     mock_ui_config.chat_list.return_value = mock_chats
 
-    session_file = tmp_path / "storage_state.json"
-
     # Execution
-    result = await login_instance.login(method=0, save_path=session_file)
+    result = await login_instance.login(method=0)
 
     # Verification
     assert result is True
     login_instance.page.goto.assert_called_once()
     mock_chats.wait_for.assert_called_once()
-    login_instance.page.context.storage_state.assert_called_once()
 
 
 @pytest.mark.asyncio
