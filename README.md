@@ -1,158 +1,66 @@
 ![Project Banner](assets/OSCG_Banner.jpeg)
 
-# Tweakio-SDK
+# CamouChat
+![img.png](assets/CamouChat_Logo.png)
 
-> **Production-Grade WhatsApp Web Automation for Python**  
-> _Anti-detection browser automation built on Playwright + Camoufox._
+**Old Name Twekaio-sdk , New Name : CamouChat** 
 
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/tweakio-sdk?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/tweakio-sdk)
 [![PyPI - Version](https://img.shields.io/pypi/v/tweakio-sdk?label=tweakio-sdk)](https://pypi.org/project/tweakio-sdk/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tweakio-sdk)](https://pypi.org/project/tweakio-sdk/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Test Coverage](https://img.shields.io/badge/coverage-%3E90%25-brightgreen)](https://github.com/BITS-Rohit/tweakio-sdk)
 
-**[Documentation](https://github.com/BITS-Rohit/tweakio-sdk#readme)** · **[PyPI](https://pypi.org/project/tweakio-sdk/)** · **[Issues](https://github.com/BITS-Rohit/tweakio-sdk/issues)** · **[Contributing](OSCG_CONTRIBUTOR_Guidelines.md)**  ·  **[Mentors](OSCG_MENTORS_Guidelines.md)**
-
 ---
 
-## 🔴 The Problem
+## Why CamouChat ?
 
 WhatsApp automation is broken:
 
-1. **Detection & Bans** — Standard Selenium/Playwright scripts are fingerprinted and banned within hours
-2. **Fragile Scripts** — When WhatsApp updates its UI, your selectors break. You spend weeks patching instead of building
-3. **No Production Patterns** — Most automation tools are throwaway scripts, not production software with proper architecture
-4. **Platform Lock-In** — Want to add Telegram later? Start from scratch
+before looking back into why camouchat . lets explore some already defined libraries. 
+1. [pywhatkit](https://github.com/Ankit404butfound/PyWhatKit) This is a famous python WhatsApp kit via that we can automate our whatsapp simply and nicely. Last commit = 2 years ago still other libs that exist gives better benefits.
+But what if selectors based breaks now ? what if number used got banned ? where is number safety. also we cannot save sessions and require u to again and again login , messed up not good for long term. and no Profiles etc setup.
+2. [pywhatsapp](https://github.com/tax/pywhatsapp) it requires some yowsup stuff , I did not understand about is it safe or not ? no solid proof of verified source of long term access, also where is reliability again ? i was not convinced as it had commits some freaking 11 years so i gone for next Explore searches. 
+3. [webwhatsap-wrapper](https://github.com/mukulhase/WebWhatsapp-Wrapper) it has good document, but freaking 6 years ago last commit, and again not worked very good , so my only option is to look around again for next option. 
+4. [alright](https://github.com/Kalebu/alright?tab=readme-ov-file) It also explains simply why alright but again last commit 3 years ago . Simple native APIs it gives, but not looked promising if any error raised up as i want reliable source of truth which i think many wants. Also it did saves and hanle login etc. but mulitple Profiles etc fingerprinting how it will handle? is it safe against Number ban ? how deeply it connects to drivers , i did not see any of this security and hence liability.  
+5. [WAHA](https://github.com/devlikeapro/waha) it is very famous lib for fast automating WhatsApp web , from docs and readme.md it is sure that it is fast against a browser automation based approacch , but recently it a large number of users got hacked cuz of some leaking API securty , it requires some setup too and kind of hard and u would  need to understand a lot of networking if u are like wondering is it really good and whats the best setup u can make with WAHA. But again it just wraps around web whatsapp API , but no account safety or other security , or any profile | Multi-profile Handling.
 
-**The industry treats automation as disposable code. We don't.**
+hence after all these libs explore i got to know , that we can trade off the fast API like WAHA with stealth profiles that can manage profiles internally and i would not need to do much work. 
+Thats where CamouChat-sdk comes in. Its not just library , it's  Published on PYPI and packaged as SDK . 
+
+--- 
+## Benefits 
+
+Here First of all we are not gonna make an API wrapper cuz WAHA already does that but we can make a trade off of that fast API wrapping to browser automation
+capabilities with solving all the other issues that those browser automation libs had. 
+1. CamouChat uses [Camoufox Browser](https://github.com/daijro/camoufox) which is a patched version of [Playwright](https://github.com/microsoft/playwright-python)'s firefox browser. Camoufox is still an active repo and a well known open source anti-detect browser.
+2. CamouChat also uses [BrowserForge](https://github.com/daijro/browserforge) it provides random fingerprint dataclasses to send directly into the camoufox. 
+3. CamouChat gives Multi-profile Handling easily for users to directly start the profiles. 
+4. CamouChat gives Encryption and Decryption system (AES GCM 256) for storing messages internally with Encryption so that if any security breach happens the core messaging still holds the privacy and do not let the Account messages get leaked.
+5. CamouChat uses [sql alchemy](https://github.com/sqlalchemy/sqlalchemy) it directly provides us safe sql handling against any sql injection and other attacks. Parameterized insertion , and support all type of sql databases. ( Also an active repo ).
+6. CamouChat uses Sandboxing Every Browser to keep fingerprint remain stealth. And able to create new Fingerprint without being mixed with other profiles.
+7. CamouChat is based on Playwright browser which self handles Session saving and updating internally and reliably
+8. CamouChat's scopes is not just to provide this , it has scope to keep maintaining it and also adding all other famous messaging platform into it so that devs do not need to learn new libs for diff platform. It works on a singular Architecture to remain easy for devs.
+9. CamouChat will also be inheriting Stable Techniques used by older libs so that it can provide all the best cherry-picks from all , Not just one.
+10. CamouChat has internal rate limiting mechanism that you can use while making ur Bot | Agent Apps. 
+11. CamouChat also has Humanized typing and Humanized mouse to face ML based Long Term Detection proof. It auto rotates the time and all making you u do not worry about how to make it manually.
+12. CamouChat stores nothing on its own side | nothing sends outside -> it all saves the data on ur device. 
+13. CamouChat is OS independent from automating browser to upto saving data to correct professionalism directory according to OS ( Linux | MacOS | Windows).
+
 
 ---
 
-## 💡 The Solution
 
-**Tweakio-SDK** is a WhatsApp automation framework built with production-grade patterns:
-
-| Problem | Tweakio Solution |
-|---------|------------------|
-| Detection | **Camoufox + BrowserForge** fingerprinting (indistinguishable from humans) |
-| Fragile selectors | **Interface-driven architecture** — when WhatsApp breaks, only `src/WhatsApp/` needs updates |
-| No persistence | **Async SQLite storage** with background queue workers |
-| No typing | **Type-safe dataclasses** for Chat and Message objects |
-
-**Current**: WhatsApp Web (v0.1.5)  
-**Roadmap**: Telegram (Q2 2026), Instagram (Q3 2026)
-
----
-# OSCG26_Guidelines
-
-This gist provides templates for the following 2 files 
-
-1. [OSCG_CONTRIBUTOR_Guidelines.md](OSCG_CONTRIBUTOR_Guidelines.md)
-2. [OSCG_MENTORS_Guidelines.md](OSCG_MENTORS_Guidelines.md)
-
-Contributors are to strictly follow `OSCG_CONTRIBUTOR_Guidelines.md` and mentors are to follow `OSCG_MENTORS_Guidelines.md` respectively 
 ---
 
 ## 📦 Installation
 
-```bash
-pip install tweakio-sdk
-```
 
-**Requirements**: Python 3.10+, Playwright browsers
-
-```bash
-# Install Playwright browsers (one-time)
-playwright install chromium
-```
-
----
-
-## ⚡ Quick Start
-
-### Basic: Fetch Chats
-
-```python
-import asyncio
-from BrowserManager import BrowserManager
-from src.WhatsApp.login import Login
-from src.WhatsApp.chat_processor import ChatProcessor
-from src.WhatsApp.web_ui_config import WebSelectorConfig
-from Custom_logger import logger
-
-async def main():
-    # 1. Launch anti-detect browser
-    browser = BrowserManager(headless=False)
-    page = await browser.getPage()
-    
-    # 2. Initialize UI config and Login
-    ui_config = WebSelectorConfig(page=page, log=logger)
-    login = Login(page=page, UIConfig=ui_config, log=logger)
-    
-    # 3. Login (scan QR code on first run)
-    await login.login(save_path="./session.json")
-    
-    # 4. Fetch chats
-    chat_processor = ChatProcessor(page=page, UIConfig=ui_config, log=logger)
-    async for chat, name in chat_processor.Fetcher(MaxChat=5):
-        print(f"📂 Chat: {name}")
-
-asyncio.run(main())
-```
-
-### Advanced: Message Processing with Storage
-
-```python
-import asyncio
-from BrowserManager import BrowserManager
-from src.WhatsApp.login import Login
-from src.WhatsApp.chat_processor import ChatProcessor
-from src.WhatsApp.message_processor import MessageProcessor
-from src.WhatsApp.web_ui_config import WebSelectorConfig
-from src.StorageDB.sqlite_db import SQLITE_DB
-from Custom_logger import logger
-
-async def main():
-    # Browser + Login setup (same as above)
-    browser = BrowserManager(headless=False)
-    page = await browser.getPage()
-    ui_config = WebSelectorConfig(page=page, log=logger)
-    login = Login(page=page, UIConfig=ui_config, log=logger)
-    await login.login(save_path="./session.json")
-    
-    # Initialize async storage
-    queue = asyncio.Queue()
-    async with SQLITE_DB(queue=queue, log=logger, db_path="messages.db") as storage:
-        
-        # Initialize processors
-        chat_processor = ChatProcessor(page=page, UIConfig=ui_config, log=logger)
-        msg_processor = MessageProcessor(
-            page=page,
-            UIConfig=ui_config,
-            chat_processor=chat_processor,
-            log=logger,
-            storage=storage  # Messages auto-saved to SQLite
-        )
-        
-        # Fetch and process messages
-        async for chat, name in chat_processor.Fetcher(MaxChat=3):
-            print(f"📂 Processing: {name}")
-            
-            # Fetcher returns wrapped Message objects with deduplication
-            messages = await msg_processor.Fetcher(chat=chat, retry=3)
-            
-            for msg in messages:
-                print(f"   💬 {msg.data_type}: {msg.raw_data[:50]}...")
-                print(f"      ID: {msg.message_id}")
-                print(f"      Direction: {msg.direction}")
-
-asyncio.run(main())
-```
-
----
 
 ## 🏗️ Architecture
 
 ```
+# --- Down below is old Must be Updated.
 tweakio-sdk/
 ├── src/
 │   ├── BrowserManager/     # Anti-detect Playwright + Camoufox
@@ -168,145 +76,62 @@ tweakio-sdk/
 └── tests/                  # >90% coverage on core modules
 ```
 
-### Key Design Decisions
-
-- **Interface-Driven**: Every platform implements `ChatProcessorInterface`, `MessageProcessorInterface`, etc.
-- **Dependency Injection**: All classes accept `log` parameter for testability
-- **Async-First**: Non-blocking SQLite writes, background queue workers
-- **Anti-Detection**: Camoufox fingerprints + human-like typing delays
 
 ---
 
-## 📊 Modules
+### 🗺️ Roadmap
 
-| Module | Description |
-|--------|-------------|
-| **BrowserManager** | Anti-detect browser with fingerprint rotation |
-| **Login** | QR code + phone number authentication |
-| **ChatProcessor** | Fetch chats, handle unread status, click navigation |
-| **MessageProcessor** | Extract messages, deduplicate, filter, store |
-| **SQLITE_DB** | Async queue-powered storage with batch inserts |
-| **WebSelectorConfig** | Platform-specific DOM selectors |
+### v0.6 — Core Infrastructure
+- [✅] Dedicated CamouChat Logger 
+- [✅] Multi-Account  & Multi-Platform Support Added
+- [✅] SandBoxed Browser and Profile Isolation Supported
+- [✅] SQL based Security Attacks safe [Uses SQL Alchemy]
+- [✅] Supports OS independent Directory resolve internally
+- [✅] Encryption & Decryption of messages & Chats.
+- [✅] Tests Coverage >=76% and MYPY , Black , Ruff, deptry Reports Fixed
 
----
+----- Shipped  V0.6 on [PYPI]()
+### v0.7 — WebSelector Stability Techniques 
+- [ ] Cherry Picked stable Selector Techniques 
+- [ ] WhatsApp Stability Increase
+- [ ] Tests >=80% & Lint Checking Updated.
 
-## 🛠️ How It Works
+### v0.8
+- [ ] Saving Media from whatsapp to local Feature
+- [ ] WebUI Hardening
+- [ ] Tests >=85% & Lint Checking updated.
 
-### Message Processing Flow
+### v0.9
+- [ ] Extra WhatsApp Functions 
+- [ ] Internal Stability Focused
 
-```
-1. ChatProcessor.Fetcher() → yields Chat objects
-2. MessageProcessor.Fetcher(chat) → clicks chat, extracts messages
-3. Messages wrapped as whatsapp_message dataclass
-4. New messages enqueued to SQLITE_DB async queue
-5. Background writer batches inserts every N seconds
-```
-
-### Anti-Detection Stack
-
-```
-Playwright (base) → Camoufox (fingerprint) → BrowserForge (realistic profiles)
-```
+### v1.0 forward — arattai (Coming Soon)
+- [ ] arattai Platform Next Integration
 
 ---
 
-## 🤝 Contributing
-
-We welcome contributions! **Vibe coding accepted** — if it works and is clean, we'll merge it.
-
-### Contribution Rules
-
-1. **Fork → Branch → PR** workflow required
-2. **AI-Assisted code is welcome** — just mention it in your PR description for transparency
-3. **Tests required** for new features (we maintain >90% coverage on core modules)
-4. **Type hints required** — we use `mypy` for static analysis
-
-### Quick Start for Contributors
-
-```bash
-# Clone and setup
-git clone https://github.com/BITS-Rohit/tweakio-sdk.git
-cd tweakio-sdk
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-
-# Run tests
-pytest --cov=src
-
-# Your feature branch
-git checkout -b feature/your-feature
-```
-
-### PR Template
-
-```markdown
-## What does this PR do?
-[Description]
-
-## AI Disclosure
-- [ ] This PR includes AI-generated code (Claude/GPT/Copilot)
-- [ ] This PR is fully human-written
-
-## Testing
-- [ ] Added/updated tests
-- [ ] All tests pass locally
-```
-
----
-
-## 🗺️ Roadmap
-
-### v0.1.6 — Core Infrastructure
-- [ ] Custom Logger improvements
-- [ ] Multi-Account Handling
-- [ ] BrowserManager enhancements
-- [ ] Dependency Injection & Interface renewal
-- [ ] Directory structure improvements
-- [ ] Separate Browser Logging
-
-### v0.1.7 — Security & Stability
-- [ ] Encryption & Decryption module
-- [ ] KeyBox integration
-- [ ] Stability & Decryptor additions
-- [ ] Stability increase → 60-70% reliability
-
-### v0.1.8 — Quality Assurance
-- [ ] Test coverage increase & logic improvements
-- [ ] Web-UI tinkering & refinements
-
-### v0.2.0 — Multi-Platform (Coming Soon)
-- [ ] Another Platform integration (Telegram/Instagram)
-- [ ] Platform-agnostic architecture
-
----
-
-## ❓ FAQ
+### ❓ FAQ
 
 **Q: Will I get banned?**  
-A: Tweakio uses Camoufox anti-detection. With reasonable rate limiting, bans are rare. Always test on disposable accounts first.
+A: It is rare but can happen on the least. Some preventions is that always use rate limiter given by the sdk. Dont spam. It uses Patched Browser so even if have to be done something it will be a soft ban [Soft ban : Browser gets logged out Not direct number ban : Tested with real numbers.]. Still if u have a spare account use that first for 100% safe.
 
 **Q: Can I use this for spam?**  
-A: No. This SDK is for legitimate automation (customer support, archiving, notifications). Spam violates WhatsApp ToS and is not supported.
+A: No. This SDK is for legitimate automation for devs | agents | Small Business Model Testing .Doing spam may risk ur number , Try at ur own risk.
 
 **Q: Why not just use the WhatsApp Business API?**  
-A: Business API has message template restrictions and approval processes. Tweakio is for developers who need full control.
+A: Business API has message template restrictions and approval processes. Cost for every freaking message . You would need to verify urself first. 
+Also limited behavior.We automate the web itself. **-- Free and Open Source**
 
 ---
 
-## 📄 License
+### 📄 License
 
 MIT License — see [LICENSE](LICENSE)
 
----
+### Important Notes 
 
-## 🔗 Links
+* CamouChat-sdk is for Education | devs | Agents creating | Business Prototypes Not for Commercial usage. It does not encourage Platform ToS violation.
+* Commercial usage is strictly prohibited. 
 
-- **PyPI**: [pypi.org/project/tweakio-sdk](https://pypi.org/project/tweakio-sdk/)
-- **GitHub**: [github.com/BITS-Rohit/tweakio-sdk](https://github.com/BITS-Rohit/tweakio-sdk)
-- **Issues**: [Report bugs](https://github.com/BITS-Rohit/tweakio-sdk/issues)
 
----
-
-**Keywords**: tweakio, tweakio-sdk, whatsapp automation, whatsapp bot python, whatsapp api, web automation, playwright, browser automation, chatbot, messaging, anti-detection, camoufox
-
-_Built with ❤️ by BITS-Rohit and the Tweakio community_
+_Built with ❤️ by BITS-Rohit and the CamouChat-sdk community_
