@@ -16,10 +16,21 @@ from camouchat.BrowserManager import CamoufoxBrowser, BrowserConfig, Platform
 # 1. Setup the Config
 config = BrowserConfig(
     platform=Platform.WHATSAPP,
-    locale="en-US",
-    headless=False,      # Set to True if you want the browser to be invisible
-    enable_cache=True,   # Keeps you logged in across sessions
-    fingerprint_obj=my_fingerprint_manager  # Usually your BrowserForgeCompatible instance
+    # ------------- This is a Required Parameter -------------
+
+    locale="en-Us",
+    # Or your side in case your Locale is different.
+
+    enable_cache=False,
+    # Generally not needed as True. To save RAM & resources usage, make it False.
+
+    headless=True,
+    # Only use True if you want to see Browser working as visible UI.
+    # Note: If multiple profiles are active, this will automatically set to False for others.
+
+    fingerprint_obj=BrowserForgeCompatible().get_fg(profile=work_profile)
+    # ------------- This is a Required Parameter -------------
+    # This automatically uses the path in the ProfileInfo dataclass.
 )
 
 # 2. Get your Profile
@@ -58,12 +69,12 @@ The `BrowserConfig` class lets you customize how your browser behaves:
 
 | Attribute | Type | Description |
 | :--- | :--- | :--- |
-| `platform` | `Platform` | **Required.** e.g., `Platform.WHATSAPP`. |
-| `locale` | `str` | Language headers for the browser (default: `"en-US"`). |
-| `headless` | `bool` | `True` = Invisible, `False` = Visible window. |
-| `enable_cache` | `bool` | Whether to store cookies and session data (Highly recommended!). |
-| `prefs` | `dict` | Custom Firefox preferences (for advanced users). |
-| `addons` | `list` | List of paths to `.xpi` extensions you want to load. |
+| `platform` | `Platform` | **Required.** Platform class for to give platform attribute anywhere. |
+| `locale` | `str` | System locale (e.g., `"en-Us"`). Use this if your locale is different. |
+| `headless` | `bool` | **True** for visible UI. If multiple profiles are active, this is automatically set to False for others. |
+| `enable_cache` | `bool` | **False** recommended to save RAM & resource usage. |
+| `prefs` | `dict` | Experimental. Recommened passed as empty dict `{}` for stealth. |
+| `addons` | `list` | List of real zip download paths for Extensions/Addons. |
 
 ---
 
@@ -75,4 +86,4 @@ The `BrowserConfig` class lets you customize how your browser behaves:
 ---
 
 ### 💡 Pro Tip
-If you are running multiple bots on the same machine, the SDK will **automatically** force `headless=True` for any additional browsers to save your computer's RAM and keep things stable! 🚀
+If you are running multiple bots on the same machine, any additional browsers will automatically have their visibility set to **False** to save your computer's RAM and keep things stable! 🚀
