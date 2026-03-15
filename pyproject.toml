@@ -103,6 +103,8 @@ ignore_missing_imports = true
 
 [tool.deptry]
 ignore = ["DEP002"]
+known_first_party = ["camouchat"]
 
 [tool.deptry.per_rule_ignores]
 DEP001 = ["Quartz", "camouchat", "concurrent_log_handler", "camoufox"]
+DEP003 = ["camouchat"]
