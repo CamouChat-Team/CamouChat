@@ -33,16 +33,16 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Run Ruff (Linter)
-        run: uv run ruff check src tests
+        run: uv run ruff check camouchat tests
 
       - name: Run Black (Formatter Check)
-        run: uv run black --check src tests
+        run: uv run black --check camouchat tests
 
       - name: Run Mypy (Type Checker)
-        run: uv run mypy src tests
+        run: uv run mypy camouchat tests
 
       - name: Run Deptry (Dependency Checker)
-        run: uv run deptry src
+        run: uv run deptry camouchat
 
   test:
     needs: lint-and-typecheck
@@ -73,7 +73,7 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Run Tests with Coverage
-        run: uv run pytest tests/ --cov=src --cov-report=xml -v
+        run: uv run pytest tests/ --cov=camouchat --cov-report=xml -v
 
       - name: Upload Coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
