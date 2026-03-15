@@ -37,7 +37,7 @@ def mock_ui_config():
 
 @pytest.fixture
 def humanize_fixture(mock_page, mock_logger, mock_ui_config):
-    with patch("src.WhatsApp.humanized_operations.pyperclip") as mock_clip:
+    with patch("camouchat.WhatsApp.humanized_operations.pyperclip") as mock_clip:
         humanize = HumanizedOperations(page=mock_page, log=mock_logger, UIConfig=mock_ui_config)
         yield humanize, mock_clip
 

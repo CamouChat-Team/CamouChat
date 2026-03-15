@@ -9,14 +9,14 @@ from unittest.mock import Mock, AsyncMock
 import pytest
 from playwright.async_api import Page, Locator
 
-from src.Exceptions import MessageListEmptyError, MessageProcessorError, WhatsAppError
-from src.Filter.message_filter import MessageFilter
-from src.Interfaces.storage_interface import StorageInterface
-from src.WhatsApp.DerivedTypes.Chat import whatsapp_chat
-from src.WhatsApp.DerivedTypes.Message import whatsapp_message
-from src.WhatsApp.chat_processor import ChatProcessor
-from src.WhatsApp.message_processor import MessageProcessor
-from src.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.Exceptions import MessageListEmptyError, MessageProcessorError, WhatsAppError
+from camouchat.Filter.message_filter import MessageFilter
+from camouchat.Interfaces.storage_interface import StorageInterface
+from camouchat.WhatsApp.DerivedTypes.Chat import whatsapp_chat
+from camouchat.WhatsApp.DerivedTypes.Message import whatsapp_message
+from camouchat.WhatsApp.chat_processor import ChatProcessor
+from camouchat.WhatsApp.message_processor import MessageProcessor
+from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
 
 # ============================================================================
 # FIXTURES
@@ -205,9 +205,9 @@ async def test_fetcher_with_storage_deduplication(
     # Verification
     # Should only enqueue msg-2
     mock_storage.enqueue_insert.assert_called_once()
-    args, _ = mock_storage.enqueue_insert.call_args
-    assert len(args[0]) == 1
-    assert args[0][0].message_id == "msg-2"
+    _, kwargs = mock_storage.enqueue_insert.call_args
+    assert len(kwargs["msgs"]) == 1
+    assert kwargs["msgs"][0].message_id == "msg-2"
 
 
 @pytest.mark.asyncio

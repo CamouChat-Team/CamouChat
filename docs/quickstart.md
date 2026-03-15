@@ -11,7 +11,7 @@ from camouchat.BrowserManager.browserforge_manager import BrowserForgeCompatible
 from camouchat.WhatsApp.login import Login
 from camouchat.WhatsApp.chat_processor import ChatProcessor
 from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
-from Custom_logger import logger
+from camouchat.camouchat_logger import logger
 
 
 async def main():
@@ -68,7 +68,7 @@ from camouchat.WhatsApp.chat_processor import ChatProcessor
 from camouchat.WhatsApp.message_processor import MessageProcessor
 from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
 from camouchat.StorageDB import SQLAlchemyStorage
-from Custom_logger import logger
+from camouchat.camouchat_logger import logger
 
 
 async def main():
