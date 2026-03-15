@@ -5,7 +5,7 @@
   <img src="assets/CamouChat_Logo.png" width="400" alt="" height="300"/>
 </p>
 
-**Old Name Twekaio-sdk , New Name : CamouChat** 
+**Old Name Tweakio-sdk , New Name : CamouChat** 
 
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/tweakio-sdk?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/tweakio-sdk)
 [![PyPI - Version](https://img.shields.io/pypi/v/tweakio-sdk?label=tweakio-sdk)](https://pypi.org/project/tweakio-sdk/)
