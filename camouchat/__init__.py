@@ -2,8 +2,8 @@
 
 __version__ = "0.6"
 
-from camouchat_logger import camouchatLogger
-from directory import DirectoryManager
+from camouchat.camouchat_logger import camouchatLogger
+from camouchat.directory import DirectoryManager
 
 __all__ = [
     'camouchatLogger',

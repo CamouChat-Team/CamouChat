@@ -39,7 +39,7 @@ def mock_ui_config():
 
 @pytest.fixture
 def reply_capable_instance(mock_page, mock_logger, mock_ui_config):
-    return ReplyCapable(page=mock_page, log=mock_logger, UIConfig=mock_ui_config)
+    return ReplyCapable(page=mock_page, log=mock_logger, ui_config=mock_ui_config)
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ def mock_humanize():
 @pytest.mark.asyncio
 async def test_init_page_none(mock_logger, mock_ui_config):
     with pytest.raises(ValueError, match="page must not be None"):
-        ReplyCapable(page=None, log=mock_logger, UIConfig=mock_ui_config)
+        ReplyCapable(page=None, log=mock_logger, ui_config=mock_ui_config)
 
 
 @pytest.mark.asyncio

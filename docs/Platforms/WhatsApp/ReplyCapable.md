@@ -24,7 +24,7 @@ reply_handler = ReplyCapable(
     log=CamouChatLogger,
     # ------------- Required Parameter -------------
 
-    UIConfig=ui_config
+    ui_config=ui_config
     # ------------- Required Parameter -------------
 )
 ```

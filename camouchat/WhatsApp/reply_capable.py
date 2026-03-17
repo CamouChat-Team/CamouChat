@@ -35,11 +35,11 @@ class ReplyCapable(ReplyCapableInterface):
     def __init__(
             self,
             page: Page,
-            UIConfig: WebSelectorConfig,
+            ui_config: WebSelectorConfig,
             log: Optional[Union[LoggerAdapter, Logger]] = None) -> None:
         if hasattr(self, "_initialized") and self._initialized:
             return
-        super().__init__(page=page, log=log, UIConfig=UIConfig)
+        super().__init__(page=page, log=log, ui_config=ui_config)
         if self.page is None:
             raise ValueError("page must not be None")
         self._initialized = True

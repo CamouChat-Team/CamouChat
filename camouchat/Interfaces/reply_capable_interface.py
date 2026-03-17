@@ -16,11 +16,11 @@ class ReplyCapableInterface(ABC):
     """Base interface for message reply operations."""
 
     def __init__(
-        self, page: Page,  UIConfig: WebUISelectorCapable,log: Optional[Union[Logger,LoggerAdapter]], **kwargs
+        self, page: Page,  ui_config: WebUISelectorCapable,log: Optional[Union[Logger,LoggerAdapter]], **kwargs
     ) -> None:
         self.page = page
         self.log = log or camouchatLogger
-        self.UIConfig = UIConfig
+        self.UIConfig = ui_config
 
     @abstractmethod
     async def reply(

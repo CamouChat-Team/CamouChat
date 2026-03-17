@@ -38,7 +38,7 @@ def mock_ui_config():
 @pytest.fixture
 def humanize_fixture(mock_page, mock_logger, mock_ui_config):
     with patch("camouchat.WhatsApp.humanized_operations.pyperclip") as mock_clip:
-        humanize = HumanizedOperations(page=mock_page, log=mock_logger, UIConfig=mock_ui_config)
+        humanize = HumanizedOperations(page=mock_page, log=mock_logger, ui_config=mock_ui_config)
         yield humanize, mock_clip
 
 
@@ -50,7 +50,7 @@ def humanize_fixture(mock_page, mock_logger, mock_ui_config):
 @pytest.mark.asyncio
 async def test_init_page_none(mock_logger, mock_ui_config):
     with pytest.raises(ValueError, match="page must not be None"):
-        HumanizedOperations(page=None, log=mock_logger, UIConfig=mock_ui_config)
+        HumanizedOperations(page=None, log=mock_logger, ui_config=mock_ui_config)
 
 
 @pytest.mark.asyncio

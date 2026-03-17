@@ -43,14 +43,14 @@ class HumanizedOperations(HumanizeOperationInterface):
     def __init__(
             self,
             page: Page,
-            UIConfig: WebUISelectorCapable,
+            ui_config: WebUISelectorCapable,
             log: Optional[Union[Logger, LoggerAdapter]] = None
     ) -> None:
 
         if hasattr(self, "_initialized") and self._initialized:
             return
 
-        super().__init__(page=page, log=log, UIConfig=UIConfig)
+        super().__init__(page=page, log=log, UIConfig=ui_config)
         if self.page is None:
             raise ValueError("page must not be None")
         self._initialized = True

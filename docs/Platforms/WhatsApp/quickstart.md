@@ -132,7 +132,7 @@ async def advanced_ops(page, chat_proc, target_chat):
     humanizer = HumanizedOperations(page=page, log=camouchatLogger)
 
     # Replying to a message
-    reply_handler = ReplyCapable(page=page, log=camouchatLogger, UIConfig=ui_config)
+    reply_handler = ReplyCapable(page=page, log=camouchatLogger, ui_config=ui_config)
     # assuming 'target_msg' was fetched from msg_proc.Fetcher
     await reply_handler.reply(message=target_msg, humanize=humanizer, text="I received your message!")
 
