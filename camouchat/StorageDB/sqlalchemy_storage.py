@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
-from camouchat import ProfileInfo
+from camouchat.BrowserManager import ProfileInfo
 from camouchat.Exceptions.base import StorageError
 from camouchat.Interfaces.message_interface import MessageInterface
 from camouchat.Interfaces.storage_interface import StorageInterface

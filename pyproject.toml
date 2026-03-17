@@ -53,7 +53,7 @@ classifiers = [
 
 dependencies = [
     "playwright>=1.40.0",
-    "camoufox>=0.3.0",
+    "camoufox[geoip]>=0.3.0",
     "pyperclip>=1.8.2",
     "cryptography>=41.0.0",
     "colorlog>=6.10.1",
