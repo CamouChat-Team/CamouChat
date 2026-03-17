@@ -12,18 +12,18 @@ To initialize, you need an active `page`, `logger`, and `WebSelectorConfig`.
 
 ```python
 from camouchat.WhatsApp import ReplyCapable, WebSelectorConfig
-from camouchat.camouchat_logger import camouchatLogger
+from camouchat.camouchat_logger import CamouChatLogger
 
 # Ensure UIConfig is ready
-ui_config = WebSelectorConfig(page=page_obj, log=camouchatLogger)
+ui_config = WebSelectorConfig(page=page_obj, log=CamouChatLogger)
 
 reply_handler = ReplyCapable(
     page=page_obj,
     # ------------- Required Parameter -------------
-    
-    log=camouchatLogger,
+
+    log=CamouChatLogger,
     # ------------- Required Parameter -------------
-    
+
     UIConfig=ui_config
     # ------------- Required Parameter -------------
 )

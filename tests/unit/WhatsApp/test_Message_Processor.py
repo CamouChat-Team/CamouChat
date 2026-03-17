@@ -12,8 +12,8 @@ from playwright.async_api import Page, Locator
 from camouchat.Exceptions import MessageListEmptyError, MessageProcessorError, WhatsAppError
 from camouchat.Filter.message_filter import MessageFilter
 from camouchat.Interfaces.storage_interface import StorageInterface
-from camouchat.WhatsApp.DerivedTypes.Chat import whatsapp_chat
-from camouchat.WhatsApp.DerivedTypes.Message import whatsapp_message
+from camouchat.WhatsApp.models.chat import Chat
+from camouchat.WhatsApp.models.message import Message
 from camouchat.WhatsApp.chat_processor import ChatProcessor
 from camouchat.WhatsApp.message_processor import MessageProcessor
 from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
@@ -65,7 +65,7 @@ def message_processor_instance(mock_page, mock_logger, mock_ui_config, mock_chat
     return MessageProcessor(
         page=mock_page,
         log=mock_logger,
-        UIConfig=mock_ui_config,
+        ui_config=mock_ui_config,
         chat_processor=mock_chat_processor,
         storage_obj=None,
         filter_obj=None,
@@ -84,7 +84,7 @@ async def test_init_page_none(mock_logger, mock_ui_config, mock_chat_processor):
         MessageProcessor(
             page=None,
             log=mock_logger,
-            UIConfig=mock_ui_config,
+            ui_config=mock_ui_config,
             chat_processor=mock_chat_processor,
             storage_obj=None,
             filter_obj=None,
@@ -94,9 +94,9 @@ async def test_init_page_none(mock_logger, mock_ui_config, mock_chat_processor):
 @pytest.mark.asyncio
 async def test_sort_messages_incoming():
     """Test sorting returns only incoming messages."""
-    msg1 = Mock(spec=whatsapp_message)
+    msg1 = Mock(spec=Message)
     msg1.direction = "in"
-    msg2 = Mock(spec=whatsapp_message)
+    msg2 = Mock(spec=Message)
     msg2.direction = "out"
 
     result = await MessageProcessor.sort_messages([msg1, msg2], incoming=True)
@@ -108,9 +108,9 @@ async def test_sort_messages_incoming():
 @pytest.mark.asyncio
 async def test_sort_messages_outgoing():
     """Test sorting returns only outgoing messages."""
-    msg1 = Mock(spec=whatsapp_message)
+    msg1 = Mock(spec=Message)
     msg1.direction = "in"
-    msg2 = Mock(spec=whatsapp_message)
+    msg2 = Mock(spec=Message)
     msg2.direction = "out"
 
     result = await MessageProcessor.sort_messages([msg1, msg2], incoming=False)
@@ -130,7 +130,7 @@ async def test_sort_messages_empty():
 async def test_get_wrapped_messages_success(message_processor_instance, mock_ui_config):
     """Test _get_wrapped_Messages extracts messages correctly."""
     # Setup mocks
-    mock_chat = Mock(spec=whatsapp_chat)
+    mock_chat = Mock(spec=Chat)
 
     # Message Locator setup
     mock_all_msgs = AsyncMock(spec=Locator)
@@ -167,7 +167,7 @@ async def test_get_wrapped_messages_success(message_processor_instance, mock_ui_
 @pytest.mark.asyncio
 async def test_get_wrapped_messages_exception(message_processor_instance, mock_ui_config):
     """Test _get_wrapped_Messages wraps WhatsAppError into MessageProcessorError."""
-    mock_chat = Mock(spec=whatsapp_chat)
+    mock_chat = Mock(spec=Chat)
     mock_ui_config.messages.side_effect = WhatsAppError("UI Error")
 
     with pytest.raises(MessageProcessorError, match="failed to wrap messages"):
@@ -182,16 +182,16 @@ async def test_fetcher_with_storage_deduplication(
     processor = MessageProcessor(
         page=mock_page,
         log=mock_logger,
-        UIConfig=mock_ui_config,
+        ui_config=mock_ui_config,
         chat_processor=mock_chat_processor,
         storage_obj=mock_storage,
         filter_obj=None,
     )
 
     # Mock wrapped messages
-    msg1 = Mock(spec=whatsapp_message)
+    msg1 = Mock(spec=Message)
     msg1.message_id = "msg-1"
-    msg2 = Mock(spec=whatsapp_message)
+    msg2 = Mock(spec=Message)
     msg2.message_id = "msg-2"
 
     processor._get_wrapped_Messages = AsyncMock(return_value=[msg1, msg2])
@@ -200,7 +200,7 @@ async def test_fetcher_with_storage_deduplication(
     mock_storage.check_message_if_exists_async.side_effect = lambda mid: mid == "msg-1"
 
     # Execution
-    await processor.Fetcher(chat=Mock(), retry=1)
+    await processor.fetch_messages(chat=Mock(), retry=1)
 
     # Verification
     # Should only enqueue msg-2
@@ -218,20 +218,20 @@ async def test_fetcher_with_filter(
     processor = MessageProcessor(
         page=mock_page,
         log=mock_logger,
-        UIConfig=mock_ui_config,
+        ui_config=mock_ui_config,
         chat_processor=mock_chat_processor,
         storage_obj=None,
         filter_obj=mock_filter,
     )
 
-    msg1 = Mock(spec=whatsapp_message)
+    msg1 = Mock(spec=Message)
     processor._get_wrapped_Messages = AsyncMock(return_value=[msg1])
 
     mock_filter.apply.side_effect = None  # Clear default lambda
     mock_filter.apply.return_value = [msg1]
 
     # Execution
-    result = await processor.Fetcher(chat=Mock(), retry=1)
+    result = await processor.fetch_messages(chat=Mock(), retry=1)
 
     # Verification
     assert result == [msg1]
@@ -246,19 +246,19 @@ async def test_fetcher_empty_after_filter(
     processor = MessageProcessor(
         page=mock_page,
         log=mock_logger,
-        UIConfig=mock_ui_config,
+        ui_config=mock_ui_config,
         chat_processor=mock_chat_processor,
         storage_obj=None,
         filter_obj=mock_filter,
     )
 
-    msg1 = Mock(spec=whatsapp_message)
+    msg1 = Mock(spec=Message)
     processor._get_wrapped_Messages = AsyncMock(return_value=[msg1])
 
     mock_filter.apply.side_effect = None  # Clear default lambda
     mock_filter.apply.return_value = []  # Filter removes everything
 
-    result = await processor.Fetcher(chat=Mock(), retry=1)
+    result = await processor.fetch_messages(chat=Mock(), retry=1)
     assert result == []
 
 
@@ -272,7 +272,7 @@ async def test_fetcher_click_chat_failure(
     processor = MessageProcessor(
         page=mock_page,
         log=mock_logger,
-        UIConfig=mock_ui_config,
+        ui_config=mock_ui_config,
         chat_processor=mock_chat_processor,
         storage_obj=None,
         filter_obj=None,
@@ -280,7 +280,7 @@ async def test_fetcher_click_chat_failure(
 
     # Expect generic Exception from decorator
     with pytest.raises(Exception, match="Chat click failed"):
-        await processor.Fetcher(chat=Mock(), retry=1)
+        await processor.fetch_messages(chat=Mock(), retry=1)
 
 
 @pytest.mark.asyncio
@@ -288,7 +288,7 @@ async def test_get_wrapped_messages_no_data_id(
     message_processor_instance, mock_ui_config, mock_logger
 ):
     """Test _get_wrapped_Messages skips messages with no data ID."""
-    mock_chat = Mock(spec=whatsapp_chat)
+    mock_chat = Mock(spec=Chat)
     mock_all_msgs = AsyncMock(spec=Locator)
     mock_all_msgs.count.return_value = 1
     mock_ui_config.messages.return_value = mock_all_msgs

@@ -7,7 +7,7 @@ inherit from TweakioError for consistent error handling.
 """
 
 from camouchat.Exceptions.base import (
-    TweakioError,
+    CamouChatError,
     AuthenticationError,
     ElementNotFoundError,
     HumanizedOperationError,
@@ -35,7 +35,7 @@ from camouchat.Exceptions.whatsapp import (
 )
 
 __all__ = [
-    "TweakioError",
+    "CamouChatError",
     "BrowserException",
     "ChatError",
     "ChatNotFoundError",

@@ -22,7 +22,7 @@ c_processor = ChatProcessor(
     # ------------- This is a Required Parameter -------------
     # This logs details & Metrics.
 
-    UIConfig=ui_config_obj
+    ui_config=ui_config_obj
     # ------------- This is a Required Parameter -------------
     # Instance of WebSelectorConfig to map the UI elements.
 )

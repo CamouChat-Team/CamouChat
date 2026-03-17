@@ -10,7 +10,7 @@ import pytest
 from playwright.async_api import Page, Locator, TimeoutError as PlaywrightTimeoutError, Position
 
 from camouchat.Exceptions.whatsapp import ReplyCapableError
-from camouchat.WhatsApp.DerivedTypes.Message import whatsapp_message
+from camouchat.WhatsApp.models.message import Message
 from camouchat.WhatsApp.humanized_operations import HumanizedOperations
 from camouchat.WhatsApp.reply_capable import ReplyCapable
 from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
@@ -62,7 +62,7 @@ async def test_init_page_none(mock_logger, mock_ui_config):
 async def test_reply_success(reply_capable_instance, mock_humanize, mock_ui_config):
     """Test reply successfully types and sends text."""
     # Setup Mocks
-    mock_msg = Mock(spec=whatsapp_message)
+    mock_msg = Mock(spec=Message)
     reply_capable_instance._side_edge_click = AsyncMock()  # Skip real click
 
     mock_input_box = AsyncMock(spec=Locator)
@@ -87,7 +87,7 @@ async def test_reply_success(reply_capable_instance, mock_humanize, mock_ui_conf
 @pytest.mark.asyncio
 async def test_reply_timeout(reply_capable_instance, mock_humanize):
     """Test reply raises error on timeout."""
-    mock_msg = Mock(spec=whatsapp_message)
+    mock_msg = Mock(spec=Message)
     reply_capable_instance._side_edge_click = AsyncMock(
         side_effect=PlaywrightTimeoutError("Timeout")
     )
@@ -99,7 +99,7 @@ async def test_reply_timeout(reply_capable_instance, mock_humanize):
 @pytest.mark.asyncio
 async def test_side_edge_click_success(reply_capable_instance):
     """Test _side_edge_click successfully triggers reply click."""
-    mock_msg = Mock(spec=whatsapp_message)
+    mock_msg = Mock(spec=Message)
     mock_msg.isIncoming.return_value = True
 
     # Setup mock UI
@@ -128,7 +128,7 @@ async def test_side_edge_click_success(reply_capable_instance):
 @pytest.mark.asyncio
 async def test_side_edge_click_no_bbox(reply_capable_instance):
     """Test _side_edge_click raises error if bbox is None."""
-    mock_msg = Mock(spec=whatsapp_message)
+    mock_msg = Mock(spec=Message)
     mock_msg_ui = AsyncMock(spec=Locator)
     mock_msg_ui.element_handle.return_value = mock_msg_ui  # Return self
     mock_msg.message_ui = mock_msg_ui

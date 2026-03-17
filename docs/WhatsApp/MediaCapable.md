@@ -8,13 +8,13 @@ The `MediaCapable` class handles uploading images, videos, audio, and documents 
 
 ```python
 from camouchat.WhatsApp import MediaCapable, WebSelectorConfig
-from camouchat.camouchat_logger import camouchatLogger
+from camouchat.camouchat_logger import CamouChatLogger
 
-ui_config = WebSelectorConfig(page=page_obj, log=camouchatLogger)
+ui_config = WebSelectorConfig(page=page_obj, log=CamouChatLogger)
 
 media_handler = MediaCapable(
     page=page_obj,
-    log=camouchatLogger,
+    log=CamouChatLogger,
     UIConfig=ui_config
 )
 ```

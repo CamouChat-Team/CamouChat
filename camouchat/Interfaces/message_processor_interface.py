@@ -35,11 +35,11 @@ class MessageProcessorInterface(ABC):
         self.UIConfig = UIConfig
 
     @abstractmethod
-    async def _get_wrapped_Messages(self, retry: int, *args, **kwargs) -> List[T]:
+    async def _get_wrapped_Messages(self, retry: int,  **kwargs) -> List[T]:
         """Extract and wrap messages from UI elements."""
         ...
 
     @abstractmethod
-    async def Fetcher(self, chat: ChatInterface, retry: int, *args, **kwargs) -> List[T]:
+    async def fetch_messages(self, chat: ChatInterface, retry: int,  **kwargs) -> List[T]:
         """Fetch messages from a chat with storage and filtering."""
         ...

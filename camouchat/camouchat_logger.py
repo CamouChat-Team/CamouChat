@@ -3,13 +3,14 @@ Shared Resources Module for tweakio-sdk library
 Supports separate loggers, contextual logging, and JSON formatting.
 """
 
+import json
 import logging
 import os
-import json
 from logging.handlers import RotatingFileHandler
 from typing import Any
 
 from colorlog import ColoredFormatter
+
 from camouchat.directory import DirectoryManager
 
 try:
@@ -41,7 +42,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_record)
 
 
-class TweakioLoggerAdapter(logging.LoggerAdapter):
+class CamouChatAdapter(logging.LoggerAdapter):
     """
     Logger adapter that injects contextual information like profile_id and process_id.
     """
@@ -55,7 +56,7 @@ class TweakioLoggerAdapter(logging.LoggerAdapter):
 
 
 # ------ Logger Configs ---------
-logger = logging.getLogger("tweakio")
+logger = logging.getLogger("camouchat")
 logger.setLevel(logging.INFO)
 logger.propagate = False  # Avoid duplication
 
@@ -103,15 +104,13 @@ if not _has_stream_handler(logger):
 # File handler with rotation
 # -------------------------------
 if not _has_file_handler(logger):
-    log_file = DirectoryManager("CamouChat").get_error_trace_file()
+    log_file = DirectoryManager().get_error_trace_file()
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
     file_handler = ConcurrentRotatingFileHandler(
-        log_file, maxBytes=20 * 1024 * 1024, backupCount=3  # 20 MB per file  # keep last 3 files
+        log_file, maxBytes=20 * 1024 * 1024, backupCount=3
     )
 
-    # We use standard formatting for the file by default.
-    # JSONFormatter is available for advanced use cases.
     file_formatter = logging.Formatter(LOG_FORMAT)
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
@@ -119,7 +118,7 @@ if not _has_file_handler(logger):
 # -------------------------------
 # Browser Logger Setup
 # -------------------------------
-_browser_logger = logging.getLogger("tweakio.browser")
+_browser_logger = logging.getLogger("camouchat.browser")
 _browser_logger.setLevel(logging.INFO)
 _browser_logger.propagate = False
 
@@ -127,7 +126,7 @@ if not _has_stream_handler(_browser_logger):
     _browser_logger.addHandler(console_handler)
 
 if not _has_file_handler(_browser_logger):
-    b_log_file = DirectoryManager("CamouChat").get_browser_log_file()
+    b_log_file = DirectoryManager().get_browser_log_file()
     os.makedirs(os.path.dirname(b_log_file), exist_ok=True)
 
     b_file_handler = ConcurrentRotatingFileHandler(
@@ -139,20 +138,19 @@ if not _has_file_handler(_browser_logger):
 # -------------------------------
 # Global wrapped instances
 # -------------------------------
-# By default, use GLOBAL for profile if not specified to maintain backward compatibility.
-camouchatLogger = TweakioLoggerAdapter(logger, {"profile_id": "GLOBAL", "process_id": os.getpid()})
-browser_logger = TweakioLoggerAdapter(
+CamouChatLogger = CamouChatAdapter(logger, {"profile_id": "GLOBAL", "process_id": os.getpid()})
+browser_logger = CamouChatAdapter(
     _browser_logger, {"profile_id": "GLOBAL", "process_id": os.getpid()}
 )
 
 
 def get_profile_logger(profile_id: str) -> logging.LoggerAdapter:
     """Returns a logger adapter configured for a specific profile_id."""
-    return TweakioLoggerAdapter(logger, {"profile_id": profile_id, "process_id": os.getpid()})
+    return CamouChatAdapter(logger, {"profile_id": profile_id, "process_id": os.getpid()})
 
 
 def get_browser_profile_logger(profile_id: str) -> logging.LoggerAdapter:
     """Returns a browser logger adapter configured for a specific profile_id."""
-    return TweakioLoggerAdapter(
+    return CamouChatAdapter(
         _browser_logger, {"profile_id": profile_id, "process_id": os.getpid()}
     )

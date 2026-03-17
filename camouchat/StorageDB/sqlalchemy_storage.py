@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
 )
 
+from camouchat import ProfileInfo
 from camouchat.Exceptions.base import StorageError
 from camouchat.Interfaces.message_interface import MessageInterface
 from camouchat.Interfaces.storage_interface import StorageInterface
@@ -41,13 +42,13 @@ class SQLAlchemyStorage(StorageInterface):
     """
 
     def __init__(
-        self,
-        queue: asyncio.Queue,
-        log: logging.Logger,
-        database_url: str = "sqlite+aiosqlite:///messages.db",
-        batch_size: int = 50,
-        flush_interval: float = 2.0,
-        echo: bool = False,
+            self,
+            queue: asyncio.Queue,
+            log: logging.Logger,
+            database_url: str = "sqlite+aiosqlite:///messages.db",
+            batch_size: int = 50,
+            flush_interval: float = 2.0,
+            echo: bool = False,
     ) -> None:
         """
         Initialize SQLAlchemy storage.
@@ -73,12 +74,12 @@ class SQLAlchemyStorage(StorageInterface):
 
     @classmethod
     def from_profile(
-        cls,
-        profile,  # ProfileInfo type (avoiding import)
-        queue: asyncio.Queue,
-        log: logging.Logger,
-        batch_size: int = 50,
-        flush_interval: float = 2.0,
+            cls,
+            profile: ProfileInfo,
+            queue: asyncio.Queue,
+            log: logging.Logger,
+            batch_size: int = 50,
+            flush_interval: float = 2.0,
     ) -> "SQLAlchemyStorage":
         """
         Create storage from ProfileInfo.
@@ -106,9 +107,6 @@ class SQLAlchemyStorage(StorageInterface):
         """Initialize SQLAlchemy engine and session factory."""
         try:
             is_sqlite = self.database_url.startswith("sqlite")
-
-            # SQLite (aiosqlite) uses StaticPool/NullPool and does NOT support
-            # pool_size or max_overflow — passing them raises ArgumentError.
             engine_kwargs: dict = {
                 "echo": self.echo,
                 "pool_pre_ping": True,
@@ -205,7 +203,7 @@ class SQLAlchemyStorage(StorageInterface):
 
                 current_time = asyncio.get_event_loop().time()
                 should_flush = len(batch) >= self.batch_size or (
-                    batch and current_time - last_flush >= self.flush_interval
+                        batch and current_time - last_flush >= self.flush_interval
                 )
 
                 if should_flush and batch:
@@ -418,10 +416,10 @@ class SQLAlchemyStorage(StorageInterface):
                 return []
 
     async def get_decrypted_messages_async(
-        self,
-        key: bytes,
-        limit: int = 1000,
-        offset: int = 0,
+            self,
+            key: bytes,
+            limit: int = 1000,
+            offset: int = 0,
     ) -> List[Dict[str, Any]]:
         """
         Fetch all messages and decrypt body + chat name on-the-fly.

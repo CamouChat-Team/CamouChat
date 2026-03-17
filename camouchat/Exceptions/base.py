@@ -10,28 +10,28 @@ Hierarchy:
 
 
 # -------------------- Base Tweakio Error --------------------
-class TweakioError(Exception):
+class CamouChatError(Exception):
     """Base exception for all Tweakio SDK errors"""
 
     pass
 
 
 # -------------------- Authentication errors --------------------
-class AuthenticationError(TweakioError):
+class AuthenticationError(CamouChatError):
     """Base exception for authentication errors"""
 
     pass
 
 
 # -------------------- Filtering Errors --------------------
-class MessageFilterError(TweakioError):
+class MessageFilterError(CamouChatError):
     """Base exception for message-related errors"""
 
     pass
 
 
 # -------------------- Storage Errors --------------------
-class StorageError(TweakioError):
+class StorageError(CamouChatError):
     """Base exception for storage errors"""
 
     pass
@@ -40,7 +40,7 @@ class StorageError(TweakioError):
 # -------------------- Humanized Operations Errors --------------------
 
 
-class HumanizedOperationError(TweakioError):
+class HumanizedOperationError(CamouChatError):
     """Base exception for humanized operation errors"""
 
     pass
@@ -53,7 +53,7 @@ class ElementNotFoundError(HumanizedOperationError):
 
 
 # -------------------- Browser Exceptions --------------------
-class BrowserException(TweakioError):
+class BrowserException(CamouChatError):
     """Base exception for browser errors"""
 
     pass

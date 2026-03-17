@@ -13,7 +13,7 @@ from camouchat.WhatsApp.humanized_operations import HumanizedOperations
 from camouchat.Exceptions.whatsapp import ReplyCapableError
 from camouchat.Interfaces.reply_capable_interface import ReplyCapableInterface
 from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
-from camouchat.WhatsApp.DerivedTypes.Message import whatsapp_message
+from camouchat.WhatsApp.models.message import Message
 
 
 class ReplyCapable(ReplyCapableInterface):
@@ -28,7 +28,7 @@ class ReplyCapable(ReplyCapableInterface):
 
     async def reply(
         self,
-        message: whatsapp_message,  # type: ignore[override]
+        message: Message,  # type: ignore[override]
         humanize: HumanizedOperations,  # type: ignore[override]
         text: Optional[str],
         **kwargs,
@@ -53,7 +53,7 @@ class ReplyCapable(ReplyCapableInterface):
         except PlaywrightTimeoutError as e:
             raise ReplyCapableError("reply timed out while preparing input box") from e
 
-    async def _side_edge_click(self, message: whatsapp_message) -> bool:
+    async def _side_edge_click(self, message: Message) -> bool:
         """Double-click on message edge to trigger reply action."""
         ui = message.message_ui
         try:

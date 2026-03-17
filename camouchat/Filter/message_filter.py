@@ -67,7 +67,7 @@ class MessageFilter:
 
     def apply(
         self,
-        messages: List[T],
+        msgs: List[T],
     ) -> List[T]:
         """
         Applies the filter on any set of Messages.
@@ -85,12 +85,12 @@ class MessageFilter:
         - MessageFilterError if not all messages belong to 1 single-same chat
         """
 
-        if not messages:
+        if not msgs:
             return []
 
-        m0: MessageInterface = messages[0]
+        m0: MessageInterface = msgs[0]
         # Check Single-same chat or not in List[messages]
-        for m in messages:
+        for m in msgs:
             mi: MessageInterface = m
             if mi.parent_chat != m0.parent_chat:
                 raise MessageFilterError("MessageFilter.apply expects messages from a single chat")
@@ -107,21 +107,21 @@ class MessageFilter:
             state.window_start = now
             state.count = 0
 
-        batch_size = len(messages)
+        batch_size = len(msgs)
 
         # Hard drop: chat delayed > self.LimitTime
         defer_since = state.defer_since
         if defer_since is not None and (now - defer_since) > self.LimitTime:
             state.reset()
-            return messages
+            return msgs
 
         # Rate-limit hit → delay entire batch
         if state.count + batch_size > self.Max_Messages_Per_Window:
             state.defer_since = state.defer_since or now
-            self.Defer_queue.put(BindData(chat, messages, now))
+            self.Defer_queue.put(BindData(chat, msgs, now))
             return []
 
         # Deliver
         state.count += batch_size
         state.last_seen = now
-        return messages
+        return msgs

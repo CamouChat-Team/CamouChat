@@ -59,10 +59,10 @@ except WhatsAppError:
     handle_general_whatsapp_failure()
 """
 
-from camouchat.Exceptions.base import TweakioError
+from camouchat.Exceptions.base import CamouChatError
 
 
-class WhatsAppError(TweakioError):
+class WhatsAppError(CamouChatError):
     """Base Class for all WhatsApp Errors"""
 
     pass

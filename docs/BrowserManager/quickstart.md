@@ -70,7 +70,7 @@ Bringing it all together. The `CamoufoxBrowser` is a customized, anti-detect ver
 
 ```python
 from camouchat.BrowserManager import CamoufoxBrowser
-from camouchat.camouchat_logger import camouchatLogger
+from camouchat.camouchat_logger import CamouChatLogger
 
 # Initialize the browser
 browser = CamoufoxBrowser(
@@ -79,8 +79,9 @@ browser = CamoufoxBrowser(
     # This is the browser_config we just created earlier.
     profile=profile,
     # That profile goes here so that browser is saved & Isolated.
-    log=camouchatLogger,
+    log=CamouChatLogger,
 )
+
 
 # Launch and get our active page
 async def start_session():
@@ -89,7 +90,9 @@ async def start_session():
     await page.goto("https://web.whatsapp.com")
     print("🌐 Stealth browser is live!")
 
+
 import asyncio
+
 asyncio.run(start_session())
 ```
 

@@ -12,7 +12,7 @@ The `MessageProcessor` touches all parts of the data cycle.
 
 ```python
 from camouchat.WhatsApp import MessageProcessor
-from camouchat.Encryption import KeyManager # (Optional) Let's say you pulled a key from ProfileManager!
+from camouchat.Encryption import KeyManager  # (Optional) Let's say you pulled a key from ProfileManager!
 
 msg_processor = MessageProcessor(
     storage_obj=my_storage,
@@ -34,10 +34,10 @@ msg_processor = MessageProcessor(
     log=camouchatLogger,
     # ------------- This is a Required Parameter -------------
 
-    UIConfig=ui_config_obj,
+    ui_config=ui_config_obj,
     # ------------- This is a Required Parameter -------------
 
-    encryption_key=profile_key  
+    encryption_key=profile_key
     # ------------- Optional Parameter -------------
     # Pass an AES-256 key from ProfileManager. If provided, all body strings are wiped from RAM/Disk.
 )
@@ -51,12 +51,13 @@ msg_processor = MessageProcessor(
 
 #### 1. `Fetcher(chat, retry, *args, **kwargs)`
 A robust function that queries raw elements out of a provided chat, extracts information like `data-id` and text content, performs optional AES encryption, enqueues the messages to storage, and finally runs them through your rate-limiting filter.
+
 ```python
-messages = await msg_processor.Fetcher(
-    chat=recent_chats[0], 
+messages = await msg_processor.fetch_messages(
+    chat=recent_chats[0],
     # ------------- Required Parameter -------------
     # The target `whatsapp_chat` element you fetched earlier.
-    
+
     retry=3
     # ------------- Required Parameter -------------
     # Attempt counts if elements aren't immediately found on the screen.

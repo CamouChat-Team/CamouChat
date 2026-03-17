@@ -28,3 +28,6 @@ design
 tweakio_browser_playwright
 .vscode
 tests/learn
+
+docs/smoke_test.py
+docs/test.py

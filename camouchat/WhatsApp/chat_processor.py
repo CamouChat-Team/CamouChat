@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import logging
 import random
+import weakref
 from typing import Dict, List, Optional
 
-import weakref
 from playwright.async_api import Page, ElementHandle, Locator
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
-from camouchat.Exceptions import ChatNotFoundError, ChatClickError, TweakioError
+from camouchat.Exceptions import ChatNotFoundError, ChatClickError, CamouChatError
 from camouchat.Exceptions.whatsapp import (
     ChatProcessorError,
     ChatUnreadError,
@@ -18,7 +18,7 @@ from camouchat.Exceptions.whatsapp import (
     ChatError,
 )
 from camouchat.Interfaces.chat_processor_interface import ChatProcessorInterface
-from camouchat.WhatsApp.DerivedTypes.Chat import whatsapp_chat
+from camouchat.WhatsApp.models.chat import Chat
 from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
 
 
@@ -37,57 +37,82 @@ class ChatProcessor(ChatProcessorInterface):
             cls._instances[page] = instance
         return cls._instances[page]
 
-    def __init__(self, page: Page, log: logging.Logger, UIConfig: WebSelectorConfig):
+    def __init__(self, page: Page, log: logging.Logger, ui_config: WebSelectorConfig):
         if hasattr(self, "_initialized") and self._initialized:
             return
-        super().__init__(page=page, log=log, UIConfig=UIConfig)
+        super().__init__(page=page, log=log, UIConfig=ui_config)
         self.capabilities: Dict[str, bool] = {}
         if self.page is None:
             raise ValueError("page must not be None")
         self._initialized = True
 
-    async def fetch_chats(self, limit: int = 5, retry: int = 5) -> list[whatsapp_chat]:  # type: ignore[override]
+    async def fetch_chats(self, limit: int = 5, retry: Optional[int] = 5) -> list[Chat]:  # type: ignore[override]
         """
         Fetch visible chats from the sidebar.
 
         :param limit: maximum number of chats to fetch
         :param retry: number of times to retry the request
         """
-        ChatList: List[whatsapp_chat] = await self._get_Wrapped_Chat(limit=limit, retry=retry)
+        ChatList: List[Chat] = await self._get_Wrapped_Chat(limit=limit, retry=retry)
 
         if not ChatList:
             raise ChatNotFoundError("Chats Not Found on the Page.")
 
         return ChatList
 
-    async def _get_Wrapped_Chat(self, limit: int, retry: int) -> list[whatsapp_chat]:  # type: ignore[override]
-        """Extract chat elements and wrap them as `whatsapp_chat` objects."""
+    async def _get_Wrapped_Chat \
+                    (
+                    self, limit: int,
+                    retry: int
+            ) -> list[Chat]:  # type: ignore[override]
+        """Extract chat elements and wrap them."""
+
         sc = self.UIConfig
-        wrapped: List[whatsapp_chat] = []
-        try:
-            chats = sc.chat_items()
-            counter = 0
-            while chats and not (await chats.count()) and counter < retry:
+
+        for attempt in range(1, retry + 1):
+            try:
+                wrapped: List[Chat] = []
+
                 chats = sc.chat_items()
-                await self.page.wait_for_timeout(1000)
-                counter += 1
+                count = await chats.count() if chats else 0
 
-            count = await chats.count() if chats else 0
-            if not count or not chats:
-                raise ChatNotFoundError("Chats Not Found.")
+                if not chats or count == 0:
+                    raise ChatNotFoundError("Chats not found.")
 
-            minimum = min(count, limit)
-            for i in range(minimum):
-                wrapperChat = whatsapp_chat(
-                    chat_ui=chats.nth(i), chat_name=await sc.getChatName(chats.nth(i))
-                )
-                wrapped.append(wrapperChat)
+                minimum = min(count, limit)
 
-            return wrapped
-        except TweakioError as e:
-            raise ChatProcessorError("Failed to extract chat") from e
+                for i in range(minimum):
+                    chat_el = chats.nth(i)
 
-    async def _click_chat(self, chat: Optional[whatsapp_chat], **kwargs) -> bool:  # type: ignore[override]
+                    name = await sc.getChatName(chat_el)
+
+                    wrapped.append(
+                        Chat(
+                            chat_ui=chat_el,
+                            chat_name=name,
+                        )
+                    )
+
+                return wrapped
+
+            except CamouChatError as e:
+                if attempt < retry:
+                    self.log.debug(f"[Retry {attempt}/{retry}] Chat fetch failed: {e}")
+                    await asyncio.sleep(1)
+                else:
+                    self.log.error(f"Failed after {retry} retries (Chat fetch).")
+                    raise ChatProcessorError(
+                        f"Failed to extract chats after {retry} retries."
+                    ) from e
+
+            # unexpected bug → fail fast
+            except Exception as e:
+                self.log.error("Unexpected error in chat extraction", exc_info=True)
+                raise ChatProcessorError("Unexpected failure in chat extraction.") from e
+
+        raise ChatProcessorError("Unreachable state in chat extraction.")
+
+    async def _click_chat(self, chat: Optional[Chat], **kwargs) -> bool:  # type: ignore[override]
         """Click on a chat to open it."""
         try:
             if not chat:
@@ -108,11 +133,11 @@ class ChatProcessor(ChatProcessorInterface):
             return True
         except PlaywrightTimeoutError as e:
             raise ChatClickError("Failed to click chat in time.") from e
-        except TweakioError as e:
+        except CamouChatError as e:
             raise ChatClickError("Error in click the given chat.") from e
 
     @staticmethod
-    async def is_unread(chat: Optional[whatsapp_chat]) -> int:
+    async def is_unread(chat: Optional[Chat]) -> int:
         """Check unread status. Returns 1 if unread with count, 0 otherwise."""
         try:
             if chat is None:
@@ -132,10 +157,10 @@ class ChatProcessor(ChatProcessorInterface):
                     if text.isdigit():
                         return 1
             return 0
-        except TweakioError as e:
+        except CamouChatError as e:
             raise ChatUnreadError("Error in is_unread checking") from e
 
-    async def do_unread(self, chat: Optional[whatsapp_chat]) -> bool:
+    async def do_unread(self, chat: Optional[Chat]) -> bool:
         """Mark a chat as unread via context menu."""
         page = self.page
 
@@ -178,5 +203,5 @@ class ChatProcessor(ChatProcessorInterface):
         except PlaywrightTimeoutError as e:
             raise ChatUnreadError("Timeout while checking unread badge") from e
 
-        except TweakioError as e:
+        except CamouChatError as e:
             raise ChatUnreadError("Error in do_unread checking") from e

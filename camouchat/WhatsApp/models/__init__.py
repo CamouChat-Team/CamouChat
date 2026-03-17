@@ -5,7 +5,7 @@ Concrete implementations of chat and message objects
 tailored for WhatsApp Web's data model and behavior.
 """
 
-from .Chat import whatsapp_chat
-from .Message import whatsapp_message
+from .chat import Chat
+from .message import Message
 
-__all__ = ["whatsapp_message", "whatsapp_chat"]
+__all__ = ["Message", "Chat"]
