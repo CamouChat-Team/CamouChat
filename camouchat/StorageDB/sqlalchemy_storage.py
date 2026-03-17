@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import weakref
 from typing import List, Dict, Any, Optional, Sequence
 
 from sqlalchemy import select, exists
@@ -41,6 +42,18 @@ class SQLAlchemyStorage(StorageInterface):
     - MySQL: mysql+aiomysql://user:pass@host/db
     """
 
+    _instances: Dict[str, SQLAlchemyStorage] = {}
+    _initialized: bool = False
+
+    def __new__(cls, *args, **kwargs) -> SQLAlchemyStorage:
+        database_url = kwargs.get("database_url") or (
+            args[2] if len(args) > 2 else "sqlite+aiosqlite:///messages.db"
+        )
+        if database_url not in cls._instances:
+            instance = super(SQLAlchemyStorage, cls).__new__(cls)
+            cls._instances[database_url] = instance
+        return cls._instances[database_url]
+
     def __init__(
             self,
             queue: asyncio.Queue,
@@ -50,6 +63,8 @@ class SQLAlchemyStorage(StorageInterface):
             flush_interval: float = 2.0,
             echo: bool = False,
     ) -> None:
+        if hasattr(self, "_initialized") and self._initialized:
+            return
         """
         Initialize SQLAlchemy storage.
 
@@ -63,6 +78,7 @@ class SQLAlchemyStorage(StorageInterface):
         """
         super().__init__(queue=queue, log=log)
         self.database_url = database_url
+        self._initialized = True
         self.batch_size = batch_size
         self.flush_interval = flush_interval
         self.echo = echo

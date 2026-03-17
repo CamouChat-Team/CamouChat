@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import random
+import weakref
 from typing import Optional
 
 from playwright.async_api import Page, Locator, Position
@@ -19,12 +20,25 @@ from camouchat.WhatsApp.models.message import Message
 class ReplyCapable(ReplyCapableInterface):
     """Enables replying to specific WhatsApp messages."""
 
-    UIConfig: WebSelectorConfig
+    _instances: weakref.WeakKeyDictionary[Page, ReplyCapable] = weakref.WeakKeyDictionary()
+    _initialized: bool = False
+
+    def __new__(cls, *args, **kwargs) -> ReplyCapable:
+        page = kwargs.get("page") or (args[0] if args else None)
+        if page is None:
+            return super(ReplyCapable, cls).__new__(cls)
+        if page not in cls._instances:
+            instance = super(ReplyCapable, cls).__new__(cls)
+            cls._instances[page] = instance
+        return cls._instances[page]
 
     def __init__(self, page: Page, log: logging.Logger, UIConfig: WebSelectorConfig):
+        if hasattr(self, "_initialized") and self._initialized:
+            return
         super().__init__(page=page, log=log, UIConfig=UIConfig)
         if self.page is None:
             raise ValueError("page must not be None")
+        self._initialized = True
 
     async def reply(
         self,

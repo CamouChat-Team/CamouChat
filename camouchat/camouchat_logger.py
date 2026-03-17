@@ -42,7 +42,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_record)
 
 
-class CamouChatAdapter(logging.LoggerAdapter):
+class TweakioLoggerAdapter(logging.LoggerAdapter):
     """
     Logger adapter that injects contextual information like profile_id and process_id.
     """
@@ -56,7 +56,7 @@ class CamouChatAdapter(logging.LoggerAdapter):
 
 
 # ------ Logger Configs ---------
-logger = logging.getLogger("camouchat")
+logger = logging.getLogger("tweakio")
 logger.setLevel(logging.INFO)
 logger.propagate = False  # Avoid duplication
 
@@ -118,7 +118,7 @@ if not _has_file_handler(logger):
 # -------------------------------
 # Browser Logger Setup
 # -------------------------------
-_browser_logger = logging.getLogger("camouchat.browser")
+_browser_logger = logging.getLogger("tweakio.browser")
 _browser_logger.setLevel(logging.INFO)
 _browser_logger.propagate = False
 
@@ -138,19 +138,30 @@ if not _has_file_handler(_browser_logger):
 # -------------------------------
 # Global wrapped instances
 # -------------------------------
-CamouChatLogger = CamouChatAdapter(logger, {"profile_id": "GLOBAL", "process_id": os.getpid()})
-browser_logger = CamouChatAdapter(
+# By default, use GLOBAL for profile if not specified to maintain backward compatibility.
+camouchatLogger = TweakioLoggerAdapter(logger, {"profile_id": "GLOBAL", "process_id": os.getpid()})
+CamouChatLogger = camouchatLogger # Alias for backward compatibility
+browser_logger = TweakioLoggerAdapter(
     _browser_logger, {"profile_id": "GLOBAL", "process_id": os.getpid()}
 )
 
+_adapter_cache: dict[str, TweakioLoggerAdapter] = {"GLOBAL": camouchatLogger}
+_browser_adapter_cache: dict[str, TweakioLoggerAdapter] = {"GLOBAL": browser_logger}
 
-def get_profile_logger(profile_id: str) -> logging.LoggerAdapter:
+
+def get_profile_logger(profile_id: str) -> TweakioLoggerAdapter:
     """Returns a logger adapter configured for a specific profile_id."""
-    return CamouChatAdapter(logger, {"profile_id": profile_id, "process_id": os.getpid()})
+    if profile_id not in _adapter_cache:
+        _adapter_cache[profile_id] = TweakioLoggerAdapter(
+            logger, {"profile_id": profile_id, "process_id": os.getpid()}
+        )
+    return _adapter_cache[profile_id]
 
 
-def get_browser_profile_logger(profile_id: str) -> logging.LoggerAdapter:
+def get_browser_profile_logger(profile_id: str) -> TweakioLoggerAdapter:
     """Returns a browser logger adapter configured for a specific profile_id."""
-    return CamouChatAdapter(
-        _browser_logger, {"profile_id": profile_id, "process_id": os.getpid()}
-    )
+    if profile_id not in _browser_adapter_cache:
+        _browser_adapter_cache[profile_id] = TweakioLoggerAdapter(
+            _browser_logger, {"profile_id": profile_id, "process_id": os.getpid()}
+        )
+    return _browser_adapter_cache[profile_id]

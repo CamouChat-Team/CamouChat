@@ -7,6 +7,7 @@ import random
 import asyncio
 import os
 import tempfile
+import weakref
 from filelock import FileLock
 from typing import Union, Optional
 
@@ -27,10 +28,25 @@ _clipboard_file_lock = FileLock(_lock_file_path)
 class HumanizedOperations(HumanizeOperationInterface):
     """Simulates human-like typing with variable delays."""
 
+    _instances: weakref.WeakKeyDictionary[Page, HumanizedOperations] = weakref.WeakKeyDictionary()
+    _initialized: bool = False
+
+    def __new__(cls, *args, **kwargs) -> HumanizedOperations:
+        page = kwargs.get("page") or (args[0] if args else None)
+        if page is None:
+            return super(HumanizedOperations, cls).__new__(cls)
+        if page not in cls._instances:
+            instance = super(HumanizedOperations, cls).__new__(cls)
+            cls._instances[page] = instance
+        return cls._instances[page]
+
     def __init__(self, page: Page, log: logging.Logger, UIConfig: WebUISelectorCapable):
+        if hasattr(self, "_initialized") and self._initialized:
+            return
         super().__init__(page=page, log=log, UIConfig=UIConfig)
         if self.page is None:
             raise ValueError("page must not be None")
+        self._initialized = True
 
     async def typing(self, text: str, **kwargs) -> bool:
         """

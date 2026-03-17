@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import weakref
 from pathlib import Path
 from playwright.async_api import Page, Locator, FileChooser, TimeoutError as PlaywrightTimeoutError
 
@@ -16,12 +17,25 @@ from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
 class MediaCapable(MediaCapableInterface):
     """Handles media file uploads to WhatsApp chats."""
 
-    UIConfig: WebSelectorConfig
+    _instances: weakref.WeakKeyDictionary[Page, MediaCapable] = weakref.WeakKeyDictionary()
+    _initialized: bool = False
+
+    def __new__(cls, *args, **kwargs) -> MediaCapable:
+        page = kwargs.get("page") or (args[0] if args else None)
+        if page is None:
+            return super(MediaCapable, cls).__new__(cls)
+        if page not in cls._instances:
+            instance = super(MediaCapable, cls).__new__(cls)
+            cls._instances[page] = instance
+        return cls._instances[page]
 
     def __init__(self, page: Page, log: logging.Logger, UIConfig: WebSelectorConfig):
+        if hasattr(self, "_initialized") and self._initialized:
+            return
         super().__init__(page=page, log=log, UIConfig=UIConfig)
         if self.page is None:
             raise ValueError("page must not be None")
+        self._initialized = True
 
     async def menu_clicker(self) -> None:
         """Open the attachment menu."""
