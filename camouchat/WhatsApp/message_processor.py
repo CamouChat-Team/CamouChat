@@ -217,7 +217,13 @@ class MessageProcessor(MessageProcessorInterface):
     async def fetch_messages(  # type: ignore[override]
             self, chat: Chat, retry: Optional[int] = 5, **kwargs
     ) -> List[Message]:
-        """Fetch, optionally encrypt, store, and filter messages from a chat."""
+        """Fetch, optionally encrypt, store, and filter messages from a chat.
+        param :
+            chat (Chat): Chat to fetch messages from.
+            retry (int): Number of times to retry the request. Default set to 5 
+        kwargs : 
+            only_new (bool): If True, returns only new messages.
+        """
 
         msgList = await self._get_wrapped_Messages(chat, retry, **kwargs)
 
@@ -271,6 +277,15 @@ class MessageProcessor(MessageProcessorInterface):
         # -----------------------------
         # Filtering (NoOp safe)
         # -----------------------------
-        msgList = self.filter.apply(msgs=msgList)
+        if new_msgs:
+            allowed_new = self.filter.apply(msgs=new_msgs)
+            # Reconstruct list: old messages + allowed new messages
+            # (Applying filter to all msgs repeatedly flags old messages as spam)
+            msgList = [m for m in msgList if m not in new_msgs] + allowed_new
+        else:
+            allowed_new = []
+
+        if kwargs.get("only_new", False):
+            return allowed_new
 
         return msgList
