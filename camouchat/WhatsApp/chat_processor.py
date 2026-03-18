@@ -18,7 +18,6 @@ from camouchat.Exceptions.whatsapp import (
     ChatMenuError,
     ChatError,
 )
-from camouchat.Interfaces.chat_interface import ChatInterface
 from camouchat.Interfaces.chat_processor_interface import ChatProcessorInterface
 from camouchat.WhatsApp.models.chat import Chat
 from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
@@ -62,18 +61,14 @@ class ChatProcessor(ChatProcessorInterface):
         :param limit: maximum number of chats to fetch
         :param retry: number of times to retry the request
         """
-        ChatList: Sequence[Chat] = await self._get_Wrapped_Chat(
-            limit=limit, retry=retry or 5
-        )
+        ChatList: Sequence[Chat] = await self._get_Wrapped_Chat(limit=limit, retry=retry or 5)
 
         if not ChatList:
             raise ChatNotFoundError("Chats Not Found on the Page.")
 
         return ChatList
 
-    async def _get_Wrapped_Chat(
-        self, limit: int = 5, retry: int = 5, **kwargs
-    ) -> Sequence[Chat]:
+    async def _get_Wrapped_Chat(self, limit: int = 5, retry: int = 5, **kwargs) -> Sequence[Chat]:
         """Extract chat elements and wrap them."""
 
         sc = self.UIConfig

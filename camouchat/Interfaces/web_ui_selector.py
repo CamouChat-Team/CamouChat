@@ -6,7 +6,7 @@ from abc import ABC
 from logging import Logger, LoggerAdapter
 from typing import Optional, Union
 
-from playwright.async_api import  Page
+from playwright.async_api import Page
 
 from camouchat.camouchat_logger import camouchatLogger
 
