@@ -10,11 +10,10 @@ from camouchat.BrowserManager import (
     Platform,
     BrowserForgeCompatible,
     ProfileManager,
-    CamoufoxBrowser,
-    StorageType,
+    CamoufoxBrowser
 )
 from camouchat.Filter import MessageFilter
-from camouchat.StorageDB import SQLAlchemyStorage
+from camouchat.StorageDB import SQLAlchemyStorage, StorageType
 from camouchat.WhatsApp import (
     Login,
     WebSelectorConfig,
@@ -33,6 +32,20 @@ async def main():
         profile_id="Work",
         storage_type=StorageType.SQLITE
     )
+
+    # --- ENCRYPTION SETUP ---
+    # 1.1 Check if encryption is enabled, if not enable it.
+    # Note: enable_encryption returns the raw 32-byte AES key.
+    try:
+        if not profile.encryption.get("enabled"):
+            print("Encryption not enabled for this profile. Enabling now...")
+            enc_key = pm.enable_encryption(Platform.WHATSAPP, "Work")
+        else:
+            print("Encryption already enabled. Loading key...")
+            enc_key = pm.get_key(Platform.WHATSAPP, "Work")
+    except Exception as e:
+        print(f"Encryption setup failed: {e}")
+        enc_key = None
 
     # 2. Browser Config
     browser_forge = BrowserForgeCompatible()
@@ -61,7 +74,7 @@ async def main():
     login = Login(page=page, UIConfig=ui, log=camouchatLogger)
 
     await login.login(
-        method=0  # [QR] , Can check by giving 1 and then 2 more params : number[int], country[str]
+        method=0  # [QR]
     )
 
     # 6. Chat Fetch
@@ -80,8 +93,10 @@ async def main():
         storage_obj=storage,
         ui_config=ui,
         chat_processor=chat_processor,
-        filter_obj=M_filter
+        filter_obj=M_filter,
+        encryption_key=enc_key  # Passing the AES key here
     )
+
 
     from camouchat.WhatsApp import ReplyCapable
     reply_obj = ReplyCapable(page=page, ui_config=ui)
@@ -99,7 +114,6 @@ async def main():
             for chat in chats:
                 print(chat)
                 print("---Entering MessageProcessor...\n")
-
                 # Using only_new=True to skip processed history.
                 messages: List[Message] = await message_processor.fetch_messages(chat=chat, only_new=True)
                 for msg in messages:
@@ -124,6 +138,22 @@ async def main():
                         processed.add(msg.message_id)  # Saves
             await asyncio.sleep(2)
 
+        # --- VERIFY DECRYPTION ---
+        if enc_key:
+            print("\n--- Verifying Storage Decryption ---")
+            # Fetch last 5 messages from DB and decrypt them using the same key
+            decrypted_rows = await storage.get_decrypted_messages_async(key=enc_key, limit=5)
+            for row in decrypted_rows:
+                status = "Encrypted" if row.get('encryption_nonce') else "Plaintext"
+                print(f"[{status}] Chat: {row.get('parent_chat_name')} | Body: {row.get('raw_data')}")
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\nTest interrupted by user.")
+    except Exception as e:
+        print(f"\nTest failed with error: {e}")
+        import traceback
+        traceback.print_exc()

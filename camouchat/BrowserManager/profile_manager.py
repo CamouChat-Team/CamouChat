@@ -1,18 +1,23 @@
+"""Profile manager"""
+
+from __future__ import annotations
+
 import json
 import os
 import shutil
 import signal
-from logging import Logger, LoggerAdapter
-from camouchat.camouchat_logger import camouchatLogger
 from datetime import datetime, timezone
+from logging import Logger, LoggerAdapter
 from pathlib import Path
 from typing import List, Optional, Dict, Union
 
-from camouchat.directory import DirectoryManager
 from camouchat.BrowserManager.camoufox_browser import CamoufoxBrowser
 from camouchat.BrowserManager.platform_manager import Platform
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.StorageDB.storage_type import StorageType
+from camouchat.camouchat_logger import camouchatLogger
+from camouchat.directory import DirectoryManager
+
 
 class ProfileManager:
     """Manager / entry point for profile creation, activation, and key management.
@@ -27,7 +32,7 @@ class ProfileManager:
 
     p_count: int = 0
 
-    def __init__(self, log : Optional[Union[LoggerAdapter, Logger]] = None) -> None:
+    def __init__(self, log: Optional[Union[LoggerAdapter, Logger]] = None) -> None:
         self.directory = DirectoryManager()
         self.log = log or camouchatLogger
 
@@ -36,14 +41,14 @@ class ProfileManager:
     # ------------------------------------------------------------------
 
     def _generate_metadata(
-        self, 
-        platform: Platform, 
-        profile_id: str, 
-        storage_type: StorageType = StorageType.SQLITE,
-        database_url: Optional[str] = None
+            self,
+            platform: Platform,
+            profile_id: str,
+            storage_type: StorageType = StorageType.SQLITE,
+            database_url: Optional[str] = None
     ) -> dict:
         now = datetime.now(timezone.utc).isoformat()
-        
+
         db_path = self.directory.get_database_path(platform, profile_id)
         if not database_url:
             if storage_type == StorageType.SQLITE:
@@ -120,11 +125,11 @@ class ProfileManager:
     # ------------------------------------------------------------------
 
     def create_profile(
-        self, 
-        platform: Platform, 
-        profile_id: str, 
-        storage_type: StorageType = StorageType.SQLITE,
-        database_url: Optional[str] = None
+            self,
+            platform: Platform,
+            profile_id: str,
+            storage_type: StorageType = StorageType.SQLITE,
+            database_url: Optional[str] = None
     ) -> ProfileInfo:
         """Create a new profile; returns the existing one if already present."""
         profile_dir = self.directory.get_profile_dir(platform, profile_id)
@@ -143,8 +148,8 @@ class ProfileManager:
         (profile_dir / "fingerprint.pkl").write_bytes(b"")
 
         metadata = self._generate_metadata(
-            platform=platform, 
-            profile_id=profile_id, 
+            platform=platform,
+            profile_id=profile_id,
             storage_type=storage_type,
             database_url=database_url
         )
@@ -234,7 +239,8 @@ class ProfileManager:
         metadata["encryption"]["enabled"] = True
         metadata["encryption"]["created_at"] = datetime.now(timezone.utc).isoformat()
         self._write_metadata(platform, profile_id, metadata)
-
+        self.log.info(
+            f"Encryption enabled for profile : [{profile_id}] , platform : [{platform}] , stored at [{key_file}]")
         return raw_key
 
     def get_key(self, platform: Platform, profile_id: str) -> bytes:
@@ -316,6 +322,7 @@ class ProfileManager:
 
     @staticmethod
     def is_pid_alive(pid: int) -> bool:
+        """Checks PID if alive or not."""
         if not pid or pid <= 0:
             return False
         try:
@@ -328,6 +335,11 @@ class ProfileManager:
             return True
 
     async def close_profile(self, platform: Platform, profile_id: str, force: bool = False) -> None:
+        """ closes the profile
+        :param platform: Platform object
+        :param profile_id: Profile ID
+        :param force: Force close | Default = False
+        """
         profile_dir = self.directory.get_profile_dir(platform, profile_id)
         metadata_file = profile_dir / "metadata.json"
         lock_file = profile_dir / ".lock"
@@ -369,7 +381,7 @@ class ProfileManager:
         ProfileManager.__dec__()
 
     def activate_profile(
-        self, platform: Platform, profile_id: str, browser_obj: CamoufoxBrowser
+            self, platform: Platform, profile_id: str, browser_obj: CamoufoxBrowser
     ) -> None:
         """
         Activate a profile. Raises if already active with a live PID.
@@ -418,6 +430,17 @@ class ProfileManager:
         lock_file.write_text(str(os.getpid()))
 
     def delete_profile(self, platform: Platform, profile_id: str, force: bool = False) -> None:
+        """
+        Completely delete a profile from the saved disk.
+        To delete & remove access on your phone follow :
+        1. Activate the profile.
+        2. close the bot | profile .
+        3. remove access to the latest active browser in "Linked Devices"
+        :param platform: Platform object
+        :param profile_id: profile ID
+        :param force: Force delete | Default = False
+        :return: None
+        """
         profile_dir = self.directory.get_profile_dir(platform, profile_id)
 
         if not profile_dir.exists():
