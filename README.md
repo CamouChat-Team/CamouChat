@@ -268,58 +268,56 @@ MIT — see [LICENSE](LICENSE)
 		<tr>
             <td align="center">
                 <a href="https://github.com/BITS-Rohit">
-                    <img src="https://avatars.githubusercontent.com/u/125949183?v=4" width="100;" alt="BITS-Rohit"/>
+                    <img src="https://avatars.githubusercontent.com/u/125949183?v=4" width="60;" alt="BITS-Rohit"/>
                     <br />
                     <sub><b>Ivy </b></sub>
                 </a>
             </td>
             <td align="center">
                 <a href="https://github.com/xinss-plus">
-                    <img src="https://avatars.githubusercontent.com/u/260048405?v=4" width="100;" alt="xinss-plus"/>
+                    <img src="https://avatars.githubusercontent.com/u/260048405?v=4" width="60;" alt="xinss-plus"/>
                     <br />
                     <sub><b>Xinss</b></sub>
                 </a>
             </td>
             <td align="center">
                 <a href="https://github.com/Adez017">
-                    <img src="https://avatars.githubusercontent.com/u/142787780?v=4" width="100;" alt="Adez017"/>
+                    <img src="https://avatars.githubusercontent.com/u/142787780?v=4" width="60;" alt="Adez017"/>
                     <br />
                     <sub><b>aditya singh rathore</b></sub>
                 </a>
             </td>
             <td align="center">
                 <a href="https://github.com/AnkithaMadhyastha">
-                    <img src="https://avatars.githubusercontent.com/u/174180608?v=4" width="100;" alt="AnkithaMadhyastha"/>
+                    <img src="https://avatars.githubusercontent.com/u/174180608?v=4" width="60;" alt="AnkithaMadhyastha"/>
                     <br />
                     <sub><b>AnkithaMadhyastha</b></sub>
                 </a>
             </td>
             <td align="center">
                 <a href="https://github.com/dharapandya85">
-                    <img src="https://avatars.githubusercontent.com/u/109461918?v=4" width="100;" alt="dharapandya85"/>
+                    <img src="https://avatars.githubusercontent.com/u/109461918?v=4" width="60;" alt="dharapandya85"/>
                     <br />
                     <sub><b>Dhara Pandya </b></sub>
                 </a>
             </td>
             <td align="center">
-                <a href="https://github.com/Vaishnav-Sabari-Girish">
-                    <img src="https://avatars.githubusercontent.com/u/88036970?v=4" width="100;" alt="Vaishnav-Sabari-Girish"/>
-                    <br />
-                    <sub><b>Vaishnav-sabari-girish</b></sub>
-                </a>
-            </td>
-		</tr>
-		<tr>
-            <td align="center">
                 <a href="https://github.com/OVERDOZZZE">
-                    <img src="https://avatars.githubusercontent.com/u/113797353?v=4" width="100;" alt="OVERDOZZZE"/>
+                    <img src="https://avatars.githubusercontent.com/u/113797353?v=4" width="60;" alt="OVERDOZZZE"/>
                     <br />
                     <sub><b>Saparbekov Nurdan</b></sub>
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/Vaishnav-Sabari-Girish">
+                    <img src="https://avatars.githubusercontent.com/u/88036970?v=4" width="60;" alt="Vaishnav-Sabari-Girish"/>
+                    <br />
+                    <sub><b>Vaishnav-sabari-girish</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/magic-peach">
-                    <img src="https://avatars.githubusercontent.com/u/146705736?v=4" width="100;" alt="magic-peach"/>
+                    <img src="https://avatars.githubusercontent.com/u/146705736?v=4" width="60;" alt="magic-peach"/>
                     <br />
                     <sub><b>Akanksha Trehun</b></sub>
                 </a>
