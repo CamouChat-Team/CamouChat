@@ -120,6 +120,9 @@ CamouChat is built with a clear direction:
 
 ##  --------------------------  Installation -------------------------- 
 
+> [!IMPORTANT]
+> **CamouChat** is currently in active development and **not yet published on PyPI**. To use or contribute to the SDK, please follow the [Contributor's Flow](#-contributors-flow-development-setup) below to install from source.
+
 ### Using `uv` (Recommended)
 
 ```bash
@@ -158,6 +161,47 @@ python -m camoufox fetch
 👉 **Quick Start Guides**: [[**docs**]](https://github.com/BITS-Rohit/tweakio-sdk/tree/main/docs)
 
 Whether you need basic chat fetching, multi-profile anti-detect sessions, or advanced async encrypted storage, you will find clean examples in the specific module guides.
+
+---
+
+## 🛠 Contributor's Flow (Development Setup)
+
+Since the package is not yet on PyPI, follow these steps to set up a local development environment.
+
+### 1. Fork & Clone
+First, [fork the repository](https://github.com/BITS-Rohit/tweakio-sdk/fork) on GitHub, then clone it locally:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/tweakio-sdk.git
+cd tweakio-sdk
+```
+
+### 2. Dependency Management (using `uv`)
+We use [**uv**](https://github.com/astral-sh/uv) for lightning-fast dependency management and virtual environments.
+
+```bash
+# Install all dependencies and create .venv
+uv sync
+
+# Activate the environment
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Download required browser binaries
+python -m camoufox fetch
+```
+
+### 3. Verify Installation
+Run the test suite to ensure everything is configured correctly:
+
+```bash
+uv run pytest
+```
+
+### 4. Contributing
+- Create a feature branch: `git checkout -b feat/amazing-feature`
+- Commit your changes: `git commit -m "feat: add amazing feature"`
+- Push to your fork: `git push origin feat/amazing-feature`
+- Open a Pull Request!
 
 ---
 
