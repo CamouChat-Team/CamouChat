@@ -260,7 +260,7 @@ MIT — see [LICENSE](LICENSE)
 
 ---
 
-## Contributors
+## Thanks to all the Contributors
 
 <!-- readme: contributors -start -->
 
