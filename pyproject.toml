@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "camouchat"
-version = "0.6.0"
-description = "CamouChat: Anti-detection WhatsApp automation SDK with end-to-end encrypted storage, async SQLite/PostgreSQL, per-profile sandboxing, and human-like browser behaviour"
+version = "0.6.1"
+description = "CamouChat: Stealth-aware WhatsApp automation SDK. Standardized, async, and encrypted by design."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -18,12 +18,15 @@ keywords = [
     "whatsapp-automation",
     "whatsapp-bot",
     "whatsapp-web",
+    "whatsapp-api",
+    "whatsapp-api-alternative",
     "playwright",
     "camoufox",
     "anti-detection",
     "browser-automation",
     "encrypted-storage",
     "aes-256",
+    "e2e-encryption",
     "async",
     "sqlite",
     "postgresql",
@@ -31,7 +34,9 @@ keywords = [
     "stealth",
     "bypass",
     "chat-bot",
-    "agents"
+    "agents",
+    "automation-framework",
+    "web-automation"
 ]
 
 classifiers = [
