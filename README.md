@@ -1,14 +1,20 @@
-<center>
+<div style="text-align: center;">
   <img src="assets/text.png" alt="CamouChat Text" />
-</center>
+</div>
 
-<p align="center">
+<p style="text-align: center;">
+  <a href="https://github.com/BITS-Rohit/CamouChat/releases/tag/v0.6">
+    <img src="https://img.shields.io/github/v/tag/BITS-Rohit/CamouChat?label=version&color=blue" alt="GitHub tag" />
+  </a>
   <a href="https://pepy.tech/projects/tweakio-sdk">
     <img src="https://static.pepy.tech/personalized-badge/tweakio-sdk?period=total&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads" />
   </a>
-  <a href="https://pypi.org/project/tweakio-sdk/">
-    <img src="https://img.shields.io/pypi/v/tweakio-sdk?label=tweakio-sdk" />
-  </a>
+
+[//]: # (  <a href="https://pypi.org/project/tweakio-sdk/">)
+
+[//]: # (    <img src="https://img.shields.io/pypi/v/tweakio-sdk?label=tweakio-sdk" />)
+
+[//]: # (  </a>)
   <a href="https://pypi.org/project/tweakio-sdk/">
     <img src="https://img.shields.io/pypi/pyversions/tweakio-sdk" />
   </a>
@@ -16,11 +22,11 @@
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" />
   </a>
   <a href="https://github.com/BITS-Rohit/tweakio-sdk">
-    <img src="https://img.shields.io/badge/coverage-%3E90%25-brightgreen" />
+    <img src="https://img.shields.io/badge/coverage-%3E75%25-brightgreen" />
   </a>
 </p>
 
-<p align="center">
+<p style="text-align: center;">
   <a href="https://github.com/BITS-Rohit/CamouChat/actions/workflows/ci.yml">
     <img src="https://github.com/BITS-Rohit/CamouChat/actions/workflows/ci.yml/badge.svg" />
   </a>
