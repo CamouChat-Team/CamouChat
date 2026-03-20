@@ -1,6 +1,11 @@
 <div style="text-align: center;">
-  <img src="assets/text.png" alt="CamouChat Text" />
+  <img src="https://raw.githubusercontent.com/BITS-Rohit/CamouChat/main/assets/text.png" alt="CamouChat Text" />
 </div>
+
+**CamouChat** is a high-performance, stealth-aware WhatsApp automation SDK. Designed for researchers and developers, it provides a standardized framework for building multi-account WhatsApp agents with **end-to-end encrypted storage**, **per-profile sandboxing**, and **human-like browser behavior**.
+
+> [!IMPORTANT]
+> CamouChat v0.6 is officially released on PyPI. It is built on [Playwright](https://github.com/microsoft/playwright) and [Camoufox](https://github.com/daijro/camoufox) to provide industry-leading anti-detection capabilities.
 
 <p align= "center">
   <a href="https://pypi.org/project/camouchat/">
@@ -183,7 +188,7 @@ Open a PR.
 
 ### v0.6 — Core Infrastructure
 
-👉 [Docs](docs/Series/v_0_6x.md)
+👉 [Docs](https://github.com/BITS-Rohit/CamouChat/blob/main/docs/Series/v_0_6x.md)
 
 ### v0.7
 
@@ -227,7 +232,7 @@ No. Use at your own risk.
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT — see [LICENSE](https://github.com/BITS-Rohit/CamouChat/blob/main/LICENSE)
 
 ---
 

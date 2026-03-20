@@ -265,7 +265,7 @@ wheels = [
 
 [[package]]
 name = "camouchat"
-version = "0.6"
+version = "0.6.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
