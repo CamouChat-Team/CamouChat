@@ -2,12 +2,15 @@
   <img src="assets/text.png" alt="CamouChat Text" />
 </div>
 
-<p style="text-align: center;">
+<p align= "center">
   <a href="https://pypi.org/project/camouchat/">
     <img src="https://img.shields.io/pypi/v/camouchat?label=camouchat&color=green" />
   </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" />
+  </a>
+  <a href="https://github.com/BITS-Rohit/tweakio-sdk">
+    <img src="https://img.shields.io/badge/coverage-%3E75%25-brightgreen" />
   </a>
 </p>
 
@@ -19,9 +22,7 @@
 [//]: # (    <img src="https://img.shields.io/pypi/pyversions/tweakio-sdk" />)
 [//]: # (  </a>)
 
-[//]: # (  <a href="https://github.com/BITS-Rohit/tweakio-sdk">)
-[//]: # (    <img src="https://img.shields.io/badge/coverage-%3E75%25-brightgreen" />)
-[//]: # (  </a>)
+
 
 <!--
 <p style="text-align: center;">
