@@ -41,7 +41,7 @@
 
 Before building CamouChat, several existing libraries were evaluated.
 
-👉 [Docs](docs/Platforms/Analysis/whatsapp_libs.md)
+👉 [Docs](https://github.com/BITS-Rohit/CamouChat/blob/main/docs/Platforms/Analysis/whatsapp_libs.md)
 
 ### Problem Summary
 
