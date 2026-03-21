@@ -143,44 +143,16 @@ python -m camoufox fetch
 
 ---
 
-## Quick Start
+## Documentation & Community
 
-👉 [Docs](https://github.com/BITS-Rohit/CamouChat/tree/main/docs)
+Explore the following resources for detailed guides, architecture overviews, and community standards:
 
----
+👉 [Main Documentation](https://github.com/BITS-Rohit/CamouChat/tree/main/docs)
+👉 [Architecture & Key Designs](https://github.com/BITS-Rohit/CamouChat/blob/main/docs/Architecture%20&%20Key%20Designs.md)
+👉 [Contributors Guide](https://github.com/BITS-Rohit/CamouChat/blob/main/Contributors.md)
+👉 [Code of Conduct](https://github.com/BITS-Rohit/CamouChat/blob/main/CODE_OF_CONDUCT.md)
+👉 [Changelog](https://github.com/BITS-Rohit/CamouChat/blob/main/CHANGELOG.md)
 
-## Contributor Flow
-
-### 1. Fork & Clone
-
-```bash
-git clone https://github.com/YOUR_USERNAME/CamouChat.git
-cd CamouChat
-```
-
-### 2. Setup (uv)
-
-```bash
-uv sync
-source .venv/bin/activate
-python -m camoufox fetch
-```
-
-### 3. Verify
-
-```bash
-uv run pytest
-```
-
-### 4. Contribute
-
-```bash
-git checkout -b feat/your-feature
-git commit -m "feat: your feature"
-git push origin feat/your-feature
-```
-
-Open a PR.
 
 ---
 
