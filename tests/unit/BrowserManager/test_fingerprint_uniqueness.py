@@ -2,7 +2,6 @@
 Unit tests for fingerprint uniqueness in BrowserForgeCompatible.
 """
 
-import pickle
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
