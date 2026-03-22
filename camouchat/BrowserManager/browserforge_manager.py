@@ -60,7 +60,7 @@ class BrowserForgeCompatible(BrowserForgeCapable):
         else:
             raise BrowserException("path given does not exist")
 
-    def _get_all_existing_fingerprints(self) -> list:
+    def _get_all_existing_fingerprints(self) -> list[Fingerprint]:
         """
         Scans all platforms and profiles to collect existing fingerprints.
         :return: list of Fingerprint objects
@@ -68,7 +68,7 @@ class BrowserForgeCompatible(BrowserForgeCapable):
         from camouchat.directory import DirectoryManager
 
         dm = DirectoryManager()
-        fingerprints = []
+        fingerprints: list[Fingerprint] = []
 
         if not dm.platforms_dir.exists():
             return fingerprints
@@ -89,7 +89,7 @@ class BrowserForgeCompatible(BrowserForgeCapable):
                         self.log.warning(f"Could not load fingerprint from {fg_path}: {e}")
         return fingerprints
 
-    def __gen_fg__(self, avoid: Optional[list] = None) -> Fingerprint:
+    def __gen_fg__(self, avoid: Optional[list[Fingerprint]] = None) -> Fingerprint:
         """
         Generates a new fingerprint.
         :param avoid: Optional list of fingerprints to avoid
