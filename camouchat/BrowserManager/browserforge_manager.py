@@ -14,6 +14,7 @@ from typing import Tuple, Optional, Union
 
 from browserforge.fingerprints import Fingerprint, FingerprintGenerator
 
+from camouchat.BrowserManager.platform_manager import Platform
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.Exceptions.base import BrowserException
 from camouchat.Interfaces.browserforge_capable_interface import BrowserForgeCapable
@@ -51,7 +52,7 @@ class BrowserForgeCompatible(BrowserForgeCapable):
                 with open(fingerprint_path, "rb") as fh:
                     fg = pickle.load(fh)
             else:
-                existing_fgs = self._get_all_existing_fingerprints()
+                existing_fgs = self._get_all_existing_fingerprints(profile.platform)
                 fg = self.__gen_fg__(avoid=existing_fgs)
                 if fg is not None:
                     with open(fingerprint_path, "wb") as fh:
@@ -60,7 +61,7 @@ class BrowserForgeCompatible(BrowserForgeCapable):
         else:
             raise BrowserException("path given does not exist")
 
-    def _get_all_existing_fingerprints(self) -> list[Fingerprint]:
+    def _get_all_existing_fingerprints(self, platform: Platform) -> list[Fingerprint]:
         """
         Scans all platforms and profiles to collect existing fingerprints.
         :return: list of Fingerprint objects
@@ -70,23 +71,23 @@ class BrowserForgeCompatible(BrowserForgeCapable):
         dm = DirectoryManager()
         fingerprints: list[Fingerprint] = []
 
-        if not dm.platforms_dir.exists():
+        platform_dir = dm.get_platform_dir(platform)
+        if not platform_dir.exists():
             return fingerprints
 
-        for platform_dir in dm.platforms_dir.iterdir():
-            if not platform_dir.is_dir():
+        for profile_dir in platform_dir.iterdir():
+            if not profile_dir.is_dir():
                 continue
-            for profile_dir in platform_dir.iterdir():
-                if not profile_dir.is_dir():
-                    continue
-                fg_path = profile_dir / "fingerprint.pkl"
-                if fg_path.exists() and fg_path.stat().st_size > 0:
-                    try:
-                        with open(fg_path, "rb") as fh:
-                            fg = pickle.load(fh)
-                            fingerprints.append(fg)
-                    except Exception as e:
-                        self.log.warning(f"Could not load fingerprint from {fg_path}: {e}")
+
+            fg_path = profile_dir / "fingerprint.pkl"
+            if fg_path.exists() and fg_path.stat().st_size > 0:
+                try:
+                    with open(fg_path, "rb") as fh:
+                        fg = pickle.load(fh)
+                        fingerprints.append(fg)
+                except Exception as e:
+                    self.log.warning(f"Could not load fingerprint from {fg_path}: {e}")
+
         return fingerprints
 
     def __gen_fg__(self, avoid: Optional[list[Fingerprint]] = None) -> Fingerprint:
@@ -104,6 +105,7 @@ class BrowserForgeCompatible(BrowserForgeCapable):
         if real_w <= 0 or real_h <= 0:
             raise BrowserException("Invalid real screen dimensions")
 
+        fg: Fingerprint
         while True:
             fg = gen.generate()
             w, h = fg.screen.width, fg.screen.height
@@ -115,12 +117,12 @@ class BrowserForgeCompatible(BrowserForgeCapable):
                         self.log.warning(
                             f"🔁 Generated fingerprint already exists in another profile. Regenerating... (attempt {attempt})"
                         )
-                    if attempt < 10:
+                    if attempt < 30:
                         continue
 
                 if self.log:
                     self.log.info(f"✅ Fingerprint screen OK: {w}x{h}")
-                return fg
+                break
 
             if self.log:
                 self.log.warning(
@@ -130,7 +132,9 @@ class BrowserForgeCompatible(BrowserForgeCapable):
             if attempt >= 10:
                 if self.log:
                     self.log.warning("⚠️ Using last generated fingerprint after 10 attempts")
-                return fg
+                break
+
+        return fg
 
     @staticmethod
     def get_screen_size() -> Tuple[int, int]:

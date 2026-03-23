@@ -5,7 +5,7 @@ Unit tests for fingerprint uniqueness in BrowserForgeCompatible.
 import sys
 from pathlib import Path
 from unittest.mock import Mock, patch
-
+from camouchat.BrowserManager.platform_manager import Platform
 import pytest
 from browserforge.fingerprints import Fingerprint
 
@@ -27,8 +27,6 @@ def browserforge(mock_logger):
 
 
 def test_get_all_existing_fingerprints(browserforge, tmp_path):
-    """Test collecting fingerprints from multiple profiles."""
-    # Setup mock directory structure
     platforms_dir = tmp_path / "platforms"
     whatsapp_dir = platforms_dir / "whatsapp"
     profile1_dir = whatsapp_dir / "profile1"
@@ -37,8 +35,6 @@ def test_get_all_existing_fingerprints(browserforge, tmp_path):
     profile1_dir.mkdir(parents=True)
     profile2_dir.mkdir(parents=True)
 
-    # Just touch the files and write dummy content, we'll mock pickle.load anyway
-    # The code checks for st_size > 0
     with open(profile1_dir / "fingerprint.pkl", "wb") as f:
         f.write(b"dummy")
     with open(profile2_dir / "fingerprint.pkl", "wb") as f:
@@ -49,12 +45,10 @@ def test_get_all_existing_fingerprints(browserforge, tmp_path):
 
     with patch("camouchat.directory.DirectoryManager") as MockDM:
         mock_dm = MockDM.return_value
-        mock_dm.platforms_dir = platforms_dir
+        mock_dm.get_platform_dir.return_value = whatsapp_dir
 
-        # We need to ensure that the unpickling returns our mock objects
-        # Since they are different mocks, they should be collected
         with patch("pickle.load", side_effect=[fg1, fg2]):
-            fgs = browserforge._get_all_existing_fingerprints()
+            fgs = browserforge._get_all_existing_fingerprints(Platform.WHATSAPP)
 
     assert len(fgs) == 2
     assert fg1 in fgs
@@ -86,12 +80,13 @@ def test_gen_fg_avoids_duplicates(browserforge):
 
 
 def test_get_fg_integration(browserforge, tmp_path):
-    """Test get_fg integration with uniqueness check."""
+
     fg_path = tmp_path / "fingerprint.pkl"
-    fg_path.touch()  # empty file
+    fg_path.touch()
 
     mock_profile = Mock(spec=ProfileInfo)
     mock_profile.fingerprint_path = fg_path
+    mock_profile.platform = Platform.WHATSAPP
 
     existing_fg = Mock(spec=Fingerprint)
     new_fg = Mock(spec=Fingerprint)

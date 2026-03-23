@@ -179,7 +179,10 @@ class MessageProcessor(MessageProcessorInterface[Message, WebSelectorConfig]):
                     wrapped_list.append(
                         Message(
                             message_ui=msg,
-                            direction=cast(Literal["in", "out"],"in" if await msg.locator(".message-in").count() > 0 else "out" ),
+                            direction=cast(
+                                Literal["in", "out"],
+                                "in" if await msg.locator(".message-in").count() > 0 else "out",
+                            ),
                             raw_data=text,
                             parent_chat=chat,
                             data_id=data_id,
