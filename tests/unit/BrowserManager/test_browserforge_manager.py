@@ -79,6 +79,9 @@ def test_get_fg_loads_existing(browserforge, mock_fingerprint, tmp_path):
         f.write(b"dummy")
 
     with patch("pickle.load", return_value=mock_fingerprint):
+        # Mock _get_all_existing_fingerprints since it's called even if existing is found
+        # Actually it's only called in the else block when file is empty.
+        # Let's check get_fg again.
         result = browserforge.get_fg(mock_profile)
 
     assert result == mock_fingerprint
@@ -92,9 +95,10 @@ def test_get_fg_generates_new(browserforge, mock_fingerprint, tmp_path, mock_log
 
     fg_path.touch()  # Create empty file
 
-    with patch.object(browserforge, "__gen_fg__", return_value=mock_fingerprint):
-        with patch("pickle.dump"):
-            result = browserforge.get_fg(mock_profile)
+    with patch.object(browserforge, "_get_all_existing_fingerprints", return_value=[]):
+        with patch.object(browserforge, "__gen_fg__", return_value=mock_fingerprint):
+            with patch("pickle.dump"):
+                result = browserforge.get_fg(mock_profile)
 
     assert result == mock_fingerprint
 
