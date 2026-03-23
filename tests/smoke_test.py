@@ -125,9 +125,8 @@ async def main():
                 print("---Entering MessageProcessor...\n")
                 # Using only_new=True to skip processed history.
                 messages: List[Message] = await message_processor.fetch_messages(
-                    chat=chat, only_new=True
+                    chat=chat, only_new=False
                 )
-                print(f"Number of messages fetched: {len(messages)}")
                 for msg in messages:
                     print(msg)
                     print("---------")
