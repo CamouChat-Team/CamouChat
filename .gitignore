@@ -32,3 +32,5 @@ tests/learn
 docs/test.py
 camouchat/BrowserManager/profile_context.py
 docs/Logger
+
+wget-*
