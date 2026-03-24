@@ -1,5 +1,5 @@
-from typing import Optional, Dict, Any
 import json
+
 
 class WAJS_Scripts:
     """
@@ -34,6 +34,7 @@ class WAJS_Scripts:
 
     @classmethod
     def is_authenticated(cls) -> str:
+        """Authentication script"""
         return cls.wrap_stealth_execution("WPP.conn.isAuthenticated()")
 
     # --- 2. CHAT & DATA FETCHING ---
@@ -45,7 +46,9 @@ class WAJS_Scripts:
     @classmethod
     def get_messages(cls, chat_id: str, count: int = 50) -> str:
         """Fetch history from active RAM"""
-        return cls.wrap_stealth_execution(f"WPP.chat.getMessages('{chat_id}', {{ count: {count} }})")
+        return cls.wrap_stealth_execution(
+            f"WPP.chat.getMessages('{chat_id}', {{ count: {count} }})"
+        )
 
     # --- 3. ACTIONS (TIER 3 FALLBACKS) ---
     @classmethod

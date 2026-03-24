@@ -1,14 +1,14 @@
-import logging
-from typing import Any, Callable, Dict, Optional
+from logging import Logger, LoggerAdapter
+from camouchat.camouchat_logger import camouchatLogger
+from typing import Any, Callable, Dict, Optional, Union
 
 from playwright.async_api import Page
 from .wajs_scripts import WAJS_Scripts
 
-logger = logging.getLogger(__name__)
-
 
 class WAJSError(Exception):
     """Exception raised when wa-js execution fails structurally or within React."""
+
     pass
 
 
@@ -18,7 +18,8 @@ class WapiWrapper:
     Parses and handles the stealth-wrapped JSON responses from WAJS_Scripts.
     """
 
-    def __init__(self, page: Page):
+    def __init__(self, page: Page, log: Optional[Union[LoggerAdapter, Logger]] = None):
+        self.log = log or camouchatLogger()
         self.page = page
 
     async def _evaluate_stealth(self, js_string: str) -> Any:
@@ -29,7 +30,7 @@ class WapiWrapper:
         # Prefix mw: to execute inside the website's context (bypassing Camoufox isolation)
         if not js_string.startswith("mw:"):
             js_string = "mw:" + js_string
-            
+
         response = await self.page.evaluate(js_string)
 
         if not response or not isinstance(response, dict):
@@ -38,7 +39,7 @@ class WapiWrapper:
         if response.get("status") == "error":
             # JS successfully swallowed a crash. We now raise it gracefully in Python.
             err_msg = response.get("message", "Unknown JavaScript Error in wa-js execution")
-            logger.error(f"WA-JS Execution Error: {err_msg}")
+            self.log.error(f"WA-JS Execution Error: {err_msg}")
             raise WAJSError(err_msg)
 
         return response.get("data")
@@ -48,21 +49,22 @@ class WapiWrapper:
         """Wait until `wa-js` completes Webpack hijack and exposes WPP"""
         import asyncio
         import time
-        logger.info("Awaiting WPP.isReady flag via Main World polling...")
-        
+
+        self.log.info("Awaiting WPP.isReady flag via Main World polling...")
+
         start = time.time()
         while (time.time() - start) * 1000 < timeout_ms:
             try:
                 # We use direct evaluation because wait_for_function fails in isolated contexts
                 is_ready = await self.page.evaluate("mw:" + WAJS_Scripts.is_ready())
                 if is_ready:
-                    logger.info("WPP successfully integrated and ready.")
+                    self.log.info("WPP successfully integrated and ready.")
                     return True
             except Exception:
                 pass
             await asyncio.sleep(0.5)
-            
-        logger.error("wa-js failed to initialize before timeout.")
+
+        self.log.error("wa-js failed to initialize before timeout.")
         raise WAJSError("WPP Initialization Timeout")
 
     async def is_authenticated(self) -> bool:
@@ -74,15 +76,15 @@ class WapiWrapper:
         Exposes a Python handler to the browser to actively listen to WPP events.
         Zero-polling architecture.
         """
-        alias = "__camou_message_proxy"
-        
+        alias = "__react_message_sync"
+
         # 1. Bind Python's callback to the browser's global JS space
         await self.page.expose_function(alias, python_callback)
-        
+
         # 2. Tell WPP to start routing real-time WS payloads into our exposed function
         setup_script = WAJS_Scripts.setup_new_message_listener(alias)
         await self.page.evaluate("mw:" + setup_script)
-        logger.info(f"Stealth Message Push Listener activated via {alias}")
+        self.log.info(f"Stealth Message Push Listener activated via {alias}")
 
     # --- 3. DATA & ACTIONS ---
     async def get_chat(self, chat_id: str) -> Dict[str, Any]:
@@ -92,6 +94,4 @@ class WapiWrapper:
         return await self._evaluate_stealth(WAJS_Scripts.get_messages(chat_id, count))
 
     async def send_text_message(self, chat_id: str, message: str) -> Any:
-        return await self._evaluate_stealth(
-            WAJS_Scripts.send_text_message(chat_id, message)
-        )
+        return await self._evaluate_stealth(WAJS_Scripts.send_text_message(chat_id, message))

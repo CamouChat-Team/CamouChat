@@ -298,7 +298,7 @@ async def test_get_page_reuses_blank_page(camoufox_browser):
 
     camoufox_browser.browser = mock_context
 
-    result = await camoufox_browser.get_page()
+    result = await camoufox_browser.get_page(platform="whatsnew")
 
     assert result == mock_page
     mock_context.new_page.assert_not_called()
@@ -318,7 +318,7 @@ async def test_get_page_creates_new(camoufox_browser):
 
     camoufox_browser.browser = mock_context
 
-    result = await camoufox_browser.get_page()
+    result = await camoufox_browser.get_page(platform="whatsnew")
 
     assert result == mock_new_page
     mock_context.new_page.assert_called_once()
@@ -333,7 +333,7 @@ async def test_get_page_initializes_browser(camoufox_browser):
     mock_context.new_page.return_value = mock_page
 
     with patch.object(camoufox_browser, "get_instance", return_value=mock_context):
-        result = await camoufox_browser.get_page()
+        result = await camoufox_browser.get_page(platform="whatsnew")
 
         assert result == mock_page
 
@@ -348,7 +348,7 @@ async def test_get_page_error(camoufox_browser):
     camoufox_browser.browser = mock_context
 
     with pytest.raises(BrowserException, match="Could not create a new page"):
-        await camoufox_browser.get_page()
+        await camoufox_browser.get_page(platform="whatsnew")
 
 
 # ============================================================================

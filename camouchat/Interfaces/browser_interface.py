@@ -34,6 +34,6 @@ class BrowserInterface(ABC):
         ...
 
     @abstractmethod
-    async def get_page(self) -> Page:
+    async def get_page(self, **kwargs) -> Page:
         """Get an available page or create a new one."""
         ...
