@@ -56,6 +56,7 @@ class WAJS_Scripts:
             ignore_group_metadata:  Skip fetching group member data (faster, default True).
         """
         import json as _json
+
         opts: dict = {
             "direction": direction,
             "ignoreGroupMetadata": ignore_group_metadata,
@@ -256,7 +257,6 @@ class WAJS_Scripts:
             }})
         """
 
-
     # ─────────────────────────────────────────────
     # 4. ACTIONS — TIER 3 FALLBACKS
     # ─────────────────────────────────────────────
@@ -284,7 +284,7 @@ class WAJS_Scripts:
     ) -> str:
         """
         Fetch messages from browser disk storage (IndexedDB) across ALL chats sequentially.
-        
+
         Args:
             min_row_id: The lower bound integer rowId.
             limit: Number of records to return.
@@ -381,8 +381,6 @@ class WAJS_Scripts:
         """Unmute notifications for a newsletter."""
         # unmute reuses unfollow then re-follow — WPP exposes it via mute toggle
         return f"wpp.newsletter.mute('{newsletter_id}', false)"
-
-
 
     # ─────────────────────────────────────────────
     # 5. EVENT LISTENER SETUP — THE PUSH PIPELINE
@@ -1092,7 +1090,7 @@ class WAJS_Scripts:
             directPath, mediaKey, type, mimetype, encFilehash, filehash
         """
         safe_path = json.dumps(direct_path)
-        safe_key  = json.dumps(media_key_b64)
+        safe_key = json.dumps(media_key_b64)
         safe_type = json.dumps(media_type)
         return f"""
             (async () => {{
@@ -1193,4 +1191,3 @@ class WAJS_Scripts:
                 }}
             }})()
         """
-

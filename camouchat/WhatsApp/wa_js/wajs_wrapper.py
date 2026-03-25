@@ -331,10 +331,7 @@ class WapiWrapper:
         Note: Messages are retrieved in order from min_row_id onwards.
         """
         return await self._evaluate_stealth(
-            WAJS_Scripts.indexdb_get_messages(
-                min_row_id=min_row_id,
-                limit=limit
-            )
+            WAJS_Scripts.indexdb_get_messages(min_row_id=min_row_id, limit=limit)
         )
 
     # ─────────────────────────────────────────────
@@ -390,9 +387,7 @@ class WapiWrapper:
                 f"decrypt_media: Cache miss for {direct_path!r} — "
                 f"falling back to CDN download via wpp.chat.downloadMedia() [NETWORK]"
             )
-            b64 = await self._evaluate_stealth(
-                WAJS_Scripts.download_media(msg_id=msg_id)
-            )
+            b64 = await self._evaluate_stealth(WAJS_Scripts.download_media(msg_id=msg_id))
 
         if not b64:
             return None
@@ -408,31 +403,31 @@ class WapiWrapper:
 
     # MIME type → file extension map for auto-naming saved media
     _MIME_TO_EXT: Dict[str, str] = {
-        "image/jpeg":       ".jpg",
-        "image/png":        ".png",
-        "image/webp":       ".webp",
-        "image/gif":        ".gif",
-        "image/avif":       ".avif",
-        "video/mp4":        ".mp4",
-        "video/3gpp":       ".3gp",
-        "video/quicktime":  ".mov",
-        "audio/ogg":        ".ogg",
-        "audio/mp4":        ".m4a",
-        "audio/mpeg":       ".mp3",
-        "audio/aac":        ".aac",
-        "audio/amr":        ".amr",
-        "application/pdf":  ".pdf",
-        "application/zip":  ".zip",
+        "image/jpeg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+        "image/gif": ".gif",
+        "image/avif": ".avif",
+        "video/mp4": ".mp4",
+        "video/3gpp": ".3gp",
+        "video/quicktime": ".mov",
+        "audio/ogg": ".ogg",
+        "audio/mp4": ".m4a",
+        "audio/mpeg": ".mp3",
+        "audio/aac": ".aac",
+        "audio/amr": ".amr",
+        "application/pdf": ".pdf",
+        "application/zip": ".zip",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":       ".xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
         "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
     }
     _TYPE_EXT_FALLBACK: Dict[str, str] = {
-        "image":    ".jpg",
-        "video":    ".mp4",
-        "audio":    ".ogg",
-        "ptt":      ".ogg",
-        "sticker":  ".webp",
+        "image": ".jpg",
+        "video": ".mp4",
+        "audio": ".ogg",
+        "ptt": ".ogg",
+        "sticker": ".webp",
         "document": ".bin",
     }
 
@@ -457,11 +452,11 @@ class WapiWrapper:
         Returns:
             Full absolute path string, e.g. /path/to/dir/image_false_91XX_ABCD.jpg
         """
-        msg_id     = message.get("id_serialized", "unknown")
+        msg_id = message.get("id_serialized", "unknown")
         media_type = message.get("type", "media")
-        mimetype   = message.get("mimetype") or message.get("mime_type")
-        ext        = WapiWrapper._ext_from_mime(mimetype, media_type)
-        safe_id    = msg_id.replace("/", "_").replace("@", "_").replace(":", "_")
+        mimetype = message.get("mimetype") or message.get("mime_type")
+        ext = WapiWrapper._ext_from_mime(mimetype, media_type)
+        safe_id = msg_id.replace("/", "_").replace("@", "_").replace(":", "_")
         return str(Path(save_dir) / f"{media_type}_{safe_id}{ext}")
 
     async def extract_media(
@@ -502,23 +497,23 @@ class WapiWrapper:
         Raw MsgModel fields consumed:
             directPath, mediaKey, type, id_serialized, mimetype, viewOnce / isViewOnce
         """
-        direct_path   = message.get("directPath")
+        direct_path = message.get("directPath")
         media_key_b64 = message.get("mediaKey")
-        media_type    = message.get("type", "image")
-        msg_id        = message.get("id_serialized")
-        mimetype      = message.get("mimetype") or message.get("mime_type")
-        view_once     = bool(message.get("viewOnce") or message.get("isViewOnce"))
+        media_type = message.get("type", "image")
+        msg_id = message.get("id_serialized")
+        mimetype = message.get("mimetype") or message.get("mime_type")
+        view_once = bool(message.get("viewOnce") or message.get("isViewOnce"))
 
         result: Dict[str, Any] = {
-            "success":       False,
-            "type":          media_type,
-            "mimetype":      mimetype,
-            "size_bytes":    None,
-            "path":          None,
-            "msg_id":        msg_id,
-            "view_once":     view_once,
+            "success": False,
+            "type": media_type,
+            "mimetype": mimetype,
+            "size_bytes": None,
+            "path": None,
+            "msg_id": msg_id,
+            "view_once": view_once,
             "used_fallback": False,
-            "error":         None,
+            "error": None,
         }
 
         if not direct_path:
@@ -547,9 +542,7 @@ class WapiWrapper:
                 f"falling back to CDN download via wpp.chat.downloadMedia() [NETWORK]"
             )
             result["used_fallback"] = True
-            b64 = await self._evaluate_stealth(
-                WAJS_Scripts.download_media(msg_id=msg_id)
-            )
+            b64 = await self._evaluate_stealth(WAJS_Scripts.download_media(msg_id=msg_id))
 
         if not b64:
             result["error"] = "Both Cache API and CDN fallback returned None — media unavailable."
@@ -564,11 +557,13 @@ class WapiWrapper:
             + (" [CDN fallback]" if result["used_fallback"] else " [Cache API]")
         )
 
-        result.update({
-            "success":    True,
-            "size_bytes": len(raw_bytes),
-            "path":       save_path,
-        })
+        result.update(
+            {
+                "success": True,
+                "size_bytes": len(raw_bytes),
+                "path": save_path,
+            }
+        )
         return result
 
     # ─────────────────────────────────────────────
@@ -582,9 +577,7 @@ class WapiWrapper:
         """
         return await self._evaluate_stealth(WAJS_Scripts.newsletter_list())
 
-    async def newsletter_search(
-        self, query: str, limit: int = 20
-    ) -> Dict[str, Any]:
+    async def newsletter_search(self, query: str, limit: int = 20) -> Dict[str, Any]:
         """
         Search the WhatsApp Channel directory.
 
@@ -606,9 +599,7 @@ class WapiWrapper:
         Args:
             newsletter_id: The @newsletter JID e.g. '120363xxxxx@newsletter'.
         """
-        return await self._evaluate_stealth(
-            WAJS_Scripts.newsletter_follow(newsletter_id)
-        )
+        return await self._evaluate_stealth(WAJS_Scripts.newsletter_follow(newsletter_id))
 
     async def newsletter_unfollow(self, newsletter_id: str) -> bool:
         """
@@ -617,21 +608,15 @@ class WapiWrapper:
         Args:
             newsletter_id: The @newsletter JID e.g. '120363xxxxx@newsletter'.
         """
-        return await self._evaluate_stealth(
-            WAJS_Scripts.newsletter_unfollow(newsletter_id)
-        )
+        return await self._evaluate_stealth(WAJS_Scripts.newsletter_unfollow(newsletter_id))
 
     async def newsletter_mute(self, newsletter_id: str) -> Any:
         """Mute notifications for a WhatsApp Channel."""
-        return await self._evaluate_stealth(
-            WAJS_Scripts.newsletter_mute(newsletter_id)
-        )
+        return await self._evaluate_stealth(WAJS_Scripts.newsletter_mute(newsletter_id))
 
     async def newsletter_unmute(self, newsletter_id: str) -> Any:
         """Unmute notifications for a WhatsApp Channel."""
-        return await self._evaluate_stealth(
-            WAJS_Scripts.newsletter_unmute(newsletter_id)
-        )
+        return await self._evaluate_stealth(WAJS_Scripts.newsletter_unmute(newsletter_id))
 
     # ═══════════════════════════════════════════════════════════
     # READ-LEVEL — DATA & INTROSPECTION
@@ -841,7 +826,9 @@ class WapiWrapper:
                  None if the contact has no picture or privacy blocks you.
         Observed: None when contact has default/no picture.
         """
-        return await self._evaluate_stealth(WAJS_Scripts.contact_get_profile_picture_url(contact_id))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.contact_get_profile_picture_url(contact_id)
+        )
 
     async def contact_get_status(self, contact_id: str) -> Any:
         """
@@ -935,7 +922,9 @@ class WapiWrapper:
             size           (int)  — current member count
             creation       (int)  — creation Unix timestamp
         """
-        return await self._evaluate_stealth(WAJS_Scripts.group_get_info_from_invite_code(invite_code))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.group_get_info_from_invite_code(invite_code)
+        )
 
     async def group_get_membership_requests(self, group_id: str) -> Any:
         """
@@ -1112,7 +1101,9 @@ class WapiWrapper:
 
     async def community_get_announcement_group(self, community_id: str) -> Any:
         """The admin broadcast/announcement group of a Community."""
-        return await self._evaluate_stealth(WAJS_Scripts.community_get_announcement_group(community_id))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.community_get_announcement_group(community_id)
+        )
 
     # ═══════════════════════════════════════════════════════════
     # ACTION-LEVEL — MUTATIONS & INTERACTIONS (OPTIONAL / TIER 3)
@@ -1176,19 +1167,27 @@ class WapiWrapper:
 
     async def group_add_participants(self, group_id: str, participants: List[str]) -> Any:
         """Add members to a group."""
-        return await self._evaluate_stealth(WAJS_Scripts.group_add_participants(group_id, participants))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.group_add_participants(group_id, participants)
+        )
 
     async def group_remove_participants(self, group_id: str, participants: List[str]) -> Any:
         """Remove members from a group."""
-        return await self._evaluate_stealth(WAJS_Scripts.group_remove_participants(group_id, participants))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.group_remove_participants(group_id, participants)
+        )
 
     async def group_promote_participants(self, group_id: str, participants: List[str]) -> Any:
         """Promote members to admin."""
-        return await self._evaluate_stealth(WAJS_Scripts.group_promote_participants(group_id, participants))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.group_promote_participants(group_id, participants)
+        )
 
     async def group_demote_participants(self, group_id: str, participants: List[str]) -> Any:
         """Remove admin from members."""
-        return await self._evaluate_stealth(WAJS_Scripts.group_demote_participants(group_id, participants))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.group_demote_participants(group_id, participants)
+        )
 
     async def group_leave(self, group_id: str) -> Any:
         """Leave a group chat."""
@@ -1212,11 +1211,15 @@ class WapiWrapper:
 
     async def group_approve_membership(self, group_id: str, participants: List[str]) -> Any:
         """Approve pending join requests."""
-        return await self._evaluate_stealth(WAJS_Scripts.group_approve_membership(group_id, participants))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.group_approve_membership(group_id, participants)
+        )
 
     async def group_reject_membership(self, group_id: str, participants: List[str]) -> Any:
         """Reject pending join requests."""
-        return await self._evaluate_stealth(WAJS_Scripts.group_reject_membership(group_id, participants))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.group_reject_membership(group_id, participants)
+        )
 
     # ─────────────────────────────────────────────
     # BLOCKLIST (ACTIONS)
@@ -1340,10 +1343,12 @@ class WapiWrapper:
 
     async def community_add_subgroups(self, community_id: str, group_ids: List[str]) -> Any:
         """Add groups to an existing Community."""
-        return await self._evaluate_stealth(WAJS_Scripts.community_add_subgroups(community_id, group_ids))
+        return await self._evaluate_stealth(
+            WAJS_Scripts.community_add_subgroups(community_id, group_ids)
+        )
 
     async def community_remove_subgroups(self, community_id: str, group_ids: List[str]) -> Any:
         """Remove groups from a Community."""
-        return await self._evaluate_stealth(WAJS_Scripts.community_remove_subgroups(community_id, group_ids))
-
-
+        return await self._evaluate_stealth(
+            WAJS_Scripts.community_remove_subgroups(community_id, group_ids)
+        )

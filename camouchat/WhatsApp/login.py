@@ -7,7 +7,12 @@ from logging import Logger, LoggerAdapter
 import random
 
 import weakref
-from playwright.async_api import Page, TimeoutError as PlaywrightTimeoutError, Error as PlaywrightError, Locator
+from playwright.async_api import (
+    Page,
+    TimeoutError as PlaywrightTimeoutError,
+    Error as PlaywrightError,
+    Locator,
+)
 from typing import Optional, Union
 from camouchat.Exceptions.whatsapp import LoginError
 from camouchat.Interfaces.login_interface import LoginInterface
@@ -83,7 +88,8 @@ class Login(LoginInterface):
                 if "NS_BINDING_ABORTED" in str(e) and _attempt < _max_retries - 1:
                     self.log.warning(
                         "[Login] NS_BINDING_ABORTED on attempt %d/%d — retrying in 2s...",
-                        _attempt + 1, _max_retries
+                        _attempt + 1,
+                        _max_retries,
                     )
                     await asyncio.sleep(2)
                     continue

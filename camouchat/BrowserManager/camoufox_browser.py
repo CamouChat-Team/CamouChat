@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 from logging import Logger, LoggerAdapter
-from pathlib import Path
 from typing import Optional, Dict, Union
 
 import camoufox.exceptions
@@ -31,10 +30,10 @@ class CamoufoxBrowser(BrowserInterface):
     Map: Dict[int, BrowserContext] = {}
 
     def __init__(
-            self,
-            config: BrowserConfig,
-            profile: ProfileInfo,
-            log: Optional[Union[Logger, LoggerAdapter]] = None,
+        self,
+        config: BrowserConfig,
+        profile: ProfileInfo,
+        log: Optional[Union[Logger, LoggerAdapter]] = None,
     ) -> None:
         """
         Initializes the Camoufox browser manager.
@@ -141,8 +140,6 @@ class CamoufoxBrowser(BrowserInterface):
         browser = self.browser
         if browser is None:
             browser = await self.get_instance()
-
-        js_path = Path(__file__).resolve().parents[1] / "WhatsApp" / "wa_js" / "wppconnect-wa.js"
 
         # Reuse an existing blank page if possible
         for p in browser.pages:

@@ -16,7 +16,7 @@ import asyncio
 import json
 import sys
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List
 
 from camouchat.BrowserManager import (
     BrowserConfig,
@@ -28,7 +28,6 @@ from camouchat.BrowserManager import (
 from camouchat.StorageDB import StorageType
 from camouchat.WhatsApp import Login, WebSelectorConfig
 from camouchat.WhatsApp.wa_js.wajs_wrapper import WapiWrapper
-from camouchat.camouchat_logger import camouchatLogger
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CONFIG — Fill these in.  No personal data is committed; use your own values.
@@ -38,26 +37,20 @@ CFG = {
     # Your bot account's WhatsApp ID (the number logged in to WA Web).
     # Format: "<country Code>XXXXXXXXXX@c.us"  (country code + number, no spaces)
     "my_number": "<country Code>XXXXXXXXXX@c.us",
-
     # Any contact in your contact list — used for contact/query tests.
     # Format: "<country Code>XXXXXXXXXX@c.us"
     "contact_id": "<country Code>XXXXXXXXXX@c.us",
-
     # A chat that has existing image/video history — used for media extraction test.
     # Can be a personal DM ("<country Code>XXXXXXXXXX@c.us") or a group ("XXXX@g.us").
     # Leave as None to auto-resolve from a group named MEDIA_GROUP_NAME below.
     "media_chat_id": None,
-
     # Group name to auto-resolve as the media test chat (RAM lookup, zero network).
     # Only used when media_chat_id is None.
     "media_group_name": "YOUR_GROUP_NAME",
-
     # Directory where extracted media files will be saved.
     "media_save_dir": "/tmp/camouchat_media",
-
     # Newsletter search query for test_newsletter_search.
     "newsletter_search_query": "technology",
-
     # CamouChat profile ID (matches the profile used in production).
     "profile_id": "Work",
 }
@@ -67,6 +60,7 @@ CFG = {
 # Each test is:   async def test_XYZ(wapi, cfg) -> None
 # Output via print(). Raise any exception to mark the test as FAILED.
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 async def test_isolation(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
     """
@@ -110,7 +104,9 @@ async def test_messages_paginate(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None
         return
     anchor_id = anchor_batch[-1].get("id_serialized")
     print(f"  Anchor ID: {anchor_id}")
-    page_msgs = await wapi.get_messages(cfg["my_number"], count=3, direction="before", anchor_msg_id=anchor_id)
+    page_msgs = await wapi.get_messages(
+        cfg["my_number"], count=3, direction="before", anchor_msg_id=anchor_id
+    )
     print(f"  Got {len(page_msgs)} messages before anchor:")
     for m in page_msgs:
         print(f"    [{m.get('type')}] {m.get('body','')[:60]!r}")
@@ -199,17 +195,19 @@ async def test_conn_session(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
     Read session & device info from ConnModel (RAM).
     user_id, lid, platform, theme, online status, multi-device flag.
     """
-    user_id      = await wapi.conn_get_my_user_id()
-    user_lid     = await wapi.conn_get_my_user_lid()
-    platform     = await wapi.conn_get_platform()
-    theme        = await wapi.conn_get_theme()
-    is_online    = await wapi.conn_is_online()
-    is_ready     = await wapi.conn_is_main_ready()
-    is_multi     = await wapi.conn_is_multi_device()
+    user_id = await wapi.conn_get_my_user_id()
+    user_lid = await wapi.conn_get_my_user_lid()
+    platform = await wapi.conn_get_platform()
+    theme = await wapi.conn_get_theme()
+    is_online = await wapi.conn_is_online()
+    is_ready = await wapi.conn_is_main_ready()
+    is_multi = await wapi.conn_is_multi_device()
     needs_update = await wapi.conn_needs_update()
     print(f"  user_id={user_id}  lid={user_lid}")
     print(f"  platform={platform}  theme={theme}")
-    print(f"  online={is_online}  ready={is_ready}  multi_device={is_multi}  needs_update={needs_update}")
+    print(
+        f"  online={is_online}  ready={is_ready}  multi_device={is_multi}  needs_update={needs_update}"
+    )
 
 
 async def test_conn_build(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
@@ -255,9 +253,9 @@ async def test_contact_query(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
     """
     cid = cfg["contact_id"]
     print(f"  Testing contact: {cid}")
-    exists  = await wapi.contact_query_exists(cid)
+    exists = await wapi.contact_query_exists(cid)
     pic_url = await wapi.contact_get_profile_picture_url(cid)
-    about   = await wapi.contact_get_status(cid)
+    about = await wapi.contact_get_status(cid)
     print(f"  queryExists: {exists}")
     print(f"  profilePicUrl: {pic_url}")
     print(f"  about/status: {about}")
@@ -286,7 +284,7 @@ async def test_group_details(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
         return
     gid = groups[0].get("id_serialized")
     print(f"  Group: {gid}")
-    is_admin  = await wapi.group_i_am_admin(gid)
+    is_admin = await wapi.group_i_am_admin(gid)
     is_sadmin = await wapi.group_i_am_super_admin(gid)
     print(f"  iAmAdmin={is_admin}  iAmSuperAdmin={is_sadmin}")
     if is_admin:
@@ -347,16 +345,13 @@ async def test_community(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
     Skipped automatically if no community parent exists in your chats.
     """
     groups = await wapi.group_get_all()
-    parent = next(
-        (g for g in groups if g.get("isParentGroup") or g.get("__x_isParentGroup")),
-        None
-    )
+    parent = next((g for g in groups if g.get("isParentGroup") or g.get("__x_isParentGroup")), None)
     if not parent:
         print("  No Community parent group found in your chats. Skipping.")
         return
-    cid  = parent.get("id_serialized")
+    cid = parent.get("id_serialized")
     subs = await wapi.community_get_subgroups(cid)
-    ann  = await wapi.community_get_announcement_group(cid)
+    ann = await wapi.community_get_announcement_group(cid)
     print(f"  Community: {cid}")
     print(f"  Subgroups: {subs}")
     print(f"  Announcement group: {ann}")
@@ -395,8 +390,11 @@ async def test_media_extract(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
         group_name = cfg.get("media_group_name", "")
         all_groups = await wapi.group_get_all()
         media_group = next(
-            (g for g in all_groups
-             if g.get("__x_name") == group_name or g.get("__x_formattedTitle") == group_name),
+            (
+                g
+                for g in all_groups
+                if g.get("__x_name") == group_name or g.get("__x_formattedTitle") == group_name
+            ),
             None,
         )
         if not media_group:
@@ -411,7 +409,8 @@ async def test_media_extract(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
     # (wpp.chat.getMessages with media filter queries a global index — scoping unreliable)
     all_msgs = await wapi.get_messages(media_id, count=50)
     media_msgs = [
-        m for m in all_msgs
+        m
+        for m in all_msgs
         if m.get("type") in ("image", "video", "sticker", "audio", "ptt", "document")
         and m.get("directPath")
     ]
@@ -421,9 +420,9 @@ async def test_media_extract(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
         print("  No extractable media found. Send a regular image to this chat and re-run.")
         return
 
-    target   = media_msgs[0]
-    save_to  = WapiWrapper.media_save_path(target, save_dir)
-    result   = await wapi.extract_media(message=target, save_path=save_to)
+    target = media_msgs[0]
+    save_to = WapiWrapper.media_save_path(target, save_dir)
+    result = await wapi.extract_media(message=target, save_path=save_to)
 
     if result["success"]:
         fallback = " [CDN fallback used]" if result["used_fallback"] else " [Cache API]"
@@ -444,30 +443,30 @@ async def test_media_extract(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
 
 REGISTRY: Dict[str, tuple] = {
     #  name                      function                   description                              on_hold
-    "test_isolation":         (test_isolation,         "Stealth bridge isolation check",         False),
-    "test_messages_basic":    (test_messages_basic,    "Last 5 messages (RAM)",                  False),
-    "test_messages_unread":   (test_messages_unread,   "Unread messages fetch",                  False),
-    "test_messages_paginate": (test_messages_paginate, "Message pagination with anchor",         False),
-    "test_message_by_id":     (test_message_by_id,     "Single message by ID",                  False),
-    "test_chat_list":         (test_chat_list,          "Top 5 chats from sidebar",               False),
-    "test_chat_list_unread":  (test_chat_list_unread,   "Chats with unread messages",             False),
-    "test_indexdb":           (test_indexdb,             "IndexedDB disk history read",            False),
-    "test_newsletter_list":   (test_newsletter_list,    "Followed WhatsApp Channels",             False),
-    "test_newsletter_search": (test_newsletter_search,  "Channel directory search",              False),
-    "test_conn_session":      (test_conn_session,       "Session & device info",                  False),
-    "test_conn_build":        (test_conn_build,         "WA Web build constants",                 False),
-    "test_conn_stream":       (test_conn_stream,        "Stream mode & info",                    False),
-    "test_contact_get":       (test_contact_get,        "Contact get + list",                    False),
-    "test_contact_query":     (test_contact_query,      "ContactExists / PicURL / Status",       False),
-    "test_group_list":        (test_group_list,          "All groups (RAM)",                       False),
-    "test_group_details":     (test_group_details,       "Admin / invite / size limit",           False),
-    "test_blocklist":         (test_blocklist,           "Blocked contacts list",                 False),
-    "test_profile":           (test_profile,             "Own name only — about/pic hang XMPP",   True),
-    "test_privacy":           (test_privacy,             "Privacy settings dump",                 False),
-    "test_labels":            (test_labels,              "Chat labels (Business only)",           False),
-    "test_community":         (test_community,           "Community parent + subgroups",          False),
-    "test_status":            (test_status,              "[ON HOLD] status_get hangs XMPP bridge", True),
-    "test_media_extract":     (test_media_extract,       "Media decrypt + save to disk",          False),
+    "test_isolation": (test_isolation, "Stealth bridge isolation check", False),
+    "test_messages_basic": (test_messages_basic, "Last 5 messages (RAM)", False),
+    "test_messages_unread": (test_messages_unread, "Unread messages fetch", False),
+    "test_messages_paginate": (test_messages_paginate, "Message pagination with anchor", False),
+    "test_message_by_id": (test_message_by_id, "Single message by ID", False),
+    "test_chat_list": (test_chat_list, "Top 5 chats from sidebar", False),
+    "test_chat_list_unread": (test_chat_list_unread, "Chats with unread messages", False),
+    "test_indexdb": (test_indexdb, "IndexedDB disk history read", False),
+    "test_newsletter_list": (test_newsletter_list, "Followed WhatsApp Channels", False),
+    "test_newsletter_search": (test_newsletter_search, "Channel directory search", False),
+    "test_conn_session": (test_conn_session, "Session & device info", False),
+    "test_conn_build": (test_conn_build, "WA Web build constants", False),
+    "test_conn_stream": (test_conn_stream, "Stream mode & info", False),
+    "test_contact_get": (test_contact_get, "Contact get + list", False),
+    "test_contact_query": (test_contact_query, "ContactExists / PicURL / Status", False),
+    "test_group_list": (test_group_list, "All groups (RAM)", False),
+    "test_group_details": (test_group_details, "Admin / invite / size limit", False),
+    "test_blocklist": (test_blocklist, "Blocked contacts list", False),
+    "test_profile": (test_profile, "Own name only — about/pic hang XMPP", True),
+    "test_privacy": (test_privacy, "Privacy settings dump", False),
+    "test_labels": (test_labels, "Chat labels (Business only)", False),
+    "test_community": (test_community, "Community parent + subgroups", False),
+    "test_status": (test_status, "[ON HOLD] status_get hangs XMPP bridge", True),
+    "test_media_extract": (test_media_extract, "Media decrypt + save to disk", False),
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -482,6 +481,7 @@ TESTS_TO_RUN: List[str] = []
 # ══════════════════════════════════════════════════════════════════════════════
 # RUNNER
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def _resolve_tests(requested: List[str]) -> List[str]:
     """Resolve test names, supporting prefix matching."""
@@ -500,9 +500,9 @@ def _resolve_tests(requested: List[str]) -> List[str]:
 
 
 async def run_tests(wapi: WapiWrapper, test_names: List[str]) -> None:
-    total   = len(test_names)
-    passed  = 0
-    failed  = 0
+    total = len(test_names)
+    passed = 0
+    failed = 0
     on_hold = 0
     results = []
 
@@ -556,7 +556,7 @@ async def run_tests(wapi: WapiWrapper, test_names: List[str]) -> None:
 async def main() -> None:
     # ── --list flag ──────────────────────────────────────────────────────────
     if "--list" in sys.argv:
-        on_hold_tests  = [(n, d) for n, (_, d, h) in REGISTRY.items() if h]
+        on_hold_tests = [(n, d) for n, (_, d, h) in REGISTRY.items() if h]
         runnable_tests = [(n, d) for n, (_, d, h) in REGISTRY.items() if not h]
 
         print("\n" + "═" * 60)
@@ -586,28 +586,30 @@ async def main() -> None:
         return
 
     # ── Browser + Login ──────────────────────────────────────────────────────
-    pm      = ProfileManager()
+    pm = ProfileManager()
     profile = pm.create_profile(
         platform=Platform.WHATSAPP,
         profile_id=CFG["profile_id"],
         storage_type=StorageType.SQLITE,
     )
 
-    config = BrowserConfig.from_dict({
-        "platform":      Platform.WHATSAPP,
-        "locale":        "en-US",
-        "enable_cache":  False,
-        "headless":      False,
-        "fingerprint_obj": BrowserForgeCompatible(),
-    })
+    config = BrowserConfig.from_dict(
+        {
+            "platform": Platform.WHATSAPP,
+            "locale": "en-US",
+            "enable_cache": False,
+            "headless": False,
+            "fingerprint_obj": BrowserForgeCompatible(),
+        }
+    )
     browser = CamoufoxBrowser(config=config, profile=profile)
-    page    = await browser.get_page()
+    page = await browser.get_page()
 
-    ui    = WebSelectorConfig(page=page)
+    ui = WebSelectorConfig(page=page)
     login = Login(page=page, UIConfig=ui)
     await login.login(method=0)
 
-    wapi  = WapiWrapper(page=page)
+    wapi = WapiWrapper(page=page)
     ready = await wapi.wait_for_ready()
 
     if not ready:
@@ -623,6 +625,7 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\nInterrupted by user.")
-    except Exception as exc:
+    except Exception:
         import traceback
+
         traceback.print_exc()
