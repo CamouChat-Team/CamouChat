@@ -16,7 +16,7 @@ import asyncio
 import json
 import sys
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 from camouchat.BrowserManager import (
     BrowserConfig,
@@ -121,6 +121,9 @@ async def test_message_by_id(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
         print("  No messages available to test get_message_by_id.")
         return
     target_id = latest[0].get("id_serialized")
+    if not target_id:
+        print("  Missing id_serialized.")
+        return
     print(f"  Targeting ID: {target_id}")
     single = await wapi.get_message_by_id(target_id)
     print("  MATCHED full dump:")
@@ -159,6 +162,9 @@ async def test_indexdb(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
         print("  No RAM message to use as rowId anchor.")
         return
     anchor_row = ram_msgs[0].get("rowId")
+    if anchor_row is None:
+        print("  Missing rowId.")
+        return
     print(f"  Anchor rowId (from RAM): {anchor_row}")
     disk_msgs = await wapi.indexdb_get_messages(min_row_id=anchor_row, limit=5)
     print(f"  Got {len(disk_msgs)} message(s) from IndexedDB. Dump of first:")
@@ -283,6 +289,9 @@ async def test_group_details(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
         print("  No groups found.")
         return
     gid = groups[0].get("id_serialized")
+    if not gid:
+        print("  Missing group ID.")
+        return
     print(f"  Group: {gid}")
     is_admin = await wapi.group_i_am_admin(gid)
     is_sadmin = await wapi.group_i_am_super_admin(gid)
@@ -350,6 +359,9 @@ async def test_community(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
         print("  No Community parent group found in your chats. Skipping.")
         return
     cid = parent.get("id_serialized")
+    if not cid:
+        print("  Missing parent group ID.")
+        return
     subs = await wapi.community_get_subgroups(cid)
     ann = await wapi.community_get_announcement_group(cid)
     print(f"  Community: {cid}")
@@ -504,7 +516,7 @@ async def run_tests(wapi: WapiWrapper, test_names: List[str]) -> None:
     passed = 0
     failed = 0
     on_hold = 0
-    results = []
+    results: List[Tuple[str, str, float, Optional[str]]] = []
 
     print("\n" + "═" * 60)
     print(f"  CamouChat WA-JS Smoke Tests  ({total} selected)")
@@ -589,7 +601,7 @@ async def main() -> None:
     pm = ProfileManager()
     profile = pm.create_profile(
         platform=Platform.WHATSAPP,
-        profile_id=CFG["profile_id"],
+        profile_id=str(CFG.get("profile_id", "Work")),
         storage_type=StorageType.SQLITE,
     )
 

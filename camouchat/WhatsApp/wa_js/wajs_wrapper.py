@@ -521,13 +521,15 @@ class WapiWrapper:
             return result
 
         # ── Primary: Cache API (zero network) ──────────────────────────────────
-        b64 = await self._evaluate_stealth(
-            WAJS_Scripts.decrypt_media(
-                direct_path=direct_path,
-                media_key_b64=media_key_b64,
-                media_type=media_type,
+        b64 = None
+        if media_key_b64:
+            b64 = await self._evaluate_stealth(
+                WAJS_Scripts.decrypt_media(
+                    direct_path=direct_path,
+                    media_key_b64=media_key_b64,
+                    media_type=media_type,
+                )
             )
-        )
 
         if b64 is None:
             # ── Fallback: CDN download (NETWORK) ───────────────────────────────
