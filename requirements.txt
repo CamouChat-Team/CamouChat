@@ -8,7 +8,7 @@ aiosignal==1.4.0
     # via aiohttp
 aiosqlite==0.22.1
     # via camouchat (pyproject.toml)
-apify-fingerprint-datapoints==0.11.0
+apify-fingerprint-datapoints==0.12.0
     # via browserforge
 attrs==26.1.0
     # via aiohttp
