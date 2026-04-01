@@ -60,7 +60,7 @@ multidict==6.7.1
     #   yarl
 numpy==2.4.3
     # via camoufox
-orjson==3.11.7
+orjson==3.11.8
     # via camoufox
 platformdirs==4.9.4
     # via
