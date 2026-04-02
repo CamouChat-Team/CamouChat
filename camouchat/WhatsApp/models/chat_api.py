@@ -45,7 +45,7 @@ class ChatModelAPI:
     timestamp: int | None
     isArchived: bool | None
     isLocked: bool | None
-    isNotSpam: bool | None 
+    isNotSpam: bool | None
     disappearingModeTrigger: str | None
     disappearingModeInitiator: str | None
     unreadMentionCount: int | None
@@ -74,9 +74,7 @@ class ChatModelAPI:
         is_comm = (is_parent is True) | (group_type == "ANNOUNCEMENT")
 
         return cls(
-            id_serialized=get_val("id_serialized")
-            or data.get("id", {}).get("_serialized")
-            or None,
+            id_serialized=get_val("id_serialized") or data.get("id", {}).get("_serialized") or None,
             unreadCount=get_val("unreadCount") or None,
             isAutoMuted=get_val("isAutoMuted") or None,
             timestamp=get_val("t") or get_val("timestamp") or None,
