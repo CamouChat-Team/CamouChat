@@ -1,7 +1,7 @@
 """
-Works on new Wa-js Based API scripts.
+Works on new Wa-js Based api scripts.
 
-Wraps the CHAT API's data into a dataclass
+Wraps the CHAT api's data into a dataclass
 """
 
 from dataclasses import dataclass

@@ -263,13 +263,13 @@ class WAJS_Scripts:
 
     @classmethod
     def send_text_message(cls, chat_id: str, message: str) -> str:
-        """Pure API text send — no UI interaction required."""
+        """Pure api text send — no UI interaction required."""
         safe_msg = json.dumps(message)
         return f"wpp.chat.sendTextMessage('{chat_id}', {safe_msg})"
 
     @classmethod
     def mark_is_read(cls, chat_id: str) -> str:
-        """Force-mark a chat as read at the API level."""
+        """Force-mark a chat as read at the api level."""
         return f"wpp.chat.markIsRead('{chat_id}')"
 
     # ─────────────────────────────────────────────
@@ -1069,11 +1069,11 @@ class WAJS_Scripts:
     @classmethod
     def decrypt_media(cls, direct_path: str, media_key_b64: str, media_type: str) -> str:
         """
-        Decrypt a WhatsApp media blob from the browser Cache API using the embedded mediaKey.
-        Type: RAM (Cache API) — Zero network cost if WA has already pre-downloaded the blob.
+        Decrypt a WhatsApp media blob from the browser Cache api using the embedded mediaKey.
+        Type: RAM (Cache api) — Zero network cost if WA has already pre-downloaded the blob.
 
         How it works:
-            1. Looks up the encrypted blob in WA's internal Cache API by CDN URL.
+            1. Looks up the encrypted blob in WA's internal Cache api by CDN URL.
             2. Derives IV + cipherKey via HKDF-SHA256 (WhatsApp media key spec).
             3. Decrypts via AES-256-CBC, strips the trailing 10-byte MAC.
             4. Returns the raw decrypted bytes as base64 for Python transfer.
@@ -1095,7 +1095,7 @@ class WAJS_Scripts:
         return f"""
             (async () => {{
                 try {{
-                    // 1. Locate the encrypted blob in WA's Cache API
+                    // 1. Locate the encrypted blob in WA's Cache api
                     const cdnUrl = 'https://mmg.whatsapp.net' + {safe_path};
                     const cacheNames = await caches.keys();
                     let encBytes = null;

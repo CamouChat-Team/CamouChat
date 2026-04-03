@@ -307,13 +307,13 @@ class WapiWrapper:
 
     async def send_text_message(self, chat_id: str, message: str) -> Any:
         """
-        Pure API text send (Tier 3 fallback).
+        Pure api text send (Tier 3 fallback).
         Use only when Playwright UI interaction fails.
         """
         return await self._evaluate_stealth(WAJS_Scripts.send_text_message(chat_id, message))
 
     async def mark_is_read(self, chat_id: str) -> Any:
-        """Force-mark a chat as read. Only call when using Tier 3 pure API mode."""
+        """Force-mark a chat as read. Only call when using Tier 3 pure api mode."""
         return await self._evaluate_stealth(WAJS_Scripts.mark_is_read(chat_id))
 
     # ─────────────────────────────────────────────
@@ -348,10 +348,10 @@ class WapiWrapper:
     ) -> Optional[bytes]:
         """
         Extract and decrypt WhatsApp media using the fields embedded in the raw MsgModel dump.
-        Primary path reads directly from the browser Cache API — zero network cost.
+        Primary path reads directly from the browser Cache api — zero network cost.
         Falls back to wa-js's CDN downloader if the blob is not yet cached.
 
-        Type: RAM (Cache API primary) / NETWORK (CDN fallback — logs INFO when triggered)
+        Type: RAM (Cache api primary) / NETWORK (CDN fallback — logs INFO when triggered)
 
         Args:
             direct_path:   msg['directPath']    — CDN path e.g. "/v/t62.7117-24/..."
@@ -366,7 +366,7 @@ class WapiWrapper:
         Raw MsgModel fields needed:
             directPath, mediaKey, type  (+id_serialized for fallback)
         """
-        # ── Primary: Cache API (zero network) ───────────────────────────────
+        # ── Primary: Cache api (zero network) ───────────────────────────────
         b64 = await self._evaluate_stealth(
             WAJS_Scripts.decrypt_media(
                 direct_path=direct_path,
@@ -468,15 +468,15 @@ class WapiWrapper:
         High-level media extraction from a raw MsgModel dump.
 
         Reads directPath + mediaKey + type directly from the message dict,
-        tries the Cache API first (zero network), falls back to CDN if needed,
+        tries the Cache api first (zero network), falls back to CDN if needed,
         writes the file to save_path, and returns a structured result dict.
 
-        Type: RAM (Cache API primary) / NETWORK (CDN fallback — logged as INFO)
+        Type: RAM (Cache api primary) / NETWORK (CDN fallback — logged as INFO)
 
         Args:
             message:   Raw MsgModel dict from get_messages() or get_message_by_id().
                        Required fields: directPath, type
-                       Optional fields: mediaKey (needed for Cache API decrypt),
+                       Optional fields: mediaKey (needed for Cache api decrypt),
                                         id_serialized (needed for CDN fallback)
             save_path: Full path where the decrypted file will be written.
                        Use media_save_path(message, save_dir) to auto-generate.
@@ -520,7 +520,7 @@ class WapiWrapper:
             result["error"] = "Message has no directPath — not a downloadable media message."
             return result
 
-        # ── Primary: Cache API (zero network) ──────────────────────────────────
+        # ── Primary: Cache api (zero network) ──────────────────────────────────
         b64 = None
         if media_key_b64:
             b64 = await self._evaluate_stealth(
@@ -547,7 +547,7 @@ class WapiWrapper:
             b64 = await self._evaluate_stealth(WAJS_Scripts.download_media(msg_id=msg_id))
 
         if not b64:
-            result["error"] = "Both Cache API and CDN fallback returned None — media unavailable."
+            result["error"] = "Both Cache api and CDN fallback returned None — media unavailable."
             return result
 
         raw_bytes = base64.b64decode(b64)
@@ -556,7 +556,7 @@ class WapiWrapper:
         Path(save_path).write_bytes(raw_bytes)
         self.log.info(
             f"extract_media: [{media_type}] {len(raw_bytes):,} bytes → {save_path}"
-            + (" [CDN fallback]" if result["used_fallback"] else " [Cache API]")
+            + (" [CDN fallback]" if result["used_fallback"] else " [Cache api]")
         )
 
         result.update(
@@ -684,7 +684,7 @@ class WapiWrapper:
         """
         Type: RAM (AppState).
         Returns: bool — True if WA Web has fully initialised (stores loaded, WS connected).
-                 Use this as the readiness gate before making any API calls.
+                 Use this as the readiness gate before making any api calls.
         """
         return await self._evaluate_stealth(WAJS_Scripts.conn_is_main_ready())
 
@@ -880,7 +880,7 @@ class WapiWrapper:
             __x_isReadOnly          (bool)
             __x_trusted             (bool)
             __x_groupType           (str)  — 'DEFAULT' | 'COMMUNITY' | 'ANNOUNCEMENT'
-            __x_hasCapi             (bool) — has Community API features
+            __x_hasCapi             (bool) — has Community api features
             __x_isParentGroup       (bool) — is a Community parent group
             __x_groupSafetyChecked  (bool)
             __x_msgsLength          (int)  — messages loaded in RAM

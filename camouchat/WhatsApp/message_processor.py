@@ -12,7 +12,7 @@ from typing import List, Optional, Sequence, Union, Literal, cast
 
 from playwright.async_api import Page
 
-from camouchat.Decorators.Chat_Click_decorator import ensure_chat_clicked
+from camouchat.WhatsApp.decorator import ensure_chat_clicked
 from camouchat.Exceptions.whatsapp import (
     MessageNotFoundError,
     WhatsAppError,
