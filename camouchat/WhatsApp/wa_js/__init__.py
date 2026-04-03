@@ -1,6 +1,7 @@
-# from .wajs_scripts import WAJS_Scripts
-# from .wajs_wrapper import WapiWrapper
-#
-# __all__ = ["WapiWrapper", "WAJS_Scripts"]
+"""
+Importing Only WAPI Wrapper, All functions requires this to fetch data of any Kind.
+"""
 
-## Need to check for Circular imports.
+from .wajs_wrapper import WapiWrapper
+
+__all__ = ["WapiWrapper"]
