@@ -10,10 +10,10 @@ import pytest
 from browserforge.fingerprints import Fingerprint
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-from camouchat.BrowserManager import browserforge_manager
+from camouchat.BrowserManager import browserforge as bf_module
 from camouchat.BrowserManager.profile_info import ProfileInfo
 
-BrowserForgeCompatible = browserforge_manager.BrowserForgeCompatible
+BrowserForgeCompatible = bf_module.BrowserForge
 
 
 @pytest.fixture

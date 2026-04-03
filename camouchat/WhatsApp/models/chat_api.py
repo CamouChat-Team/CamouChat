@@ -62,63 +62,63 @@ class ChatModelAPI:
     @classmethod
     def from_dict(cls, data: dict) -> "ChatModelAPI":
         """
-        Creates a ChatModelAPI from the raw dictionary returned by WA-JS.
-        Handles the '__x_' prefixes automatically.
+        Returns cls object from the dict entered.
+        :param data:
+        :return: ChatModelAPI
         """
 
         def get_val(key: str, default: Any = None):
             return data.get(key, data.get(f"__x_{key}", default))
 
+        def safe(v):
+            return v if v is not None else None
+
+        id_data = data.get("id") or {}
+
         is_parent = get_val("isParentGroup", False)
         group_type = get_val("groupType", "DEFAULT")
-        is_comm = (is_parent is True) | (group_type == "ANNOUNCEMENT")
+        is_comm = (is_parent is True) or (group_type == "ANNOUNCEMENT")
+
+        t_val = get_val("t")
+        timestamp = t_val if t_val is not None else get_val("timestamp")
 
         return cls(
-            id_serialized=get_val("id_serialized") or data.get("id", {}).get("_serialized") or None,
-            unreadCount=get_val("unreadCount") or None,
-            isAutoMuted=get_val("isAutoMuted") or None,
-            timestamp=get_val("t") or get_val("timestamp") or None,
-            isArchived=get_val("archive") or None,
-            isLocked=get_val("isLocked") or None,
-            isNotSpam=get_val("notSpam") or None,
-            disappearingModeTrigger=get_val("disappearingModeTrigger") or None,
-            disappearingModeInitiator=get_val("disappearingModeInitiator") or None,
-            unreadMentionCount=get_val("unreadMentionCount") or None,
-            lastChatEntryTimestamp=get_val("lastChatEntryTimestamp") or None,
-            isOpened=get_val("hasOpened") or None,
-            isReadOnly=get_val("isReadOnly") or None,
-            isTrusted=get_val("trusted") or None,
-            formattedTitle=get_val("formattedTitle") or get_val("name") or None,
-            groupSafetyChecked=get_val("groupSafetyChecked") or None,
-            canSend=get_val("canSend") or None,
-            proxyName=get_val("proxyName") or None,
+            id_serialized=get_val("id_serialized") or id_data.get("_serialized"),
+            unreadCount=safe(get_val("unreadCount")),
+            isAutoMuted=safe(get_val("isAutoMuted")),
+            timestamp=safe(timestamp),
+            isArchived=safe(get_val("archive")),
+            isLocked=safe(get_val("isLocked")),
+            isNotSpam=safe(get_val("notSpam")),
+            disappearingModeTrigger=safe(get_val("disappearingModeTrigger")),
+            disappearingModeInitiator=safe(get_val("disappearingModeInitiator")),
+            unreadMentionCount=safe(get_val("unreadMentionCount")),
+            lastChatEntryTimestamp=safe(get_val("lastChatEntryTimestamp")),
+            isOpened=safe(get_val("hasOpened")),
+            isReadOnly=safe(get_val("isReadOnly")),
+            isTrusted=safe(get_val("trusted")),
+            formattedTitle=get_val("formattedTitle") or get_val("name"),
+            groupSafetyChecked=safe(get_val("groupSafetyChecked")),
+            canSend=safe(get_val("canSend")),
+            proxyName=safe(get_val("proxyName")),
             isCommunity=is_comm,
         )
 
     def __str__(self):
         return (
-            f"ChatModelAPI(\n"
-            f"    id_serialized={self.id_serialized!r},\n"
-            f"    unreadCount={self.unreadCount},\n"
-            f"    isAutoMuted={self.isAutoMuted},\n"
-            f"    timestamp={self.timestamp},\n"
-            f"    isArchived={self.isArchived},\n"
-            f"    isLocked={self.isLocked},\n"
-            f"    isNotSpam={self.isNotSpam},\n"
-            f"    disappearingModeTrigger={self.disappearingModeTrigger!r},\n"
-            f"    disappearingModeInitiator={self.disappearingModeInitiator!r},\n"
-            f"    unreadMentionCount={self.unreadMentionCount},\n"
-            f"    lastChatEntryTimestamp={self.lastChatEntryTimestamp},\n"
-            f"    isOpened={self.isOpened},\n"
-            f"    isReadOnly={self.isReadOnly},\n"
-            f"    isTrusted={self.isTrusted},\n"
-            f"    formattedTitle={self.formattedTitle!r},\n"
-            f"    groupSafetyChecked={self.groupSafetyChecked},\n"
-            f"    canSend={self.canSend},\n"
-            f"    proxyName={self.proxyName!r},\n"
-            f"    isCommunity={self.isCommunity}\n"
-            f")"
+            f"[{self.formattedTitle}] "
+            f"Unread: {self.unreadCount or 0} | "
+            f"{'Archived' if self.isArchived else 'Active'} | "
+            f"{'Community' if self.isCommunity else 'Chat'}"
         )
 
     def __repr__(self):
-        return self.__str__()
+        return (
+            f"ChatModelAPI("
+            f"id='{self.id_serialized}', "
+            f"title='{self.formattedTitle}', "
+            f"unread={self.unreadCount}, "
+            f"archived={self.isArchived}, "
+            f"community={self.isCommunity}"
+            f")"
+        )

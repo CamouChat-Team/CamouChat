@@ -12,10 +12,10 @@ import pytest
 from browserforge.fingerprints import Fingerprint
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
-from camouchat.BrowserManager import browserforge_manager
+from camouchat.BrowserManager import browserforge as bf_module
 from camouchat.Exceptions import base
 
-BrowserForgeCompatible = browserforge_manager.BrowserForgeCompatible
+BrowserForgeCompatible = bf_module.BrowserForge
 BrowserException = base.BrowserException
 
 

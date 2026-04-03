@@ -41,7 +41,7 @@ CamoufoxBrowser(
 
 ```python
 from camouchat.BrowserManager import (
-    CamoufoxBrowser, BrowserConfig, BrowserForgeCompatible,
+    CamoufoxBrowser, BrowserConfig, BrowserForge,
     ProfileManager, Platform
 )
 from camouchat.camouchat_logger import camouchatLogger
@@ -49,16 +49,16 @@ from camouchat.camouchat_logger import camouchatLogger
 pm = ProfileManager()
 profile = pm.create_profile(Platform.WHATSAPP, "WorkBot")
 
-bf = BrowserForgeCompatible()
+bf = BrowserForge()
 
 config = BrowserConfig(
     platform=Platform.WHATSAPP,
     locale="en-US",
-    headless=False,          # False = visible browser window
-    enable_cache=True,       # True = reuse DOM cache (good for debugging)
-    fingerprint_obj=bf,      # The BrowserForgeCompatible instance — NOT the generated Fingerprint
-    prefs={},                # Pass {} to avoid suspicious Firefox prefs
-    addons=[],               # Absolute paths to .xpi/.zip extension files
+    headless=False,  # False = visible browser window
+    enable_cache=True,  # True = reuse DOM cache (good for debugging)
+    fingerprint_obj=bf,  # The BrowserForgeCompatible instance — NOT the generated Fingerprint
+    prefs={},  # Pass {} to avoid suspicious Firefox prefs
+    addons=[],  # Absolute paths to .xpi/.zip extension files
 )
 
 browser = CamoufoxBrowser(config=config, profile=profile, log=camouchatLogger)

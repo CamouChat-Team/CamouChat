@@ -17,10 +17,10 @@ BrowserForgeCompatible(log: Optional[Union[Logger, LoggerAdapter]] = None)
 | `log` | `Logger \| LoggerAdapter` | `camouchatLogger` | Logger for fingerprint generation events and warning logs. |
 
 ```python
-from camouchat.BrowserManager import BrowserForgeCompatible
+from camouchat.BrowserManager import BrowserForge
 from camouchat.camouchat_logger import camouchatLogger
 
-bf = BrowserForgeCompatible(log=camouchatLogger)
+bf = BrowserForge(log=camouchatLogger)
 ```
 
 ---

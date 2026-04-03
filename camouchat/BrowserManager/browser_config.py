@@ -1,10 +1,15 @@
+"""
+CamouBrowser Config.
+Pass this config to the CamouBrowser
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 
 from camouchat.BrowserManager.platform_manager import Platform
-from camouchat.Interfaces.browserforge_capable_interface import BrowserForgeCapable
+from camouchat.BrowserManager.browserforge import BrowserForge
 
 
 @dataclass
@@ -17,7 +22,7 @@ class BrowserConfig:
     locale: str
     enable_cache: bool
     headless: bool
-    fingerprint_obj: BrowserForgeCapable
+    fingerprint_obj: BrowserForge
     geoip: bool = True
     proxy: Optional[Dict[str, str]] = None
     prefs: Optional[Dict[str, bool]] = None
@@ -50,4 +55,28 @@ class BrowserConfig:
             fingerprint_obj=data["fingerprint_obj"],
             geoip=data.get("geoip", True),
             proxy=data.get("proxy"),
+        )
+
+    def __str__(self):
+        return f"""
+            Platform: {self.platform}
+            Locale: {self.locale}
+            EnableCache: {self.enable_cache}
+            Headless: {self.headless}
+            Fingerprint: {self.fingerprint_obj!r} # Need to check for the fingerprint's __repr__
+            geoip: {self.geoip}
+            Proxy: {self.proxy}
+            Preferences: {self.prefs}
+            Addons: {self.addons}
+            """
+
+    def __repr__(self):
+        return (
+            f"BrowserConfig("
+            f"platform={self.platform}, "
+            f"locale='{self.locale}', "
+            f"headless={self.headless}, "
+            f"geoip={self.geoip}, "
+            f"fingerprint_obj={self.fingerprint_obj!r}"
+            f")"
         )

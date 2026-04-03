@@ -15,7 +15,7 @@ from camouchat.BrowserManager.browser_config import BrowserConfig
 from camouchat.BrowserManager.platform_manager import Platform
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.Exceptions.base import BrowserException
-from camouchat.Interfaces.browser_interface import BrowserInterface
+from camouchat.BrowserManager.Interfaces.browser_interface import BrowserInterface
 
 
 class CamoufoxBrowser(BrowserInterface):

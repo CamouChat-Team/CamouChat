@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from camouchat.BrowserManager import (
     BrowserConfig,
     Platform,
-    BrowserForgeCompatible,
+    BrowserForge,
     ProfileManager,
     CamoufoxBrowser,
 )
@@ -624,7 +624,7 @@ async def main() -> None:
             "enable_cache": False,
             "headless": False,
             "geoip": False,  # skip MaxMind MMDB download (avoids GitHub rate-limit)
-            "fingerprint_obj": BrowserForgeCompatible(),
+            "fingerprint_obj": BrowserForge(),
         }
     )
     browser = CamoufoxBrowser(config=config, profile=profile)

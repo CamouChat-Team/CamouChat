@@ -14,7 +14,7 @@ Do NOT import from this __init__.py file.
 # This file intentionally left minimal to avoid circular import issues.
 # Import interfaces directly from their respective module files.
 
-# browserforge_manager.py
+# browserforge.py
 #   → imports BrowserForgeCapable from Interfaces.browserforge_capable_interface
 #     → TRIGGERS Interfaces/__init__.py
 #       → imports ChatProcessorInterface

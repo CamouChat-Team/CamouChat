@@ -35,9 +35,9 @@ print(f"   DB URL:           {profile.database_url}")
 `BrowserForgeCompatible` generates a browser fingerprint that matches your machine's actual screen resolution (within 10% tolerance) and persists it to `fingerprint.pkl`. On subsequent runs, it reloads the saved fingerprint to maintain a **consistent browser identity** across sessions.
 
 ```python
-from camouchat.BrowserManager import BrowserForgeCompatible
+from camouchat.BrowserManager import BrowserForge
 
-bf = BrowserForgeCompatible()
+bf = BrowserForge()
 
 # get_fg() is called internally by CamoufoxBrowser at launch time.
 # You don't need to call it manually — just pass the bf instance to BrowserConfig.

@@ -17,10 +17,9 @@ from browserforge.fingerprints import Fingerprint, FingerprintGenerator
 from camouchat.BrowserManager.platform_manager import Platform
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.Exceptions.base import BrowserException
-from camouchat.Interfaces.browserforge_capable_interface import BrowserForgeCapable
 
 
-class BrowserForgeCompatible(BrowserForgeCapable):
+class BrowserForge:
     """
     BrowserForge fingerprint manager.
 
@@ -97,7 +96,7 @@ class BrowserForgeCompatible(BrowserForgeCapable):
         :return: Fingerprint
         """
         gen = FingerprintGenerator()
-        real_w, real_h = BrowserForgeCompatible.get_screen_size()
+        real_w, real_h = BrowserForge.get_screen_size()
         tolerance = 0.1
         attempt = 0
         avoid = avoid or []
@@ -228,3 +227,6 @@ class BrowserForgeCompatible(BrowserForgeCapable):
 
         except Exception as e:
             raise BrowserException(f"Failed to load fingerprint JSON: {e}")
+
+    def __repr__(self):
+        return f"BrowserForge(" f"log={type(self.log).__name__}" f")"
