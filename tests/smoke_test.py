@@ -27,7 +27,7 @@ from camouchat.BrowserManager import (
 )
 from camouchat.StorageDB import StorageType
 from camouchat.WhatsApp import Login, WebSelectorConfig
-from camouchat.WhatsApp.wa_js.wajs_wrapper import WapiWrapper
+from camouchat.WhatsApp.api.wa_js.wajs_wrapper import WapiWrapper
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CONFIG — Fill these in.  No personal data is committed; use your own values.

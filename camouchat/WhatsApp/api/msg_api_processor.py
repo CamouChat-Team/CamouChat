@@ -17,9 +17,8 @@ from logging import Logger, LoggerAdapter
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from camouchat.camouchat_logger import camouchatLogger
-from camouchat.WhatsApp.wa_js.wajs_wrapper import WapiWrapper
-from camouchat.WhatsApp.wa_js.wajs_scripts import WAJS_Scripts
-from camouchat.WhatsApp.api.models.message_api import MessageModelAPI
+from .wa_js.wajs_wrapper import WapiWrapper , WAJS_Scripts
+from .models.message_api import MessageModelAPI
 
 
 class MessageApiManager:
