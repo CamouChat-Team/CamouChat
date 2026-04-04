@@ -65,7 +65,7 @@ def test_gen_fg_avoids_duplicates(browserforge):
 
     # Mock screen size
     with patch.object(BrowserForgeCompatible, "get_screen_size", return_value=(1920, 1080)):
-        with patch("camouchat.BrowserManager.browserforge_manager.FingerprintGenerator") as MockGen:
+        with patch("camouchat.BrowserManager.browserforge.FingerprintGenerator") as MockGen:
             mock_gen_instance = MockGen.return_value
             # First return duplicate, then return unique
             mock_gen_instance.generate.side_effect = [dup_fg, unique_fg]
