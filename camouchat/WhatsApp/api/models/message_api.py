@@ -494,3 +494,101 @@ class MessageModelAPI:
             f"timestamp={self.timestamp}"
             f")"
         )
+
+    def to_dict(self, include_none: bool = False) -> Dict[str, Any]:
+        """
+        Export this MessageModelAPI as a flat Python dict.
+
+        Useful for:
+        - JSON serialization  → json.dumps(msg.to_dict())
+        - Structured logging  → logger.info("msg", extra=msg.to_dict())
+        - Custom DB storage   → db.insert(msg.to_dict())
+        - Forwarding to APIs  → requests.post(url, json=msg.to_dict())
+        - Equality comparison → msg_a.to_dict() == msg_b.to_dict()
+
+        Args:
+            include_none: If False (default), keys whose value is None are
+                          omitted to keep the output compact. Set to True to
+                          get a fixed-schema dict with every field present.
+
+        Returns:
+            Dict[str, Any] — all fields, grouped logically.
+        """
+        raw: Dict[str, Any] = {
+            # ── Identity ──────────────────────────────────────────────────────
+            "id_serialized":               self.id_serialized,
+            "rowId":                       self.rowId,
+            "fromMe":                      self.fromMe,
+            "jid_From":                    self.jid_From,
+            "jid_To":                      self.jid_To,
+            "author":                      self.author,
+            "pushname":                    self.pushname,
+            "broadcast":                   self.broadcast,
+            "MsgType":                     self.MsgType,
+            "body":                        self.body,
+            "caption":                     self.caption,
+            "timestamp":                   self.timestamp,
+            "ack":                         self.ack,
+            # ── Presence / arrival ────────────────────────────────────────────
+            "isNew":                       self.isNew,
+            "isNewMsg":                    self.isNewMsg,
+            "recvFresh":                   self.recvFresh,
+            "isMdHistoryMsg":              self.isMdHistoryMsg,
+            # ── Social flags ──────────────────────────────────────────────────
+            "isStarMsg":                   self.isStarMsg,
+            "isForwarded":                 self.isForwarded,
+            "forwardsCount":               self.forwardsCount,
+            "hasReaction":                 self.hasReaction,
+            "pendingDeleteForMe":          self.pendingDeleteForMe,
+            # ── Disappearing / ephemeral ──────────────────────────────────────
+            "ephemeralDuration":           self.ephemeralDuration,
+            "disappearingModeInitiator":   self.disappearingModeInitiator,
+            "disappearingModeTrigger":     self.disappearingModeTrigger,
+            # ── Special type flags ────────────────────────────────────────────
+            "isAvatar":                    self.isAvatar,
+            "isVideoCallMessage":          self.isVideoCallMessage,
+            "isDynamicReplyButtonsMsg":    self.isDynamicReplyButtonsMsg,
+            "isCarouselCard":              self.isCarouselCard,
+            "activeBotMsgStreamingInProgress": self.activeBotMsgStreamingInProgress,
+            # ── Quoted / reply ────────────────────────────────────────────────
+            "fromQuotedMsg":              self.fromQuotedMsg,
+            "isQuotedMsgAvailable":       self.isQuotedMsgAvailable,
+            "quotedMsgId":                self.quotedMsgId,
+            "quotedMsgType":              self.quotedMsgType,
+            "quotedMsgBody":              self.quotedMsgBody,
+            "quotedParticipant":          self.quotedParticipant,
+            "quotedRemoteJid":            self.quotedRemoteJid,
+            # ── Media ─────────────────────────────────────────────────────────
+            "mimetype":                   self.mimetype,
+            "directPath":                 self.directPath,
+            "mediaKey":                   self.mediaKey,
+            "size":                       self.size,
+            "duration":                   self.duration,
+            "isViewOnce":                 self.isViewOnce,
+            # ── Poll ──────────────────────────────────────────────────────────
+            "isQuestion":                 self.isQuestion,
+            "pollName":                   self.pollName,
+            "pollType":                   self.pollType,
+            "pollContentType":            self.pollContentType,
+            "pollSelectableOptionsCount": self.pollSelectableOptionsCount,
+            "questionResponsesCount":     self.questionResponsesCount,
+            "readQuestionResponsesCount": self.readQuestionResponsesCount,
+            # ── Event ─────────────────────────────────────────────────────────
+            "eventName":                  self.eventName,
+            "eventDescription":           self.eventDescription,
+            "eventJoinLink":              self.eventJoinLink,
+            "eventStartTime":             self.eventStartTime,
+            "eventEndTime":               self.eventEndTime,
+            "isEventCanceled":            self.isEventCanceled,
+            "eventIsScheduledCall":       self.eventIsScheduledCall,
+            # ── vCard ─────────────────────────────────────────────────────────
+            "vcardFormattedName":         self.vcardFormattedName,
+            "vcardList":                  self.vcardList,
+            # ── Misc ──────────────────────────────────────────────────────────
+            "stickerSentTs":              self.stickerSentTs,
+            "isViewed":                   self.isViewed,
+        }
+        if include_none:
+            return raw
+        return {k: v for k, v in raw.items() if v is not None}
+

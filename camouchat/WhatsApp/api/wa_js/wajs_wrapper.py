@@ -28,6 +28,12 @@ class WapiWrapper:
     def __init__(self, page: Page, log: Optional[Union[LoggerAdapter, Logger]] = None):
         self.page = page
         self.log = log or camouchatLogger
+        # ── Bridge state — instance-scoped (NOT class-level) ──────────────────
+        # Keeping these on the instance prevents state leaking between separate
+        # WapiWrapper objects when multiple browser pages are in play.
+        self._bridge_key: Optional[str] = None
+        self._queue_key: Optional[str] = None
+        self._bridge_active: bool = False
 
     async def _evaluate_stealth(self, js_fragment: str) -> Any:
         """
@@ -201,15 +207,8 @@ class WapiWrapper:
         return await self._evaluate_stealth(WAJS_Scripts.is_authenticated())
 
     # ──────────────────────────────────────────────────────────────
-    # 2. PUSH ARCHITECTURE — STEALTH DOM BRIDGE (nextplan.md)
+    # 2. PUSH ARCHITECTURE — STEALTH DOM BRIDGE
     # ──────────────────────────────────────────────────────────────
-
-    # Randomized bridge key generated once per WapiWrapper instance
-    # so the CustomEvent name changes every bot launch and can never
-    # be blacklisted by Meta's integrity scanners.
-    _bridge_key: Optional[str] = None
-    _queue_key: Optional[str] = None
-    _bridge_active: bool = False
 
     def _get_bridge_key(self) -> str:
         """
@@ -238,9 +237,9 @@ class WapiWrapper:
             return
 
         bridge_key = self._get_bridge_key()  # random per session, e.g. '_c203a2bd9fdb1'
-        queue_key  = f"__cq{bridge_key}"     # e.g. '__cq_c203a2bd9fdb1'
-        guard_key  = f"__cg{bridge_key}"     # e.g. '__cg_c203a2bd9fdb1'
-        self._queue_key = queue_key          # stored so poll_message_queue can use it
+        queue_key = f"__cq{bridge_key}"  # e.g. '__cq_c203a2bd9fdb1'
+        guard_key = f"__cg{bridge_key}"  # e.g. '__cg_c203a2bd9fdb1'
+        self._queue_key = queue_key  # stored so poll_message_queue can use it
 
         # Define hidden queue + guard in Main World — non-enumerable so scanners can't see them.
         await self.page.evaluate(f"""mw:(() => {{
@@ -279,7 +278,9 @@ class WapiWrapper:
         }})()""")
 
         self._bridge_active = True
-        self.log.info(f"Stealth DOM Bridge active. queue='{queue_key}' (hidden, non-enumerable) | Mode: mw: poll")
+        self.log.info(
+            f"Stealth DOM Bridge active. queue='{queue_key}' (hidden, non-enumerable) | Mode: mw: poll"
+        )
 
     async def poll_message_queue(self) -> list:
         """
@@ -299,6 +300,41 @@ class WapiWrapper:
         except Exception:
             return []
 
+    async def probe_expose_function_support(self) -> bool:
+        """
+        [DIAGNOSTIC ONLY — do not call in production]
+        Checks if page.expose_function bindings are callable from Camoufox's
+        Isolated World (page.evaluate without mw: prefix).
+
+        If True  → a true push-based bridge is viable:
+            mw: wpp.on → CustomEvent(id) → Isolated World addEventListener
+            → window[alias](id) [expose_function] → Python enqueue
+            → _drain_loop → _evaluate_stealth(get_message_by_id)
+        If False → the mw: poll approach (current architecture) is correct.
+
+        WARNING: This call permanently registers a named expose_function on the
+        page for the lifetime of the session. Only call it once, in a debug
+        environment, and never in the main message loop.
+
+        Returns:
+            True  = expose_function IS callable from Isolated World.
+            False = expose_function is NOT callable from Isolated World.
+        """
+        probe_alias = f"__probe{self._get_bridge_key()}"
+        result_holder = {"called": False}
+
+        async def _probe(x: str) -> None:
+            result_holder["called"] = True
+
+        await self.page.expose_function(probe_alias, _probe)
+        is_function = await self.page.evaluate(
+            f"typeof window['{probe_alias}'] === 'function'"  # Isolated World — no mw:
+        )
+        self.log.info(
+            f"probe_expose_function_support: "
+            f"window[alias] in Isolated World = {'function ✓' if is_function else 'undefined ✗'}"
+        )
+        return bool(is_function)
 
     async def teardown_message_bridge(self) -> None:
         """
@@ -310,7 +346,7 @@ class WapiWrapper:
             return
 
         # Clear hidden properties via mw: — they're non-configurable so we just empty the queue.
-        qk = getattr(self, '_queue_key', None)
+        qk = getattr(self, "_queue_key", None)
         if qk:
             await self.page.evaluate(f"mw:window['{qk}'] = []")
 
@@ -456,7 +492,7 @@ class WapiWrapper:
         )
 
     # ─────────────────────────────────────────────
-    # 5b. MEDIA DECRYPTION
+    # 6. MEDIA DECRYPT — CACHE API / CDN FALLBACK
     # ─────────────────────────────────────────────
 
     async def decrypt_media(
