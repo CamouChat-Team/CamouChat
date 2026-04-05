@@ -49,6 +49,9 @@ class MessageApiManager:
         self.log = log or camouchatLogger
         self._bridge_active: bool = False
         self._handlers: List[Callable[[MessageModelAPI], Any]] = []
+        self._id_queue: asyncio.Queue = asyncio.Queue()
+        self._drain_task: Optional[asyncio.Task] = None
+        self._poll_task: Optional[asyncio.Task] = None
 
     # ──────────────────────────────────────────────
     # EVENT-DRIVEN LISTENER  (Push Architecture)
@@ -71,31 +74,63 @@ class MessageApiManager:
 
     async def _setup_bridge(self) -> None:
         """
-        Wires the stealth DOM Bridge exactly ONCE at session start.
-        Called by WapiSession.start() — NOT by the decorator.
+        Wires the bridge exactly ONCE at session start.
 
-        On every incoming WhatsApp message:
-          1. Main World WPP hook fires → sends ONLY id_serialized across DOM.
-          2. Isolated World catches the id → calls __get_new_message__.
-          3. Raw dict fetched from React RAM, normalized → MessageModelAPI.
-          4. All registered handlers are called with the clean object.
+        Flow per incoming message:
+          1. Main World wpp.on fires → pushes id to window.__camou_queue__ (mw:).
+          2. _poll_loop reads the queue every 100ms via mw: evaluate.
+          3. Each id is put in _id_queue (asyncio.Queue).
+          4. _drain_loop dequeues → RAM fetch → MessageModelAPI → handlers.
         """
         if self._bridge_active:
             self.log.warning("MessageApiManager: bridge already active, skipping re-setup.")
             return
 
-        await self._bridge.setup_message_bridge(self.__get_new_message__)
+        await self._bridge.setup_message_bridge()
+        self._drain_task = asyncio.ensure_future(self._drain_loop())
+        self._poll_task = asyncio.ensure_future(self._poll_loop())
         self._bridge_active = True
         self.log.info("MessageApiManager: DOM bridge active, ready to receive messages.")
 
+    async def _poll_loop(self) -> None:
+        """
+        Polls window.__camou_queue__ in Main World every 100ms and feeds _id_queue.
+        Runs via mw: evaluate — stays in Camoufox's real Main World context.
+        """
+        while True:
+            try:
+                ids = await self._bridge.poll_message_queue()
+                for id_serialized in ids:
+                    await self._id_queue.put(id_serialized)
+            except asyncio.CancelledError:
+                break
+            except Exception as exc:
+                self.log.error(f"MessageApiManager: poll error: {exc}")
+            await asyncio.sleep(0.1)
+
+
+    async def _drain_loop(self) -> None:
+        """
+        Background task: drains the id queue and processes each message.
+        Runs page.evaluate (RAM fetch) safely outside any expose_function callback.
+        """
+        while True:
+            try:
+                id_serialized = await self._id_queue.get()
+                try:
+                    await self.__get_new_message__(id_serialized)
+                except Exception as exc:
+                    self.log.error(f"MessageApiManager: drain loop error for id={id_serialized!r}: {exc}")
+                finally:
+                    self._id_queue.task_done()
+            except asyncio.CancelledError:
+                break
+
     async def __get_new_message__(self, id_serialized: str) -> None:
         """
-        Internal bridge callback — receives id_serialized from the Isolated World,
-        fetches the full message from React RAM, normalizes it to MessageModelAPI,
-        and fans it out to every registered handler.
-
-        Args:
-            id_serialized: The WPP message id e.g. 'true_916398@c.us_ABCDEF123'
+        Fetches full message from React RAM by id, normalizes it,
+        and fans it out to all registered handlers.
+        Called from _drain_loop — NOT inside an expose_function callback.
         """
         try:
             raw: Dict[str, Any] = await self._bridge._evaluate_stealth(
@@ -103,13 +138,12 @@ class MessageApiManager:
             )
             if not raw:
                 self.log.warning(
-                    f"MessageApiManager: RAM lookup returned empty for id={id_serialized!r}"
+                    f"MessageApiManager: RAM lookup empty for id={id_serialized!r}"
                 )
                 return
 
             msg = MessageModelAPI.from_dict(raw)
 
-            # Fan-out to all registered handlers
             for handler in list(self._handlers):
                 try:
                     result = handler(msg)
@@ -118,12 +152,11 @@ class MessageApiManager:
                 except Exception as exc:
                     self.log.error(
                         f"MessageApiManager: handler '{getattr(handler, '__name__', '?')}' "
-                        f"raised on msg id={id_serialized!r}: {exc}"
+                        f"raised on id={id_serialized!r}: {exc}"
                     )
-
         except Exception as exc:
             self.log.error(
-                f"MessageApiManager: error processing message id={id_serialized!r}: {exc}"
+                f"MessageApiManager: error processing id={id_serialized!r}: {exc}"
             )
 
     async def stop_bridge(self) -> None:
@@ -131,6 +164,13 @@ class MessageApiManager:
         Tears down the stealth DOM Bridge and clears all registered handlers.
         Called by WapiSession.stop().
         """
+        for task in (self._poll_task, self._drain_task):
+            if task and not task.done():
+                task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
         await self._bridge.teardown_message_bridge()
         self._bridge_active = False
         self._handlers.clear()

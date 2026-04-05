@@ -5,7 +5,7 @@ import uuid
 import os
 from logging import Logger, LoggerAdapter
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from playwright.async_api import Page
 
@@ -208,6 +208,7 @@ class WapiWrapper:
     # so the CustomEvent name changes every bot launch and can never
     # be blacklisted by Meta's integrity scanners.
     _bridge_key: Optional[str] = None
+    _queue_key: Optional[str] = None
     _bridge_active: bool = False
 
     def _get_bridge_key(self) -> str:
@@ -222,120 +223,82 @@ class WapiWrapper:
             self._bridge_key = f"_c{secrets.token_hex(6)}"
         return self._bridge_key
 
-    async def setup_message_bridge(self, python_callback: Callable) -> None:
+    async def setup_message_bridge(self) -> None:
         """
-        Wires the full stealth DOM Bridge for zero-poll message delivery.
+        Registers the WPP message listener in the real Main World via 'mw:'.
+        Pushes incoming message ids into a hidden (non-enumerable) JS array.
+        Python drains it by polling via mw: every 100ms.
 
-        Architecture :
-        ┌──────────────────────────────────────────────────────────┐
-        │  MAIN WORLD  (WhatsApp Webpack — no Playwright DNA here) │
-        │                                                          │
-        │  WPP.on('chat.new_message', msg => {                     │
-        │      // Only id_serialized crosses the bridge            │
-        │      window.dispatchEvent(new CustomEvent('<rand_key>', {│
-        │          detail: msg.id._serialized,                     │
-        │          bubbles: false,   // restricted — nextplan §3   │
-        │          composed: false,                                │
-        │      }));                                                │
-        │  });                                                     │
-        └──────────────────────────────┬───────────────────────────┘
-                                       │  DOM boundary (safe)
-        ┌──────────────────────────────▼───────────────────────────┐
-        │  ISOLATED WORLD  (Playwright — WA cannot scan this)      │
-        │                                                          │
-        │  window.addEventListener('<rand_key>', async e => {      │
-        │      // Fetch FULL msg from RAM, not from the bridge     │
-        │      const full = await _evaluate_stealth(               │
-        │          get_message_by_id(e.detail)                     │
-        │      );                                                  │
-        │      python_callback(full);   ← safe Playwright binding  │
-        │  });                                                     │
-        └──────────────────────────────────────────────────────────┘
-
-        Args:
-            python_callback: Async/sync Python function receiving a raw
-                             message dict (to be normalized to MessageModelAPI
-                             by the caller — e.g. MessageApiManager).
+        Stealth: both the queue and the active-guard are defined with
+        enumerable=false, configurable=false so they are invisible to
+        Object.keys(window), for..in enumeration, and WhatsApp integrity scans.
         """
         if self._bridge_active:
             self.log.warning("setup_message_bridge: bridge already active, skipping re-register.")
             return
 
-        bridge_key = self._get_bridge_key()
-        python_alias = f"__camou_{bridge_key}"
+        bridge_key = self._get_bridge_key()  # random per session, e.g. '_c203a2bd9fdb1'
+        queue_key  = f"__cq{bridge_key}"     # e.g. '__cq_c203a2bd9fdb1'
+        guard_key  = f"__cg{bridge_key}"     # e.g. '__cg_c203a2bd9fdb1'
+        self._queue_key = queue_key          # stored so poll_message_queue can use it
 
-        # page.expose_function injects the binding ONLY into the Isolated World.
-        await self.page.expose_function(python_alias, python_callback)
-
-        # We use a <script> tag (not page.evaluate) so it runs as native
-        # The hook ONLY dispatches id_serialized (not the fat message object)
-        main_world_hook = f"""
-            (async () => {{
-                const wpp = window.__react_devtools_hook;
-                if (!wpp) {{
-                    console.warn('CamouBridge: WPP handle missing.');
-                    return;
-                }}
-                if (window.__camou_bridge_active__) return;
-
-                wpp.on('chat.new_message', (msg) => {{
-                    try {{
-                        const id = (msg && msg.id && msg.id._serialized)
-                            ? msg.id._serialized
-                            : null;
-                        if (!id) return;
-
-                        // Fire id_serialized across DOM boundary only.
-                        // bubbles:false, composed:false — nextplan §3
-                        window.dispatchEvent(new CustomEvent('{bridge_key}', {{
-                            detail: id,
-                            bubbles: false,
-                            composed: false,
-                        }}));
-                    }} catch (_) {{}}
-                }});
-
-                window.__camou_bridge_active__ = true;
-            }})();
-        """
-
-        # Inject Main World hook via <script> tag (stealth DOM injection)
-        await self.page.evaluate(
-            """([code]) => {
-                const s = document.createElement('script');
-                const nonceEl = document.querySelector('script[nonce]');
-                if (nonceEl) s.setAttribute('nonce', nonceEl.nonce);
-                s.textContent = code;
-                document.documentElement.appendChild(s);
-                s.remove();
-            }""",
-            [main_world_hook],
-        )
-
-        # ── Step 3: Isolated World listener — catches DOM event, fetches RAM ─
-        # This runs in the Isolated World (default page.evaluate context in
-        # Camoufox). WA cannot enumerate or scan this execution heap.
-        #
-        # On receiving id_serialized, it calls _evaluate_stealth to pull the
-        # FULL message dict from React RAM — the fat data never crosses the DOM.
-        isolated_listener = f"""() => {{
-            window.addEventListener('{bridge_key}', async (e) => {{
-                const id = e.detail;
-                if (!id) return;
-                try {{
-                    await window['{python_alias}'](id);
-                }} catch (_) {{}}
+        # Define hidden queue + guard in Main World — non-enumerable so scanners can't see them.
+        await self.page.evaluate(f"""mw:(() => {{
+            Object.defineProperty(window, '{queue_key}', {{
+                value: [],
+                writable: true,
+                enumerable: false,
+                configurable: false,
             }});
-        }}"""
+            Object.defineProperty(window, '{guard_key}', {{
+                value: false,
+                writable: true,
+                enumerable: false,
+                configurable: false,
+            }});
+        }})()""")
 
-        await self.page.evaluate(isolated_listener)
+        # Register wpp.on listener — entirely in Main World via mw:.
+        await self.page.evaluate(f"""mw:(async () => {{
+            const wpp = window.__react_devtools_hook;
+            if (!wpp) {{
+                console.warn('CamouBridge: WPP handle missing.');
+                return;
+            }}
+            if (window['{guard_key}']) return;
+
+            wpp.on('chat.new_message', (msg) => {{
+                try {{
+                    const id = msg && msg.id && msg.id._serialized
+                        ? msg.id._serialized : null;
+                    if (id) window['{queue_key}'].push(id);
+                }} catch (e) {{}}
+            }});
+
+            window['{guard_key}'] = true;
+        }})()""")
 
         self._bridge_active = True
-        self.log.info(
-            f"Stealth DOM Bridge active. "
-            f"Key='{bridge_key}' | Alias='{python_alias}' | "
-            f"Main World hook: <script> tag | Isolated World: page.evaluate"
-        )
+        self.log.info(f"Stealth DOM Bridge active. queue='{queue_key}' (hidden, non-enumerable) | Mode: mw: poll")
+
+    async def poll_message_queue(self) -> list:
+        """
+        Drains the hidden Main World queue via mw: evaluate.
+        Returns a list of id_serialized strings (may be empty).
+        Called by MessageApiManager._poll_loop every 100ms.
+        """
+        if not self._bridge_active:
+            return []
+        try:
+            qk = self._queue_key
+            ids = await self.page.evaluate(
+                f"mw:(() => {{ const q = window['{qk}'] || []; "
+                f"window['{qk}'] = []; return q; }})()"
+            )
+            return ids or []
+        except Exception:
+            return []
+
 
     async def teardown_message_bridge(self) -> None:
         """
@@ -346,22 +309,15 @@ class WapiWrapper:
         if not self._bridge_active:
             return
 
-        bridge_key = self._get_bridge_key()
-
-        # Clear the Main World guard flag so a future re-inject can re-run
-        await self.page.evaluate(
-            """([code]) => {
-                const s = document.createElement('script');
-                s.textContent = code;
-                document.documentElement.appendChild(s);
-                s.remove();
-            }""",
-            ["delete window.__camou_bridge_active__;"],
-        )
+        # Clear hidden properties via mw: — they're non-configurable so we just empty the queue.
+        qk = getattr(self, '_queue_key', None)
+        if qk:
+            await self.page.evaluate(f"mw:window['{qk}'] = []")
 
         self._bridge_active = False
         self._bridge_key = None
-        self.log.info(f"Stealth DOM Bridge torn down (was key='{bridge_key}').")
+        self._queue_key = None
+        self.log.info("Stealth DOM Bridge torn down.")
 
     # ─────────────────────────────────────────────
     # 3. DATA FETCHING
