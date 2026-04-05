@@ -105,12 +105,40 @@ class ChatModelAPI:
         )
 
     def __str__(self):
-        return (
-            f"[{self.formattedTitle}] "
-            f"Unread: {self.unreadCount or 0} | "
-            f"{'Archived' if self.isArchived else 'Active'} | "
-            f"{'Community' if self.isCommunity else 'Chat'}"
-        )
+        lines = [
+            "─── ChatModelAPI ──────────────────────────────────",
+            f"  id          : {self.id_serialized}",
+            f"  title       : {self.formattedTitle or '(empty name)'}",
+            f"  type        : {'Community' if self.isCommunity else 'Chat'}",
+            f"  timestamp   : {self.timestamp}",
+            f"  unread      : {self.unreadCount or 0}  (@mentions: {self.unreadMentionCount or 0})",
+            f"  status      : {'Archived' if self.isArchived else 'Active'}",
+        ]
+
+        flags = []
+        if self.isReadOnly:
+            flags.append("read-only")
+        if self.isLocked:
+            flags.append("locked")
+        if self.isAutoMuted:
+            flags.append("auto-muted")
+        if self.isTrusted is False:
+            flags.append("untrusted(not-in-contacts)")
+        if self.isNotSpam is False:
+            flags.append("spam-flagged")
+        if self.canSend is False:
+            flags.append("cannot-send")
+        if self.isOpened:
+            flags.append("opened")
+
+        if flags:
+            lines.append(f"  flags       : {', '.join(flags)}")
+        
+        if self.disappearingModeTrigger:
+            lines.append(f"  ephemeral   : initiator={self.disappearingModeInitiator} trigger={self.disappearingModeTrigger}")
+
+        lines.append("───────────────────────────────────────────────────")
+        return "\n".join(lines)
 
     def __repr__(self):
         return (
@@ -122,3 +150,32 @@ class ChatModelAPI:
             f"community={self.isCommunity}"
             f")"
         )
+        
+    def to_dict(self, include_none: bool = False) -> dict:
+        """
+        Export this ChatModelAPI as a flat Python dict.
+        """
+        raw = {
+            "id_serialized": self.id_serialized,
+            "unreadCount": self.unreadCount,
+            "isAutoMuted": self.isAutoMuted,
+            "timestamp": self.timestamp,
+            "isArchived": self.isArchived,
+            "isLocked": self.isLocked,
+            "isNotSpam": self.isNotSpam,
+            "disappearingModeTrigger": self.disappearingModeTrigger,
+            "disappearingModeInitiator": self.disappearingModeInitiator,
+            "unreadMentionCount": self.unreadMentionCount,
+            "lastChatEntryTimestamp": self.lastChatEntryTimestamp,
+            "isOpened": self.isOpened,
+            "isReadOnly": self.isReadOnly,
+            "isTrusted": self.isTrusted,
+            "formattedTitle": self.formattedTitle,
+            "groupSafetyChecked": self.groupSafetyChecked,
+            "canSend": self.canSend,
+            "proxyName": self.proxyName,
+            "isCommunity": self.isCommunity,
+        }
+        if include_none:
+            return raw
+        return {k: v for k, v in raw.items() if v is not None}
