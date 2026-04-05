@@ -149,6 +149,9 @@ class MessageModelAPI:
     quotedParticipant: Optional[str]
     quotedRemoteJid: Optional[str]
 
+    # ── Mentions ──────────────────────────────────────────────────────────────
+    mentionedJidList: Optional[List[str]]
+
     # ── Media fields ──────────────────────────────────────────────────────────
     mimetype: Optional[str]
     directPath: Optional[str]
@@ -185,10 +188,19 @@ class MessageModelAPI:
 
     # ─────────────────────────────────────────────────────────────────────────
 
-    _MEDIA_THUMB_TYPES: frozenset = frozenset({
-        "image", "video", "sticker", "document", "audio", "ptt",
-        "gif", "product", "order",
-    })
+    _MEDIA_THUMB_TYPES: frozenset = frozenset(
+        {
+            "image",
+            "video",
+            "sticker",
+            "document",
+            "audio",
+            "ptt",
+            "gif",
+            "product",
+            "order",
+        }
+    )
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MessageModelAPI":
@@ -247,19 +259,16 @@ class MessageModelAPI:
             author=g("author_serialized"),
             pushname=g("notifyName") or g("pushname"),
             broadcast=g("broadcast"),
-            
             MsgType=g("type"),
             body=g("body"),
             caption=g("caption"),
             timestamp=timestamp,
             ack=g("ack", 0),
-
             # ── Presence / arrival flags ───────────────────────────────────────
             isNew=g("isNew"),
             isNewMsg=g("isNewMsg"),
             recvFresh=g("recvFresh"),
             isMdHistoryMsg=g("isMdHistoryMsg"),
-
             # ── Social flags ───────────────────────────────────────────────────
             isStarMsg=g("star"),
             isForwarded=g("isForwarded"),
@@ -268,19 +277,16 @@ class MessageModelAPI:
             ),
             hasReaction=g("hasReaction"),
             pendingDeleteForMe=g("pendingDeleteForMe"),
-
             # ── Disappearing / ephemeral ───────────────────────────────────────
             ephemeralDuration=g("ephemeralDuration", 0),
             disappearingModeInitiator=g("disappearingModeInitiator"),
             disappearingModeTrigger=g("disappearingModeTrigger"),
-
             # ── Special message type flags ─────────────────────────────────────
             isAvatar=g("isAvatar"),
             isVideoCallMessage=g("isVideoCall"),
             isDynamicReplyButtonsMsg=g("isDynamicReplyButtonsMsg"),
             isCarouselCard=g("isCarouselCard"),
             activeBotMsgStreamingInProgress=g("activeBotMsgStreamingInProgress"),
-
             # ── Quoted / reply ─────────────────────────────────────────────────
             fromQuotedMsg=bool(g("quotedMsg") or g("quotedMsgId") or g("quotedStanzaID")),
             isQuotedMsgAvailable=bool(g("quotedMsg")),
@@ -289,6 +295,9 @@ class MessageModelAPI:
             quotedMsgBody=g("quotedMsgBody"),
             quotedParticipant=g("quotedParticipant"),
             quotedRemoteJid=g("quotedRemoteJid"),
+            
+            # ── Mentions ───────────────────────────────────────────────────────
+            mentionedJidList=g("mentionedJidList") or None,
 
             # ── Media ──────────────────────────────────────────────────────────
             mimetype=g("mimetype"),
@@ -297,7 +306,6 @@ class MessageModelAPI:
             size=size,
             duration=g("duration"),
             isViewOnce=g("isViewOnce", False),
-
             # ── Poll ───────────────────────────────────────────────────────────
             isQuestion=is_question,
             pollName=g("pollName"),
@@ -306,7 +314,6 @@ class MessageModelAPI:
             pollSelectableOptionsCount=g("pollSelectableOptionsCount"),
             questionResponsesCount=question_responses,
             readQuestionResponsesCount=g("readQuestionResponsesCount"),
-
             # ── Event ──────────────────────────────────────────────────────────
             eventName=g("eventName"),
             eventDescription=g("eventDescription"),
@@ -315,11 +322,9 @@ class MessageModelAPI:
             eventEndTime=g("eventEndTime"),
             isEventCanceled=g("isEventCanceled"),
             eventIsScheduledCall=g("eventIsScheduledCall"),
-
             # ── vCard ──────────────────────────────────────────────────────────
             vcardFormattedName=g("vcardFormattedName"),
             vcardList=g("vcardList") or None,
-
             # ── Misc ───────────────────────────────────────────────────────────
             stickerSentTs=g("stickerSentTs"),
             isViewed=g("viewed"),
@@ -428,6 +433,15 @@ class MessageModelAPI:
             if self.quotedRemoteJid:
                 lines.append(f"  ↩ quotedChat : {self.quotedRemoteJid}")
 
+        # ── Mentions ──────────────────────────────────────────────────────────
+        if self.mentionedJidList:
+            mentions = self.mentionedJidList
+            lines.append(f"  mentions    : {len(mentions)} user(s)")
+            if len(mentions) <= 3:
+                lines.append(f"                {', '.join(mentions)}")
+            else:
+                lines.append(f"                {', '.join(mentions[:3])} (+{len(mentions)-3} more)")
+
         # ── Media ─────────────────────────────────────────────────────────────
         if self.mimetype:
             lines.append(f"  mimetype    : {self.mimetype}")
@@ -451,9 +465,7 @@ class MessageModelAPI:
                 lines.append(f"  pollType    : {self.pollType}  content={self.pollContentType}")
             if self.pollSelectableOptionsCount is not None:
                 sel = self.pollSelectableOptionsCount
-                lines.append(
-                    f"  pollSelect  : {sel if sel else 'unlimited'} option(s) per voter"
-                )
+                lines.append(f"  pollSelect  : {sel if sel else 'unlimited'} option(s) per voter")
 
         # ── Event detail ──────────────────────────────────────────────────────
         if self.MsgType == "event_creation":
@@ -461,13 +473,9 @@ class MessageModelAPI:
                 lines.append(f"  eventName   : {self.eventName}")
             if self.eventDescription:
                 desc = self.eventDescription
-                lines.append(
-                    f"  eventDesc   : {desc[:80]}{'…' if len(desc) > 80 else ''}"
-                )
+                lines.append(f"  eventDesc   : {desc[:80]}{'…' if len(desc) > 80 else ''}")
             if self.eventStartTime:
-                lines.append(
-                    f"  eventTime   : {self.eventStartTime} → {self.eventEndTime}"
-                )
+                lines.append(f"  eventTime   : {self.eventStartTime} → {self.eventEndTime}")
             if self.eventJoinLink:
                 lines.append(f"  eventLink   : {self.eventJoinLink}")
             if self.isEventCanceled:
@@ -516,79 +524,80 @@ class MessageModelAPI:
         """
         raw: Dict[str, Any] = {
             # ── Identity ──────────────────────────────────────────────────────
-            "id_serialized":               self.id_serialized,
-            "rowId":                       self.rowId,
-            "fromMe":                      self.fromMe,
-            "jid_From":                    self.jid_From,
-            "jid_To":                      self.jid_To,
-            "author":                      self.author,
-            "pushname":                    self.pushname,
-            "broadcast":                   self.broadcast,
-            "MsgType":                     self.MsgType,
-            "body":                        self.body,
-            "caption":                     self.caption,
-            "timestamp":                   self.timestamp,
-            "ack":                         self.ack,
+            "id_serialized": self.id_serialized,
+            "rowId": self.rowId,
+            "fromMe": self.fromMe,
+            "jid_From": self.jid_From,
+            "jid_To": self.jid_To,
+            "author": self.author,
+            "pushname": self.pushname,
+            "broadcast": self.broadcast,
+            "MsgType": self.MsgType,
+            "body": self.body,
+            "caption": self.caption,
+            "timestamp": self.timestamp,
+            "ack": self.ack,
             # ── Presence / arrival ────────────────────────────────────────────
-            "isNew":                       self.isNew,
-            "isNewMsg":                    self.isNewMsg,
-            "recvFresh":                   self.recvFresh,
-            "isMdHistoryMsg":              self.isMdHistoryMsg,
+            "isNew": self.isNew,
+            "isNewMsg": self.isNewMsg,
+            "recvFresh": self.recvFresh,
+            "isMdHistoryMsg": self.isMdHistoryMsg,
             # ── Social flags ──────────────────────────────────────────────────
-            "isStarMsg":                   self.isStarMsg,
-            "isForwarded":                 self.isForwarded,
-            "forwardsCount":               self.forwardsCount,
-            "hasReaction":                 self.hasReaction,
-            "pendingDeleteForMe":          self.pendingDeleteForMe,
+            "isStarMsg": self.isStarMsg,
+            "isForwarded": self.isForwarded,
+            "forwardsCount": self.forwardsCount,
+            "hasReaction": self.hasReaction,
+            "pendingDeleteForMe": self.pendingDeleteForMe,
             # ── Disappearing / ephemeral ──────────────────────────────────────
-            "ephemeralDuration":           self.ephemeralDuration,
-            "disappearingModeInitiator":   self.disappearingModeInitiator,
-            "disappearingModeTrigger":     self.disappearingModeTrigger,
+            "ephemeralDuration": self.ephemeralDuration,
+            "disappearingModeInitiator": self.disappearingModeInitiator,
+            "disappearingModeTrigger": self.disappearingModeTrigger,
             # ── Special type flags ────────────────────────────────────────────
-            "isAvatar":                    self.isAvatar,
-            "isVideoCallMessage":          self.isVideoCallMessage,
-            "isDynamicReplyButtonsMsg":    self.isDynamicReplyButtonsMsg,
-            "isCarouselCard":              self.isCarouselCard,
+            "isAvatar": self.isAvatar,
+            "isVideoCallMessage": self.isVideoCallMessage,
+            "isDynamicReplyButtonsMsg": self.isDynamicReplyButtonsMsg,
+            "isCarouselCard": self.isCarouselCard,
             "activeBotMsgStreamingInProgress": self.activeBotMsgStreamingInProgress,
             # ── Quoted / reply ────────────────────────────────────────────────
-            "fromQuotedMsg":              self.fromQuotedMsg,
-            "isQuotedMsgAvailable":       self.isQuotedMsgAvailable,
-            "quotedMsgId":                self.quotedMsgId,
-            "quotedMsgType":              self.quotedMsgType,
-            "quotedMsgBody":              self.quotedMsgBody,
-            "quotedParticipant":          self.quotedParticipant,
-            "quotedRemoteJid":            self.quotedRemoteJid,
+            "fromQuotedMsg": self.fromQuotedMsg,
+            "isQuotedMsgAvailable": self.isQuotedMsgAvailable,
+            "quotedMsgId": self.quotedMsgId,
+            "quotedMsgType": self.quotedMsgType,
+            "quotedMsgBody": self.quotedMsgBody,
+            "quotedParticipant": self.quotedParticipant,
+            "quotedRemoteJid": self.quotedRemoteJid,
+            # ── Mentions ──────────────────────────────────────────────────────
+            "mentionedJidList": self.mentionedJidList,
             # ── Media ─────────────────────────────────────────────────────────
-            "mimetype":                   self.mimetype,
-            "directPath":                 self.directPath,
-            "mediaKey":                   self.mediaKey,
-            "size":                       self.size,
-            "duration":                   self.duration,
-            "isViewOnce":                 self.isViewOnce,
+            "mimetype": self.mimetype,
+            "directPath": self.directPath,
+            "mediaKey": self.mediaKey,
+            "size": self.size,
+            "duration": self.duration,
+            "isViewOnce": self.isViewOnce,
             # ── Poll ──────────────────────────────────────────────────────────
-            "isQuestion":                 self.isQuestion,
-            "pollName":                   self.pollName,
-            "pollType":                   self.pollType,
-            "pollContentType":            self.pollContentType,
+            "isQuestion": self.isQuestion,
+            "pollName": self.pollName,
+            "pollType": self.pollType,
+            "pollContentType": self.pollContentType,
             "pollSelectableOptionsCount": self.pollSelectableOptionsCount,
-            "questionResponsesCount":     self.questionResponsesCount,
+            "questionResponsesCount": self.questionResponsesCount,
             "readQuestionResponsesCount": self.readQuestionResponsesCount,
             # ── Event ─────────────────────────────────────────────────────────
-            "eventName":                  self.eventName,
-            "eventDescription":           self.eventDescription,
-            "eventJoinLink":              self.eventJoinLink,
-            "eventStartTime":             self.eventStartTime,
-            "eventEndTime":               self.eventEndTime,
-            "isEventCanceled":            self.isEventCanceled,
-            "eventIsScheduledCall":       self.eventIsScheduledCall,
+            "eventName": self.eventName,
+            "eventDescription": self.eventDescription,
+            "eventJoinLink": self.eventJoinLink,
+            "eventStartTime": self.eventStartTime,
+            "eventEndTime": self.eventEndTime,
+            "isEventCanceled": self.isEventCanceled,
+            "eventIsScheduledCall": self.eventIsScheduledCall,
             # ── vCard ─────────────────────────────────────────────────────────
-            "vcardFormattedName":         self.vcardFormattedName,
-            "vcardList":                  self.vcardList,
+            "vcardFormattedName": self.vcardFormattedName,
+            "vcardList": self.vcardList,
             # ── Misc ──────────────────────────────────────────────────────────
-            "stickerSentTs":              self.stickerSentTs,
-            "isViewed":                   self.isViewed,
+            "stickerSentTs": self.stickerSentTs,
+            "isViewed": self.isViewed,
         }
         if include_none:
             return raw
         return {k: v for k, v in raw.items() if v is not None}
-
