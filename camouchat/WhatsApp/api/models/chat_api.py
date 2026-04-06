@@ -33,6 +33,13 @@ class ChatModelAPI:
         canSend (bool | None): True if you are technically able to type in this chat.
         proxyName (str | None): Internal Meta proxy type identifier (chat, contact, or msg).
         isCommunity (bool | None): Derived property: True if this is a WhatsApp Community or Announcement parent.
+        muteExpiration (int | None): Unix timestamp when the chat will be unmuted.
+        groupType (str | None): Type of group (e.g., 'DEFAULT', 'ANNOUNCEMENT', 'PARENT').
+        labels (list | None): Business labels applied to the chat.
+        ephemeralDuration (int | None): The time (in seconds) the disappearing messages are set to.
+        ephemeralSettingTimestamp (int | None): Unix timestamp for when ephemeral setting was toggled.
+        unreadMentionsOfMe (list | None): Array of message IDs where you are explicitly mentioned but unread.
+        isAnnounceGrpRestrict (bool | None): True if this is an announcements-only group restricting messages.
 
 
     If the specified field is None , its Mostly means the webpack was not successfully patched the whatsapp.
@@ -58,6 +65,14 @@ class ChatModelAPI:
     canSend: bool | None
     proxyName: str | None
     isCommunity: bool | None
+    muteExpiration: int | None
+    groupType: str | None
+    labels: list | None
+    ephemeralDuration: int | None
+    ephemeralSettingTimestamp: int | None
+    unreadMentionsOfMe: list | None
+    isAnnounceGrpRestrict: bool | None
+    optional_attr_list: dict[str, str] | None
 
     @classmethod
     def from_dict(cls, data: dict) -> "ChatModelAPI":
@@ -102,6 +117,14 @@ class ChatModelAPI:
             canSend=safe(get_val("canSend")),
             proxyName=safe(get_val("proxyName")),
             isCommunity=is_comm,
+            muteExpiration=safe(get_val("muteExpiration")),
+            groupType=safe(group_type),
+            labels=safe(get_val("labels")),
+            ephemeralDuration=safe(get_val("ephemeralDuration")),
+            ephemeralSettingTimestamp=safe(get_val("ephemeralSettingTimestamp")),
+            unreadMentionsOfMe=safe(get_val("unreadMentionsOfMe")),
+            isAnnounceGrpRestrict=safe(get_val("isAnnounceGrpRestrict")),
+            optional_attr_list=get_val("optionalAttrList"),
         )
 
     def __str__(self):
@@ -133,9 +156,21 @@ class ChatModelAPI:
 
         if flags:
             lines.append(f"  flags       : {', '.join(flags)}")
-        
-        if self.disappearingModeTrigger:
-            lines.append(f"  ephemeral   : initiator={self.disappearingModeInitiator} trigger={self.disappearingModeTrigger}")
+
+        if self.isAnnounceGrpRestrict:
+            lines.append("  permissions : announcements-only (restricted)")
+
+        if self.muteExpiration:
+            lines.append(f"  muted-until : {self.muteExpiration}")
+
+        if self.labels:
+            lines.append(f"  labels      : {', '.join(self.labels)}")
+
+        if self.ephemeralDuration or self.disappearingModeTrigger:
+            dur = f" duration={self.ephemeralDuration}s" if self.ephemeralDuration else ""
+            init = f" initiator={self.disappearingModeInitiator}" if self.disappearingModeInitiator else ""
+            trig = f" trigger={self.disappearingModeTrigger}" if self.disappearingModeTrigger else ""
+            lines.append(f"  ephemeral   :{dur}{init}{trig}")
 
         lines.append("───────────────────────────────────────────────────")
         return "\n".join(lines)
@@ -150,7 +185,7 @@ class ChatModelAPI:
             f"community={self.isCommunity}"
             f")"
         )
-        
+
     def to_dict(self, include_none: bool = False) -> dict:
         """
         Export this ChatModelAPI as a flat Python dict.
@@ -175,6 +210,14 @@ class ChatModelAPI:
             "canSend": self.canSend,
             "proxyName": self.proxyName,
             "isCommunity": self.isCommunity,
+            "muteExpiration": self.muteExpiration,
+            "groupType": self.groupType,
+            "labels": self.labels,
+            "ephemeralDuration": self.ephemeralDuration,
+            "ephemeralSettingTimestamp": self.ephemeralSettingTimestamp,
+            "unreadMentionsOfMe": self.unreadMentionsOfMe,
+            "isAnnounceGrpRestrict": self.isAnnounceGrpRestrict,
+            "optional_attr_list": self.optional_attr_list,
         }
         if include_none:
             return raw

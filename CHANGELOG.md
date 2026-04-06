@@ -13,8 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - BrowserForge Interface removed
 
 ### Added 
-- ChatModelAPI dataclass added at camouchat/WhatsApp/models/chat_api.py
-- MessageModelAPI dataclass added at camouchat/WhatsApp/models/message_api.py
+- ChatModelAPI dataclass added at camouchat/WhatsApp/models/chat_api.py & Structure Extended 
+- MessageModelAPI dataclass added at camouchat/WhatsApp/models/message_api.py & Structure Extended 
 
 - **WA-JS API Layer (`wajs_scripts.py` + `wajs_wrapper.py`)**: Built a full programmatic bridge
   into WhatsApp Web's internal Webpack store — reading messages, chats, contacts, groups,

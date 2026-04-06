@@ -159,7 +159,6 @@ class MessageModelAPI:
     # ── Diagnostics/Debug ───────────────────────────────────────────────────────────
     optionalAttrList: Optional[Dict[str, str]]
 
-
     # ── Media fields ──────────────────────────────────────────────────────────
     mimetype: Optional[str]
     directPath: Optional[str]
@@ -230,13 +229,6 @@ class MessageModelAPI:
           viewed             → isViewed
           isVideoCall        → isVideoCallMessage
 
-        Bug-fixes vs prior version:
-          [BUG-1] ciphertext type is NO LONGER clobbered to 'viewonce'. A ciphertext-arriving
-                  message is simply tagged isViewOnce=False and left for the WA re-fire to
-                  deliver the real decrypted type. Only explicitly marked view-once messages
-                  (isViewOnce==True in the raw payload) set that flag.
-          [BUG-2] questionResponsesCount now reads the wire field 'questionResponsesCount'
-                  directly, not len(pollOptions) which counted candidate options, not voters.
         """
 
         def g(key: str, default: Any = None) -> Any:
@@ -303,18 +295,17 @@ class MessageModelAPI:
             quotedMsgBody=g("quotedMsgBody"),
             quotedParticipant=g("quotedParticipant"),
             quotedRemoteJid=g("quotedRemoteJid"),
-            
             # ── Mentions ───────────────────────────────────────────────────────
-            mentionedJidList=g("mentionedJidList") or None,
-
+            mentionedJidList=(
+                [j if isinstance(j, str) else j.get("_serialized", str(j)) for j in m_list]
+                if (m_list := g("mentionedJidList"))
+                else None
+            ),
             # ── Sender Data (Deep Identity) ────────────────────────────────────
             senderObj=g("senderObj") or None,
             senderWithDevice=g("senderWithDevice") or None,
-
             # ── Diagnostics ────────────────────────────────────────────────────
             optionalAttrList=g("optionalAttrList") or {},
-
-
             # ── Media ──────────────────────────────────────────────────────────
             mimetype=g("mimetype"),
             directPath=g("directPath"),
@@ -359,30 +350,37 @@ class MessageModelAPI:
             lines.append(f"  author      : {self.author}  (group sender)")
         if self.pushname:
             lines.append(f"  pushname    : {self.pushname}")
-        
+
         # Deep Sender Profiling display
         if self.senderObj:
             so = self.senderObj
             badges = []
-            if so.get("isBusiness"): 
+            if so.get("isBusiness"):
                 badges.append("Business")
-            if so.get("isEnterprise"): 
+            if so.get("isEnterprise"):
                 badges.append("Enterprise")
-            if so.get("verifiedLevel"): 
+            if so.get("verifiedLevel"):
                 badges.append(f"VerifiedLvl={so.get('verifiedLevel')}")
             badge_str = f" [{', '.join(badges)}]" if badges else ""
-            
+
             # WhatsApp uses '__x_' prefixes for React getter keys now
-            display_name = so.get('__x_name') or so.get('name') or so.get('__x_pushname') or so.get('pushname') or 'Unknown'
+            display_name = (
+                so.get("__x_name")
+                or so.get("name")
+                or so.get("__x_pushname")
+                or so.get("pushname")
+                or "Unknown"
+            )
             lines.append(f"  senderProfile: {display_name}{badge_str}")
-            
+
             # Format the raw dictionary beautifully
             import json
+
             pretty_so = json.dumps(so, indent=2)
             lines.append("  senderRawData:")
             for j_line in pretty_so.splitlines():
                 lines.append(f"    {j_line}")
-        
+
         if self.senderWithDevice:
             lines.append(f"  senderDevice: {self.senderWithDevice}")
 

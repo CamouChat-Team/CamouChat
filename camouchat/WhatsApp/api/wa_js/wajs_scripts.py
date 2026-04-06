@@ -87,11 +87,24 @@ class WAJS_Scripts:
                 chats.map(chat => {{
                     // Dump all primitive properties from the ChatModel
                     const dump = {{}};
+                    const optList = {{}};
                     for (let key in chat) {{
                         const val = chat[key];
+                        let tInfo = typeof val;
+                        if (Array.isArray(val)) tInfo = 'array';
+                        else if (val === null)  tInfo = 'null';
+                        else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                        optList[key] = tInfo;
+
                         if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {{
                             dump[key] = val;
                         }}
+                    }}
+                    dump['optionalAttrList'] = optList;
+                    // Arrays (would be dropped by scalar loop)
+                    if (Array.isArray(chat.labels)) dump['labels'] = chat.labels;
+                    if (Array.isArray(chat.unreadMentionsOfMe)) {{
+                        dump['unreadMentionsOfMe'] = chat.unreadMentionsOfMe.map(m => m?._serialized || m?.id || m);
                     }}
                     // Resolve key nested Wid objects
                     if (chat.id)      dump['id_serialized']      = chat.id._serialized;
@@ -117,11 +130,25 @@ class WAJS_Scripts:
 
                 // Dump all primitive properties from the React model
                 const dump = {{}};
+                const optList = {{}};
                 for (let key in chat) {{
                     const val = chat[key];
+                    let tInfo = typeof val;
+                    if (Array.isArray(val)) tInfo = 'array';
+                    else if (val === null)  tInfo = 'null';
+                    else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                    optList[key] = tInfo;
+
                     if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {{
                         dump[key] = val;
                     }}
+                }}
+                dump['optionalAttrList'] = optList;
+
+                // Arrays (would be dropped by scalar loop)
+                if (Array.isArray(chat.labels)) dump['labels'] = chat.labels;
+                if (Array.isArray(chat.unreadMentionsOfMe)) {{
+                    dump['unreadMentionsOfMe'] = chat.unreadMentionsOfMe.map(m => m?._serialized || m?.id || m);
                 }}
 
                 // Manually extract crucial nested objects to prevent structured-clone errors
@@ -418,11 +445,24 @@ class WAJS_Scripts:
             wpp.chat.list({ onlyNewsletter: true, ignoreGroupMetadata: true }).then(chats =>
                 chats.map(chat => {
                     const dump = {};
+                    const optList = {};
                     for (let key in chat) {
                         const val = chat[key];
+                        let tInfo = typeof val;
+                        if (Array.isArray(val)) tInfo = 'array';
+                        else if (val === null)  tInfo = 'null';
+                        else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                        optList[key] = tInfo;
+
                         if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
                             dump[key] = val;
                         }
+                    }
+                    dump['optionalAttrList'] = optList;
+                    // Arrays (would be dropped by scalar loop)
+                    if (Array.isArray(chat.labels)) dump['labels'] = chat.labels;
+                    if (Array.isArray(chat.unreadMentionsOfMe)) {
+                        dump['unreadMentionsOfMe'] = chat.unreadMentionsOfMe.map(m => m?._serialized || m?.id || m);
                     }
                     if (chat.id) dump['id_serialized'] = chat.id._serialized;
                     return dump;
@@ -707,12 +747,25 @@ class WAJS_Scripts:
             wpp.group.getAllGroups().then(groups =>
                 groups.map(g => {
                     const dump = {};
+                    const optList = {};
                     for (let key in g) {
                         const val = g[key];
+                        let tInfo = typeof val;
+                        if (Array.isArray(val)) tInfo = 'array';
+                        else if (val === null)  tInfo = 'null';
+                        else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                        optList[key] = tInfo;
+
                         if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
                             dump[key] = val;
                         }
                     }
+                    dump['optionalAttrList'] = optList;
+                    // Arrays (would be dropped by scalar loop)
+                    if (Array.isArray(g.labels)) dump['labels'] = g.labels;
+                    if (Array.isArray(g.unreadMentionsOfMe)) {{
+                        dump['unreadMentionsOfMe'] = g.unreadMentionsOfMe.map(m => m?._serialized || m?.id || m);
+                    }}
                     if (g.id) dump['id_serialized'] = g.id._serialized;
                     return dump;
                 })
