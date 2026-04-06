@@ -87,11 +87,24 @@ class WAJS_Scripts:
                 chats.map(chat => {{
                     // Dump all primitive properties from the ChatModel
                     const dump = {{}};
+                    const optList = {{}};
                     for (let key in chat) {{
                         const val = chat[key];
+                        let tInfo = typeof val;
+                        if (Array.isArray(val)) tInfo = 'array';
+                        else if (val === null)  tInfo = 'null';
+                        else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                        optList[key] = tInfo;
+
                         if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {{
                             dump[key] = val;
                         }}
+                    }}
+                    dump['optionalAttrList'] = optList;
+                    // Arrays (would be dropped by scalar loop)
+                    if (Array.isArray(chat.labels)) dump['labels'] = chat.labels;
+                    if (Array.isArray(chat.unreadMentionsOfMe)) {{
+                        dump['unreadMentionsOfMe'] = chat.unreadMentionsOfMe.map(m => m?._serialized || m?.id || m);
                     }}
                     // Resolve key nested Wid objects
                     if (chat.id)      dump['id_serialized']      = chat.id._serialized;
@@ -117,11 +130,25 @@ class WAJS_Scripts:
 
                 // Dump all primitive properties from the React model
                 const dump = {{}};
+                const optList = {{}};
                 for (let key in chat) {{
                     const val = chat[key];
+                    let tInfo = typeof val;
+                    if (Array.isArray(val)) tInfo = 'array';
+                    else if (val === null)  tInfo = 'null';
+                    else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                    optList[key] = tInfo;
+
                     if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {{
                         dump[key] = val;
                     }}
+                }}
+                dump['optionalAttrList'] = optList;
+
+                // Arrays (would be dropped by scalar loop)
+                if (Array.isArray(chat.labels)) dump['labels'] = chat.labels;
+                if (Array.isArray(chat.unreadMentionsOfMe)) {{
+                    dump['unreadMentionsOfMe'] = chat.unreadMentionsOfMe.map(m => m?._serialized || m?.id || m);
                 }}
 
                 // Manually extract crucial nested objects to prevent structured-clone errors
@@ -196,8 +223,16 @@ class WAJS_Scripts:
 
                     // Dynamically dump ALL primitive + binary properties
                     const dump = {{}};
+                    const optList = {{}};
                     for (let key in attrs) {{
                         const val = attrs[key];
+                        // Save type info for development/diagnostics
+                        let tInfo = typeof val;
+                        if (Array.isArray(val)) tInfo = 'array';
+                        else if (val === null)  tInfo = 'null';
+                        else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                        optList[key] = tInfo;
+
                         if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {{
                             dump[key] = val;
                         }} else if (val instanceof Uint8Array || val instanceof ArrayBuffer) {{
@@ -205,6 +240,7 @@ class WAJS_Scripts:
                             dump[key] = toB64(val);
                         }}
                     }}
+                    dump['optionalAttrList'] = optList;
 
                     // Manually resolve nested Wid/MsgKey objects that hold key identifiers
                     if (attrs.id)     dump['id_serialized'] = attrs.id._serialized;
@@ -212,6 +248,37 @@ class WAJS_Scripts:
                     if (attrs.to)     dump['to_serialized']   = attrs.to._serialized   ?? attrs.to;
                     if (attrs.author) dump['author_serialized'] = attrs.author._serialized ?? null;
                     if (attrs.quotedMsg?.id) dump['quotedMsgId'] = attrs.quotedMsg.id._serialized;
+
+                    // Disappearing mode — may be nested object in some WA builds
+                    if (attrs.disappearingMode) {{
+                        dump['disappearingModeInitiator'] = attrs.disappearingMode.initiator ?? attrs.disappearingModeInitiator ?? null;
+                        dump['disappearingModeTrigger']   = attrs.disappearingMode.trigger   ?? attrs.disappearingModeTrigger   ?? null;
+                    }}
+
+                    // Arrays (would be dropped by scalar loop)
+                    if (Array.isArray(attrs.vcardList)) {{
+                        dump['vcardList'] = attrs.vcardList.map(v => typeof v === 'string' ? v : (v?.vcard ?? null));
+                    }}
+                    if (Array.isArray(attrs.mentionedJidList)) {{
+                        dump['mentionedJidList'] = attrs.mentionedJidList;
+                    }}
+
+                    // Deep Sender Profiling (Dynamic Primitive Extraction)
+                    if (attrs.senderObj) {{
+                        const sObj = {{}};
+                        for (let k in attrs.senderObj) {{
+                            const v = attrs.senderObj[k];
+                            if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {{
+                                sObj[k] = v;
+                            }}
+                        }}
+                        // Resolve inner Wid properties 
+                        if (attrs.senderObj.id) sObj['id_serialized'] = attrs.senderObj.id._serialized;
+                        dump['senderObj'] = sObj;
+                    }}
+                    if (attrs.senderWithDevice) {{
+                        dump['senderWithDevice'] = attrs.senderWithDevice?._serialized ?? attrs.senderWithDevice?.device ?? null;
+                    }}
 
                     return dump;
                 }})
@@ -240,20 +307,71 @@ class WAJS_Scripts:
                     return btoa(b64);
                 }};
                 const dump = {{}};
+                const optList = {{}};
                 for (let key in attrs) {{
                     const val = attrs[key];
+                    let tInfo = typeof val;
+                    if (Array.isArray(val)) tInfo = 'array';
+                    else if (val === null)  tInfo = 'null';
+                    else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                    optList[key] = tInfo;
+
                     if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {{
                         dump[key] = val;
                     }} else if (val instanceof Uint8Array || val instanceof ArrayBuffer) {{
                         dump[key] = toB64(val);
                     }}
                 }}
+                dump['optionalAttrList'] = optList;
                 if (attrs.id)     dump['id_serialized'] = attrs.id._serialized;
                 if (attrs.from)   dump['from_serialized'] = attrs.from._serialized ?? attrs.from;
                 if (attrs.to)     dump['to_serialized']   = attrs.to._serialized   ?? attrs.to;
                 if (attrs.author) dump['author_serialized'] = attrs.author._serialized ?? null;
-                if (attrs.quotedMsg?.id) dump['quotedMsgId'] = attrs.quotedMsg.id._serialized;
+                // Quoted message — extract all lookup fields
+                if (attrs.quotedMsg?.id) {{
+                    dump['quotedMsgId']        = attrs.quotedMsg.id._serialized;
+                    dump['quotedMsgType']      = attrs.quotedMsg.type ?? null;
+                    dump['quotedMsgBody']      = typeof attrs.quotedMsg.body === 'string'
+                                                    ? attrs.quotedMsg.body.slice(0, 120)
+                                                    : null;
+                }}
+                // quotedStanzaID is the raw stanza key (present even without quotedMsg in RAM)
+                if (attrs.quotedStanzaID)      dump['quotedStanzaID']      = attrs.quotedStanzaID;
+                if (attrs.quotedParticipant)   dump['quotedParticipant']   = attrs.quotedParticipant?._serialized ?? attrs.quotedParticipant;
+                if (attrs.quotedRemoteJid)     dump['quotedRemoteJid']     = attrs.quotedRemoteJid?._serialized  ?? attrs.quotedRemoteJid;
+
+                // Disappearing mode — initiator/trigger may be nested objects in some WA builds
+                if (attrs.disappearingMode) {{
+                    dump['disappearingModeInitiator'] = attrs.disappearingMode.initiator ?? attrs.disappearingModeInitiator ?? null;
+                    dump['disappearingModeTrigger']   = attrs.disappearingMode.trigger   ?? attrs.disappearingModeTrigger   ?? null;
+                }}
+
+                // Arrays (would be dropped by scalar loop)
+                if (Array.isArray(attrs.vcardList)) {{
+                    dump['vcardList'] = attrs.vcardList.map(v => typeof v === 'string' ? v : (v?.vcard ?? null));
+                }}
+                if (Array.isArray(attrs.mentionedJidList)) {{
+                    dump['mentionedJidList'] = attrs.mentionedJidList;
+                }}
+
+                // Deep Sender Profiling (Dynamic Primitive Extraction)
+                if (attrs.senderObj) {{
+                    const sObj = {{}};
+                    for (let k in attrs.senderObj) {{
+                        const v = attrs.senderObj[k];
+                        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {{
+                            sObj[k] = v;
+                        }}
+                    }}
+                    if (attrs.senderObj.id) sObj['id_serialized'] = attrs.senderObj.id._serialized;
+                    dump['senderObj'] = sObj;
+                }}
+                if (attrs.senderWithDevice) {{
+                    dump['senderWithDevice'] = attrs.senderWithDevice?._serialized ?? attrs.senderWithDevice?.device ?? null;
+                }}
+
                 return dump;
+
             }})
         """
 
@@ -263,13 +381,13 @@ class WAJS_Scripts:
 
     @classmethod
     def send_text_message(cls, chat_id: str, message: str) -> str:
-        """Pure API text send — no UI interaction required."""
+        """Pure api text send — no UI interaction required."""
         safe_msg = json.dumps(message)
         return f"wpp.chat.sendTextMessage('{chat_id}', {safe_msg})"
 
     @classmethod
     def mark_is_read(cls, chat_id: str) -> str:
-        """Force-mark a chat as read at the API level."""
+        """Force-mark a chat as read at the api level."""
         return f"wpp.chat.markIsRead('{chat_id}')"
 
     # ─────────────────────────────────────────────
@@ -327,11 +445,24 @@ class WAJS_Scripts:
             wpp.chat.list({ onlyNewsletter: true, ignoreGroupMetadata: true }).then(chats =>
                 chats.map(chat => {
                     const dump = {};
+                    const optList = {};
                     for (let key in chat) {
                         const val = chat[key];
+                        let tInfo = typeof val;
+                        if (Array.isArray(val)) tInfo = 'array';
+                        else if (val === null)  tInfo = 'null';
+                        else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                        optList[key] = tInfo;
+
                         if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
                             dump[key] = val;
                         }
+                    }
+                    dump['optionalAttrList'] = optList;
+                    // Arrays (would be dropped by scalar loop)
+                    if (Array.isArray(chat.labels)) dump['labels'] = chat.labels;
+                    if (Array.isArray(chat.unreadMentionsOfMe)) {
+                        dump['unreadMentionsOfMe'] = chat.unreadMentionsOfMe.map(m => m?._serialized || m?.id || m);
                     }
                     if (chat.id) dump['id_serialized'] = chat.id._serialized;
                     return dump;
@@ -402,17 +533,45 @@ class WAJS_Scripts:
 
                 // Full raw dump — same as get_messages()
                 const dump = {{}};
+                const optList = {{}};
                 for (let key in attrs) {{
                     const val = attrs[key];
+                    let tInfo = typeof val;
+                    if (Array.isArray(val)) tInfo = 'array';
+                    else if (val === null)  tInfo = 'null';
+                    else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                    optList[key] = tInfo;
+
                     if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {{
                         dump[key] = val;
                     }}
                 }}
+                dump['optionalAttrList'] = optList;
                 if (attrs.id)     dump['id_serialized']     = attrs.id._serialized;
                 if (attrs.from)   dump['from_serialized']   = attrs.from._serialized ?? attrs.from;
                 if (attrs.to)     dump['to_serialized']     = attrs.to._serialized   ?? attrs.to;
                 if (attrs.author) dump['author_serialized'] = attrs.author._serialized ?? null;
                 if (attrs.quotedMsg?.id) dump['quotedMsgId'] = attrs.quotedMsg.id._serialized;
+                
+                if (Array.isArray(attrs.mentionedJidList)) {{
+                    dump['mentionedJidList'] = attrs.mentionedJidList;
+                }}
+
+                // Deep Sender Profiling (Dynamic Primitive Extraction)
+                if (attrs.senderObj) {{
+                    const sObj = {{}};
+                    for (let k in attrs.senderObj) {{
+                        const v = attrs.senderObj[k];
+                        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {{
+                            sObj[k] = v;
+                        }}
+                    }}
+                    if (attrs.senderObj.id) sObj['id_serialized'] = attrs.senderObj.id._serialized;
+                    dump['senderObj'] = sObj;
+                }}
+                if (attrs.senderWithDevice) {{
+                    dump['senderWithDevice'] = attrs.senderWithDevice?._serialized ?? attrs.senderWithDevice?.device ?? null;
+                }}
 
                 window.{python_alias}(dump);
             }});
@@ -588,12 +747,25 @@ class WAJS_Scripts:
             wpp.group.getAllGroups().then(groups =>
                 groups.map(g => {
                     const dump = {};
+                    const optList = {};
                     for (let key in g) {
                         const val = g[key];
+                        let tInfo = typeof val;
+                        if (Array.isArray(val)) tInfo = 'array';
+                        else if (val === null)  tInfo = 'null';
+                        else if (val instanceof Uint8Array || val instanceof ArrayBuffer) tInfo = 'binary';
+                        optList[key] = tInfo;
+
                         if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
                             dump[key] = val;
                         }
                     }
+                    dump['optionalAttrList'] = optList;
+                    // Arrays (would be dropped by scalar loop)
+                    if (Array.isArray(g.labels)) dump['labels'] = g.labels;
+                    if (Array.isArray(g.unreadMentionsOfMe)) {{
+                        dump['unreadMentionsOfMe'] = g.unreadMentionsOfMe.map(m => m?._serialized || m?.id || m);
+                    }}
                     if (g.id) dump['id_serialized'] = g.id._serialized;
                     return dump;
                 })
@@ -1069,11 +1241,11 @@ class WAJS_Scripts:
     @classmethod
     def decrypt_media(cls, direct_path: str, media_key_b64: str, media_type: str) -> str:
         """
-        Decrypt a WhatsApp media blob from the browser Cache API using the embedded mediaKey.
-        Type: RAM (Cache API) — Zero network cost if WA has already pre-downloaded the blob.
+        Decrypt a WhatsApp media blob from the browser Cache api using the embedded mediaKey.
+        Type: RAM (Cache api) — Zero network cost if WA has already pre-downloaded the blob.
 
         How it works:
-            1. Looks up the encrypted blob in WA's internal Cache API by CDN URL.
+            1. Looks up the encrypted blob in WA's internal Cache api by CDN URL.
             2. Derives IV + cipherKey via HKDF-SHA256 (WhatsApp media key spec).
             3. Decrypts via AES-256-CBC, strips the trailing 10-byte MAC.
             4. Returns the raw decrypted bytes as base64 for Python transfer.
@@ -1095,7 +1267,7 @@ class WAJS_Scripts:
         return f"""
             (async () => {{
                 try {{
-                    // 1. Locate the encrypted blob in WA's Cache API
+                    // 1. Locate the encrypted blob in WA's Cache api
                     const cdnUrl = 'https://mmg.whatsapp.net' + {safe_path};
                     const cacheNames = await caches.keys();
                     let encBytes = null;

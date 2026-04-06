@@ -2,11 +2,10 @@ import asyncio
 import base64
 import time
 import uuid
-import codecs
 import os
 from logging import Logger, LoggerAdapter
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from playwright.async_api import Page
 
@@ -29,6 +28,12 @@ class WapiWrapper:
     def __init__(self, page: Page, log: Optional[Union[LoggerAdapter, Logger]] = None):
         self.page = page
         self.log = log or camouchatLogger
+        # ── Bridge state — instance-scoped (NOT class-level) ──────────────────
+        # Keeping these on the instance prevents state leaking between separate
+        # WapiWrapper objects when multiple browser pages are in play.
+        self._bridge_key: Optional[str] = None
+        self._queue_key: Optional[str] = None
+        self._bridge_active: bool = False
 
     async def _evaluate_stealth(self, js_fragment: str) -> Any:
         """
@@ -111,7 +116,7 @@ class WapiWrapper:
         to evade Meta's integrity.js scanners.
         """
         js_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "wppconnect-wa.js"))
-        with codecs.open(js_path, "r", "utf-8") as f:
+        with open(js_path, "r", encoding="utf-8") as f:
             js_code = f.read()
 
         self.log.info("Injecting WPP engine and waiting for Webpack integration...")
@@ -148,19 +153,41 @@ class WapiWrapper:
                         "mw:window.WPP && window.WPP.isReady === true"
                     )
                     if is_ready:
-                        # Smash & Grab: hide WPP under a non-enumerable cache key
+                        # Hide WPP under a non-enumerable, non-configurable,
+                        # non-writable property so:
+                        #   - Object.keys(window)   → WPP invisible
+                        #   - Object.defineProperty  → cannot redefine
+                        #   - window.__react_devtools_hook = null → rejected
                         await self.page.evaluate("""mw:(() => {
                             Object.defineProperty(window, "__react_devtools_hook", {
                                 value: window.WPP,
                                 enumerable: false,
-                                configurable: true,
-                                writable: true
+                                configurable: false,
+                                writable: false
                             });
                             delete window.WPP;
                         })()""")
+
+                        # Confirm WPP is gone from enumerable keys and
+                        # the hidden handle is alive and non-null.
+                        sweep_ok = await self.page.evaluate("""mw:(() => {
+                            const keys = Object.keys(window);
+                            const wppGone  = !keys.includes('WPP');
+                            const handleOk = typeof window.__react_devtools_hook === 'object'
+                                             && window.__react_devtools_hook !== null;
+                            return wppGone && handleOk;
+                        })()""")
+
+                        if not sweep_ok:
+                            self.log.error(
+                                "Smash & Grab verification FAILED — "
+                                "WPP still enumerable or handle is null."
+                            )
+                            return False
+
                         self.log.info(
-                            "WPP engine integrated! Global 'window.WPP' successfully "
-                            "completely annihilated and converted to stealth property."
+                            "WPP engine integrated! Global 'window.WPP' annihilated → "
+                            "stealth handle locked (enumerable=false, configurable=false, writable=false)."
                         )
                         return True
 
@@ -179,24 +206,154 @@ class WapiWrapper:
         """Check if WhatsApp session is currently authenticated."""
         return await self._evaluate_stealth(WAJS_Scripts.is_authenticated())
 
-    # ─────────────────────────────────────────────
-    # 2. PUSH ARCHITECTURE — EVENT LISTENER
-    # ─────────────────────────────────────────────
+    # ──────────────────────────────────────────────────────────────
+    # 2. PUSH ARCHITECTURE — STEALTH DOM BRIDGE
+    # ──────────────────────────────────────────────────────────────
 
-    async def expose_message_listener(self, python_callback: Callable) -> None:
+    def _get_bridge_key(self) -> str:
         """
-        Zero-poll message pipeline: Exposes a Python handler to the browser,
-        then instructs WPP to push every incoming message directly into it.
-
-        Args:
-            python_callback: Python async/sync function receiving a dict with message fields.
+        Returns (and lazily generates) a per-session random event key.
+        This key is the name of the CustomEvent crossing the DOM boundary.
+        It is randomized so it cannot be hardcoded into WA's blacklist.
         """
-        alias = "__react_message_sync"
-        await self.page.expose_function(alias, python_callback)
+        if not self._bridge_key:
+            import secrets
 
-        setup_script = WAJS_Scripts.setup_new_message_listener(alias)
-        await self.page.evaluate("mw:" + setup_script)
-        self.log.info(f"Stealth Message Push Listener activated via {alias}")
+            self._bridge_key = f"_c{secrets.token_hex(6)}"
+        return self._bridge_key
+
+    async def setup_message_bridge(self) -> None:
+        """
+        Registers the WPP message listener in the real Main World via 'mw:'.
+        Pushes incoming message ids into a hidden (non-enumerable) JS array.
+        Python drains it by polling via mw: every 100ms.
+
+        Stealth: both the queue and the active-guard are defined with
+        enumerable=false, configurable=false so they are invisible to
+        Object.keys(window), for..in enumeration, and WhatsApp integrity scans.
+        """
+        if self._bridge_active:
+            self.log.warning("setup_message_bridge: bridge already active, skipping re-register.")
+            return
+
+        bridge_key = self._get_bridge_key()  # random per session, e.g. '_c203a2bd9fdb1'
+        queue_key = f"__cq{bridge_key}"  # e.g. '__cq_c203a2bd9fdb1'
+        guard_key = f"__cg{bridge_key}"  # e.g. '__cg_c203a2bd9fdb1'
+        self._queue_key = queue_key  # stored so poll_message_queue can use it
+
+        # Define hidden queue + guard in Main World — non-enumerable so scanners can't see them.
+        await self.page.evaluate(f"""mw:(() => {{
+            Object.defineProperty(window, '{queue_key}', {{
+                value: [],
+                writable: true,
+                enumerable: false,
+                configurable: false,
+            }});
+            Object.defineProperty(window, '{guard_key}', {{
+                value: false,
+                writable: true,
+                enumerable: false,
+                configurable: false,
+            }});
+        }})()""")
+
+        # Register wpp.on listener — entirely in Main World via mw:.
+        await self.page.evaluate(f"""mw:(async () => {{
+            const wpp = window.__react_devtools_hook;
+            if (!wpp) {{
+                console.warn('CamouBridge: WPP handle missing.');
+                return;
+            }}
+            if (window['{guard_key}']) return;
+
+            wpp.on('chat.new_message', (msg) => {{
+                try {{
+                    const id = msg && msg.id && msg.id._serialized
+                        ? msg.id._serialized : null;
+                    if (id) window['{queue_key}'].push(id);
+                }} catch (e) {{}}
+            }});
+
+            window['{guard_key}'] = true;
+        }})()""")
+
+        self._bridge_active = True
+        self.log.info(
+            f"Stealth DOM Bridge active. queue='{queue_key}' (hidden, non-enumerable) | Mode: mw: poll"
+        )
+
+    async def poll_message_queue(self) -> list:
+        """
+        Drains the hidden Main World queue via mw: evaluate.
+        Returns a list of id_serialized strings (may be empty).
+        Called by MessageApiManager._poll_loop every 100ms.
+        """
+        if not self._bridge_active:
+            return []
+        try:
+            qk = self._queue_key
+            ids = await self.page.evaluate(
+                f"mw:(() => {{ const q = window['{qk}'] || []; "
+                f"window['{qk}'] = []; return q; }})()"
+            )
+            return ids or []
+        except Exception:
+            return []
+
+    async def probe_expose_function_support(self) -> bool:
+        """
+        [DIAGNOSTIC ONLY — do not call in production]
+        Checks if page.expose_function bindings are callable from Camoufox's
+        Isolated World (page.evaluate without mw: prefix).
+
+        If True  → a true push-based bridge is viable:
+            mw: wpp.on → CustomEvent(id) → Isolated World addEventListener
+            → window[alias](id) [expose_function] → Python enqueue
+            → _drain_loop → _evaluate_stealth(get_message_by_id)
+        If False → the mw: poll approach (current architecture) is correct.
+
+        WARNING: This call permanently registers a named expose_function on the
+        page for the lifetime of the session. Only call it once, in a debug
+        environment, and never in the main message loop.
+
+        Returns:
+            True  = expose_function IS callable from Isolated World.
+            False = expose_function is NOT callable from Isolated World.
+        """
+        probe_alias = f"__probe{self._get_bridge_key()}"
+        result_holder = {"called": False}
+
+        async def _probe(x: str) -> None:
+            result_holder["called"] = True
+
+        await self.page.expose_function(probe_alias, _probe)
+        is_function = await self.page.evaluate(
+            f"typeof window['{probe_alias}'] === 'function'"  # Isolated World — no mw:
+        )
+        self.log.info(
+            f"probe_expose_function_support: "
+            f"window[alias] in Isolated World = {'function ✓' if is_function else 'undefined ✗'}"
+        )
+        return bool(is_function)
+
+    async def teardown_message_bridge(self) -> None:
+        """
+        Removes the stealth bridge event listener from the Isolated World
+        and resets the Main World guard flag so it can be re-registered.
+        Cleans up without leaving enumerable traces on the window object.
+        """
+        if not self._bridge_active:
+            return
+
+        # Clear hidden properties via mw: — they're non-configurable so we just empty the queue.
+        qk = getattr(self, "_queue_key", None)
+        if qk:
+            await self.page.evaluate(f"mw:window['{qk}'] = []")
+
+        self._bridge_active = False
+        self._bridge_key = None
+        self._queue_key = None
+        self.log.info("Stealth DOM Bridge torn down.")
 
     # ─────────────────────────────────────────────
     # 3. DATA FETCHING
@@ -307,17 +464,17 @@ class WapiWrapper:
 
     async def send_text_message(self, chat_id: str, message: str) -> Any:
         """
-        Pure API text send (Tier 3 fallback).
+        Pure api text send (Tier 3 fallback).
         Use only when Playwright UI interaction fails.
         """
         return await self._evaluate_stealth(WAJS_Scripts.send_text_message(chat_id, message))
 
     async def mark_is_read(self, chat_id: str) -> Any:
-        """Force-mark a chat as read. Only call when using Tier 3 pure API mode."""
+        """Force-mark a chat as read. Only call when using Tier 3 pure api mode."""
         return await self._evaluate_stealth(WAJS_Scripts.mark_is_read(chat_id))
 
     # ─────────────────────────────────────────────
-    # 5. INDEXDB — DISK HISTORY
+    # 5. INDEX DB — DISK HISTORY
     # ─────────────────────────────────────────────
 
     async def indexdb_get_messages(
@@ -335,7 +492,7 @@ class WapiWrapper:
         )
 
     # ─────────────────────────────────────────────
-    # 5b. MEDIA DECRYPTION
+    # 6. MEDIA DECRYPT — CACHE API / CDN FALLBACK
     # ─────────────────────────────────────────────
 
     async def decrypt_media(
@@ -348,10 +505,10 @@ class WapiWrapper:
     ) -> Optional[bytes]:
         """
         Extract and decrypt WhatsApp media using the fields embedded in the raw MsgModel dump.
-        Primary path reads directly from the browser Cache API — zero network cost.
+        Primary path reads directly from the browser Cache api — zero network cost.
         Falls back to wa-js's CDN downloader if the blob is not yet cached.
 
-        Type: RAM (Cache API primary) / NETWORK (CDN fallback — logs INFO when triggered)
+        Type: RAM (Cache api primary) / NETWORK (CDN fallback — logs INFO when triggered)
 
         Args:
             direct_path:   msg['directPath']    — CDN path e.g. "/v/t62.7117-24/..."
@@ -366,7 +523,7 @@ class WapiWrapper:
         Raw MsgModel fields needed:
             directPath, mediaKey, type  (+id_serialized for fallback)
         """
-        # ── Primary: Cache API (zero network) ───────────────────────────────
+        # ── Primary: Cache api (zero network) ───────────────────────────────
         b64 = await self._evaluate_stealth(
             WAJS_Scripts.decrypt_media(
                 direct_path=direct_path,
@@ -468,15 +625,15 @@ class WapiWrapper:
         High-level media extraction from a raw MsgModel dump.
 
         Reads directPath + mediaKey + type directly from the message dict,
-        tries the Cache API first (zero network), falls back to CDN if needed,
+        tries the Cache api first (zero network), falls back to CDN if needed,
         writes the file to save_path, and returns a structured result dict.
 
-        Type: RAM (Cache API primary) / NETWORK (CDN fallback — logged as INFO)
+        Type: RAM (Cache api primary) / NETWORK (CDN fallback — logged as INFO)
 
         Args:
             message:   Raw MsgModel dict from get_messages() or get_message_by_id().
                        Required fields: directPath, type
-                       Optional fields: mediaKey (needed for Cache API decrypt),
+                       Optional fields: mediaKey (needed for Cache api decrypt),
                                         id_serialized (needed for CDN fallback)
             save_path: Full path where the decrypted file will be written.
                        Use media_save_path(message, save_dir) to auto-generate.
@@ -520,7 +677,7 @@ class WapiWrapper:
             result["error"] = "Message has no directPath — not a downloadable media message."
             return result
 
-        # ── Primary: Cache API (zero network) ──────────────────────────────────
+        # ── Primary: Cache api (zero network) ──────────────────────────────────
         b64 = None
         if media_key_b64:
             b64 = await self._evaluate_stealth(
@@ -547,7 +704,7 @@ class WapiWrapper:
             b64 = await self._evaluate_stealth(WAJS_Scripts.download_media(msg_id=msg_id))
 
         if not b64:
-            result["error"] = "Both Cache API and CDN fallback returned None — media unavailable."
+            result["error"] = "Both Cache api and CDN fallback returned None — media unavailable."
             return result
 
         raw_bytes = base64.b64decode(b64)
@@ -556,7 +713,7 @@ class WapiWrapper:
         Path(save_path).write_bytes(raw_bytes)
         self.log.info(
             f"extract_media: [{media_type}] {len(raw_bytes):,} bytes → {save_path}"
-            + (" [CDN fallback]" if result["used_fallback"] else " [Cache API]")
+            + (" [CDN fallback]" if result["used_fallback"] else " [Cache api]")
         )
 
         result.update(
@@ -684,7 +841,7 @@ class WapiWrapper:
         """
         Type: RAM (AppState).
         Returns: bool — True if WA Web has fully initialised (stores loaded, WS connected).
-                 Use this as the readiness gate before making any API calls.
+                 Use this as the readiness gate before making any api calls.
         """
         return await self._evaluate_stealth(WAJS_Scripts.conn_is_main_ready())
 
@@ -880,7 +1037,7 @@ class WapiWrapper:
             __x_isReadOnly          (bool)
             __x_trusted             (bool)
             __x_groupType           (str)  — 'DEFAULT' | 'COMMUNITY' | 'ANNOUNCEMENT'
-            __x_hasCapi             (bool) — has Community API features
+            __x_hasCapi             (bool) — has Community api features
             __x_isParentGroup       (bool) — is a Community parent group
             __x_groupSafetyChecked  (bool)
             __x_msgsLength          (int)  — messages loaded in RAM

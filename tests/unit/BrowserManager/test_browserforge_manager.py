@@ -1,5 +1,5 @@
 """
-Unit tests for BrowserForgeCompatible class.
+Unit tests for BrowserForge class.
 Tests fingerprint generation, loading, and screen size matching.
 """
 
@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from camouchat.BrowserManager import browserforge as bf_module
 from camouchat.Exceptions import base
 
-BrowserForgeCompatible = bf_module.BrowserForge
+BrowserForge = bf_module.BrowserForge
 BrowserException = base.BrowserException
 
 
@@ -31,7 +31,7 @@ def mock_logger():
 
 @pytest.fixture
 def browserforge(mock_logger):
-    return BrowserForgeCompatible(log=mock_logger)
+    return BrowserForge(log=mock_logger)
 
 
 @pytest.fixture
@@ -50,14 +50,14 @@ def mock_fingerprint():
 
 
 def test_init_success(mock_logger):
-    """Test BrowserForgeCompatible initializes with logger."""
-    bf = BrowserForgeCompatible(log=mock_logger)
+    """Test BrowserForge initializes with logger."""
+    bf = BrowserForge(log=mock_logger)
     assert bf.log == mock_logger
 
 
 def test_init_no_logger():
-    """Test BrowserForgeCompatible uses default logger when not provided."""
-    bf = BrowserForgeCompatible(log=None)
+    """Test BrowserForge uses default logger when not provided."""
+    bf = BrowserForge(log=None)
     from camouchat.camouchat_logger import camouchatLogger
 
     assert bf.log == camouchatLogger
@@ -121,10 +121,10 @@ def test_get_fg_path_not_exists(browserforge):
 def test_gen_fg_success(browserforge, mock_fingerprint, mock_logger):
     """Test __gen_fg__ generates valid fingerprint matching screen size."""
     with patch(
-        "camouchat.BrowserManager.browserforge_manager.BrowserForgeCompatible.get_screen_size",
+        "camouchat.BrowserManager.browserforge.BrowserForge.get_screen_size",
         return_value=(1920, 1080),
     ):
-        with patch("camouchat.BrowserManager.browserforge_manager.FingerprintGenerator") as MockGen:
+        with patch("camouchat.BrowserManager.browserforge.FingerprintGenerator") as MockGen:
             mock_gen_instance = MockGen.return_value
             mock_gen_instance.generate.return_value = mock_fingerprint
 
@@ -144,10 +144,10 @@ def test_gen_fg_retries_on_mismatch(browserforge, mock_logger):
     good_fg.screen = Mock(width=1920, height=1080)
 
     with patch(
-        "camouchat.BrowserManager.browserforge_manager.BrowserForgeCompatible.get_screen_size",
+        "camouchat.BrowserManager.browserforge.BrowserForge.get_screen_size",
         return_value=(1920, 1080),
     ):
-        with patch("camouchat.BrowserManager.browserforge_manager.FingerprintGenerator") as MockGen:
+        with patch("camouchat.BrowserManager.browserforge.FingerprintGenerator") as MockGen:
             mock_gen_instance = MockGen.return_value
             mock_gen_instance.generate.side_effect = [bad_fg, good_fg]
 
@@ -164,10 +164,10 @@ def test_gen_fg_max_attempts(browserforge, mock_logger):
     bad_fg.screen = Mock(width=800, height=600)
 
     with patch(
-        "camouchat.BrowserManager.browserforge_manager.BrowserForgeCompatible.get_screen_size",
+        "camouchat.BrowserManager.browserforge.BrowserForge.get_screen_size",
         return_value=(1920, 1080),
     ):
-        with patch("camouchat.BrowserManager.browserforge_manager.FingerprintGenerator") as MockGen:
+        with patch("camouchat.BrowserManager.browserforge.FingerprintGenerator") as MockGen:
             mock_gen_instance = MockGen.return_value
             mock_gen_instance.generate.return_value = bad_fg
 
@@ -181,7 +181,7 @@ def test_gen_fg_max_attempts(browserforge, mock_logger):
 def test_gen_fg_invalid_screen_size(browserforge):
     """Test __gen_fg__ raises error for invalid screen dimensions."""
     with patch(
-        "camouchat.BrowserManager.browserforge_manager.BrowserForgeCompatible.get_screen_size",
+        "camouchat.BrowserManager.browserforge.BrowserForge.get_screen_size",
         return_value=(0, 0),
     ):
         with pytest.raises(BrowserException, match="Invalid real screen dimensions"):
@@ -199,7 +199,7 @@ def test_get_screen_size_windows(mock_system):
     with patch("ctypes.windll", create=True) as mock_windll:
         mock_windll.user32.GetSystemMetrics.side_effect = [1920, 1080]
 
-        w, h = BrowserForgeCompatible.get_screen_size()
+        w, h = BrowserForge.get_screen_size()
 
         assert w == 1920
         assert h == 1080
@@ -211,7 +211,7 @@ def test_get_screen_size_linux(mock_system):
     mock_output = b"  dimensions:    1920x1080 pixels"
 
     with patch("subprocess.check_output", return_value=mock_output):
-        w, h = BrowserForgeCompatible.get_screen_size()
+        w, h = BrowserForge.get_screen_size()
 
         assert w == 1920
         assert h == 1080
@@ -226,7 +226,7 @@ def test_get_screen_size_macos(mock_system):
     mock_quartz.CGDisplayPixelsHigh.return_value = 1440
 
     with patch.dict("sys.modules", {"Quartz": mock_quartz}):
-        w, h = BrowserForgeCompatible.get_screen_size()
+        w, h = BrowserForge.get_screen_size()
 
         assert w == 2560
         assert h == 1440
@@ -236,7 +236,7 @@ def test_get_screen_size_macos(mock_system):
 def test_get_screen_size_unsupported_os(mock_system):
     """Test get_screen_size raises error on unsupported OS."""
     with pytest.raises(BrowserException, match="Unsupported OS"):
-        BrowserForgeCompatible.get_screen_size()
+        BrowserForge.get_screen_size()
 
 
 # ============================================================================
@@ -252,7 +252,7 @@ def test_get_fingerprint_as_dict_success(tmp_path):
     mock_profile = Mock()
     mock_profile.fingerprint_path = json_path
 
-    result = BrowserForgeCompatible.get_fingerprint_as_dict(mock_profile)
+    result = BrowserForge.get_fingerprint_as_dict(mock_profile)
 
     assert result["screen"]["width"] == 1920
 
@@ -263,7 +263,7 @@ def test_get_fingerprint_as_dict_not_exists():
     mock_profile.fingerprint_path = fake_path
 
     with pytest.raises(BrowserException, match="does not exist"):
-        BrowserForgeCompatible.get_fingerprint_as_dict(mock_profile)
+        BrowserForge.get_fingerprint_as_dict(mock_profile)
 
 
 def test_get_fingerprint_as_dict_not_file(tmp_path):
@@ -272,7 +272,7 @@ def test_get_fingerprint_as_dict_not_file(tmp_path):
     mock_profile.fingerprint_path = tmp_path
 
     with pytest.raises(BrowserException, match="is not a file"):
-        BrowserForgeCompatible.get_fingerprint_as_dict(mock_profile)
+        BrowserForge.get_fingerprint_as_dict(mock_profile)
 
 
 def test_get_fingerprint_as_dict_empty(tmp_path):
@@ -284,7 +284,7 @@ def test_get_fingerprint_as_dict_empty(tmp_path):
     mock_profile.fingerprint_path = empty_file
 
     with pytest.raises(BrowserException, match="is empty"):
-        BrowserForgeCompatible.get_fingerprint_as_dict(mock_profile)
+        BrowserForge.get_fingerprint_as_dict(mock_profile)
 
 
 def test_get_fingerprint_as_dict_invalid_json(tmp_path):
@@ -296,7 +296,7 @@ def test_get_fingerprint_as_dict_invalid_json(tmp_path):
     mock_profile.fingerprint_path = bad_json
 
     with pytest.raises(BrowserException, match="Invalid fingerprint JSON"):
-        BrowserForgeCompatible.get_fingerprint_as_dict(mock_profile)
+        BrowserForge.get_fingerprint_as_dict(mock_profile)
 
 
 def test_get_fingerprint_as_dict_not_dict(tmp_path):
@@ -308,4 +308,4 @@ def test_get_fingerprint_as_dict_not_dict(tmp_path):
     mock_profile.fingerprint_path = list_json
 
     with pytest.raises(BrowserException, match="not a valid dict"):
-        BrowserForgeCompatible.get_fingerprint_as_dict(mock_profile)
+        BrowserForge.get_fingerprint_as_dict(mock_profile)

@@ -1,5 +1,5 @@
 """
-Unit tests for fingerprint uniqueness in BrowserForgeCompatible.
+Unit tests for fingerprint uniqueness in BrowserForge.
 """
 
 import sys
@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 from camouchat.BrowserManager import browserforge as bf_module
 from camouchat.BrowserManager.profile_info import ProfileInfo
 
-BrowserForgeCompatible = bf_module.BrowserForge
+BrowserForge = bf_module.BrowserForge
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def mock_logger():
 
 @pytest.fixture
 def browserforge(mock_logger):
-    return BrowserForgeCompatible(log=mock_logger)
+    return BrowserForge(log=mock_logger)
 
 
 def test_get_all_existing_fingerprints(browserforge, tmp_path):
@@ -64,8 +64,8 @@ def test_gen_fg_avoids_duplicates(browserforge):
     unique_fg.screen = Mock(width=1920, height=1080)
 
     # Mock screen size
-    with patch.object(BrowserForgeCompatible, "get_screen_size", return_value=(1920, 1080)):
-        with patch("camouchat.BrowserManager.browserforge_manager.FingerprintGenerator") as MockGen:
+    with patch.object(BrowserForge, "get_screen_size", return_value=(1920, 1080)):
+        with patch("camouchat.BrowserManager.browserforge.FingerprintGenerator") as MockGen:
             mock_gen_instance = MockGen.return_value
             # First return duplicate, then return unique
             mock_gen_instance.generate.side_effect = [dup_fg, unique_fg]

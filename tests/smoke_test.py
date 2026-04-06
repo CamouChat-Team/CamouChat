@@ -27,7 +27,7 @@ from camouchat.BrowserManager import (
 )
 from camouchat.StorageDB import StorageType
 from camouchat.WhatsApp import Login, WebSelectorConfig
-from camouchat.WhatsApp.wa_js.wajs_wrapper import WapiWrapper
+from camouchat.WhatsApp.api.wa_js.wajs_wrapper import WapiWrapper
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CONFIG — Fill these in.  No personal data is committed; use your own values.
@@ -383,7 +383,7 @@ async def test_community(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
 async def test_status(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
     """
     [On hold → Fails] Status/stories fetch hangs the XMPP bridge.
-    Kept as a placeholder for when the underlying WPP API is fixed.
+    Kept as a placeholder for when the underlying WPP api is fixed.
     """
     # mine   = await wapi.status_get_mine()
     # theirs = await wapi.status_get(cfg["contact_id"])
@@ -396,7 +396,7 @@ async def test_media_extract(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
     Extract and decrypt the most recent image/video from MEDIA_CHAT_ID.
 
     Uses:
-      - Cache API path first (zero network)
+      - Cache api path first (zero network)
       - CDN fallback if not cached (logs INFO: [NETWORK])
 
     Requires a chat with at least one image/video in history.
@@ -448,7 +448,7 @@ async def test_media_extract(wapi: WapiWrapper, cfg: Dict[str, Any]) -> None:
     result = await wapi.extract_media(message=target, save_path=save_to)
 
     if result["success"]:
-        fallback = " [CDN fallback used]" if result["used_fallback"] else " [Cache API]"
+        fallback = " [CDN fallback used]" if result["used_fallback"] else " [Cache api]"
         print(f"  ✅ SUCCESS{fallback}")
         print(f"     type={result['type']}  mimetype={result['mimetype']}")
         print(f"     size={result['size_bytes']:,} bytes  viewOnce={result['view_once']}")

@@ -6,9 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.7.0] - [Next Version]
+### Moved
+- Decorator Folder moved to WhatsApp/ 
+
+### Removed 
+- BrowserForge Interface removed
+
 ### Added 
-- ChatModelAPI dataclass added at camouchat/WhatsApp/models/chat_api.py
-- MessageModelAPI dataclass added at camouchat/WhatsApp/models/message_api.py
+- ChatModelAPI dataclass added at camouchat/WhatsApp/models/chat_api.py & Structure Extended 
+- MessageModelAPI dataclass added at camouchat/WhatsApp/models/message_api.py & Structure Extended 
 
 - **WA-JS API Layer (`wajs_scripts.py` + `wajs_wrapper.py`)**: Built a full programmatic bridge
   into WhatsApp Web's internal Webpack store — reading messages, chats, contacts, groups,

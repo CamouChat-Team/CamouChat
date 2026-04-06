@@ -13,7 +13,5 @@ gives :
 
 from .chat import Chat
 from .message import Message
-from .message_api import MessageModelAPI
-from .chat_api import ChatModelAPI
 
-__all__ = ["Message", "Chat", "MessageModelAPI", "ChatModelAPI"]
+__all__ = ["Message", "Chat"]
