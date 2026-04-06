@@ -15,7 +15,7 @@ class ChatApiManager:
     # RAM BASED METHODS
     # ──────────────────────────────────────────────
 
-    async def get_chat(self, chat_id: str) -> ChatModelAPI:
+    async def get_chat_by_id(self, chat_id: str) -> ChatModelAPI:
         """
         [Type: RAM]
         Fetch all the scalar data from React memory structured via ChatModelAPI.

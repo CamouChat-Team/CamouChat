@@ -152,6 +152,14 @@ class MessageModelAPI:
     # ── Mentions ──────────────────────────────────────────────────────────────
     mentionedJidList: Optional[List[str]]
 
+    # ── Sender Data (Deep Identity) ───────────────────────────────────────────
+    senderObj: Optional[Dict[str, Any]]
+    senderWithDevice: Optional[str]
+
+    # ── Diagnostics/Debug ───────────────────────────────────────────────────────────
+    optionalAttrList: Optional[Dict[str, str]]
+
+
     # ── Media fields ──────────────────────────────────────────────────────────
     mimetype: Optional[str]
     directPath: Optional[str]
@@ -299,6 +307,14 @@ class MessageModelAPI:
             # ── Mentions ───────────────────────────────────────────────────────
             mentionedJidList=g("mentionedJidList") or None,
 
+            # ── Sender Data (Deep Identity) ────────────────────────────────────
+            senderObj=g("senderObj") or None,
+            senderWithDevice=g("senderWithDevice") or None,
+
+            # ── Diagnostics ────────────────────────────────────────────────────
+            optionalAttrList=g("optionalAttrList") or {},
+
+
             # ── Media ──────────────────────────────────────────────────────────
             mimetype=g("mimetype"),
             directPath=g("directPath"),
@@ -343,6 +359,32 @@ class MessageModelAPI:
             lines.append(f"  author      : {self.author}  (group sender)")
         if self.pushname:
             lines.append(f"  pushname    : {self.pushname}")
+        
+        # Deep Sender Profiling display
+        if self.senderObj:
+            so = self.senderObj
+            badges = []
+            if so.get("isBusiness"): 
+                badges.append("Business")
+            if so.get("isEnterprise"): 
+                badges.append("Enterprise")
+            if so.get("verifiedLevel"): 
+                badges.append(f"VerifiedLvl={so.get('verifiedLevel')}")
+            badge_str = f" [{', '.join(badges)}]" if badges else ""
+            
+            # WhatsApp uses '__x_' prefixes for React getter keys now
+            display_name = so.get('__x_name') or so.get('name') or so.get('__x_pushname') or so.get('pushname') or 'Unknown'
+            lines.append(f"  senderProfile: {display_name}{badge_str}")
+            
+            # Format the raw dictionary beautifully
+            import json
+            pretty_so = json.dumps(so, indent=2)
+            lines.append("  senderRawData:")
+            for j_line in pretty_so.splitlines():
+                lines.append(f"    {j_line}")
+        
+        if self.senderWithDevice:
+            lines.append(f"  senderDevice: {self.senderWithDevice}")
 
         lines.append(f"  timestamp   : {self.timestamp}")
         lines.append(f"  ack         : {self.ack}  (0=pending 1=sent 2=delivered 3=read 4=played)")
@@ -597,6 +639,11 @@ class MessageModelAPI:
             # ── Misc ──────────────────────────────────────────────────────────
             "stickerSentTs": self.stickerSentTs,
             "isViewed": self.isViewed,
+            # ── Sender Identity ───────────────────────────────────────────────
+            "senderObj": self.senderObj,
+            "senderWithDevice": self.senderWithDevice,
+            # ── Diagnostics ───────────────────────────────────────────────────
+            "optionalAttrList": self.optionalAttrList,
         }
         if include_none:
             return raw
