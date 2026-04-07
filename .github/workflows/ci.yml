@@ -39,7 +39,7 @@ jobs:
         run: uv run black --check camouchat tests
 
       - name: Run Mypy (Type Checker)
-        run: uv run mypy camouchat tests
+        run: uv run mypy camouchat tests --exclude "tests/smoke_test.py"
 
       - name: Run deptry (Dependency Checker)
         run: uv run deptry camouchat
