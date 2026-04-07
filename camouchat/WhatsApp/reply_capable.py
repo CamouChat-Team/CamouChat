@@ -199,8 +199,8 @@ class ReplyCapable(ReplyCapableInterface[Message, HumanInteractionController, We
                     await asyncio.sleep(delay)
                 else:
                     raise ReplyCapableError(
-                        f"side_edge_click: '{data_id}' never appeared in DOM after "
-                        f"{retries} attempts."
+                        f"side_edge_click failed after {retries} attempts: "
+                        f"'{data_id}' never appeared in DOM."
                     )
 
             except ReplyCapableError:
