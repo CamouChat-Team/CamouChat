@@ -28,9 +28,6 @@ class WapiWrapper:
     def __init__(self, page: Page, log: Optional[Union[LoggerAdapter, Logger]] = None):
         self.page = page
         self.log = log or camouchatLogger
-        # ── Bridge state — instance-scoped (NOT class-level) ──────────────────
-        # Keeping these on the instance prevents state leaking between separate
-        # WapiWrapper objects when multiple browser pages are in play.
         self._bridge_key: Optional[str] = None
         self._queue_key: Optional[str] = None
         self._bridge_active: bool = False
@@ -620,66 +617,51 @@ class WapiWrapper:
         self,
         message: Dict[str, Any],
         save_path: str,
-    ) -> Dict[str, Any]:
+    ) -> Optional[str]:
         """
-        High-level media extraction from a raw MsgModel dump.
+        Extract and save WhatsApp media using the browser Cache API only.
 
-        Reads directPath + mediaKey + type directly from the message dict,
-        tries the Cache api first (zero network), falls back to CDN if needed,
-        writes the file to save_path, and returns a structured result dict.
+        **RAM-only — zero network cost.**  Reads the already-cached encrypted
+        blob from the browser's Cache Storage, decrypts it with the AES key
+        embedded in the message, and writes the plaintext bytes to disk.
 
-        Type: RAM (Cache api primary) / NETWORK (CDN fallback — logged as INFO)
+        This is the **only** extraction method called in the production path.
+        CDN download (``extract_media_cdn``) exists as a separate function but
+        is intentionally **not** invoked here — hitting Meta's CDN creates a
+        server-side access log and is considered non-stealthy.
 
         Args:
-            message:   Raw MsgModel dict from get_messages() or get_message_by_id().
-                       Required fields: directPath, type
-                       Optional fields: mediaKey (needed for Cache api decrypt),
-                                        id_serialized (needed for CDN fallback)
-            save_path: Full path where the decrypted file will be written.
-                       Use media_save_path(message, save_dir) to auto-generate.
+            message:   Raw MsgModel dict from ``get_messages()`` / ``get_message_by_id()``.
+                       Required fields: ``directPath``, ``mediaKey``, ``type``.
+            save_path: Full filesystem path where the decrypted file is written.
+                       Use ``media_save_path(message, save_dir)`` to auto-generate.
 
         Returns:
-            {
-                "success":       bool,        # True if bytes were saved
-                "type":          str,          # "image"|"video"|"audio"|"ptt"|"document"|"sticker"
-                "mimetype":      str | None,   # e.g. "image/jpeg"
-                "size_bytes":    int | None,   # file size on success
-                "path":          str | None,   # absolute path to saved file
-                "msg_id":        str | None,   # id_serialized from the message
-                "view_once":     bool,         # True if this was a view-once message
-                "used_fallback": bool,         # True if CDN download [NETWORK] was used
-                "error":         str | None,   # human-readable error on failure
-            }
+            Absolute path string of the saved file on success, or ``None`` if:
+                - ``directPath`` is absent (message has no downloadable media).
+                - ``mediaKey`` is absent (cannot decrypt without the AES key).
+                - The Cache API returned nothing (blob not yet cached locally).
+                - Any unexpected JS / decode error occurred.
 
         Raw MsgModel fields consumed:
-            directPath, mediaKey, type, id_serialized, mimetype, viewOnce / isViewOnce
+            ``directPath``, ``mediaKey``, ``type``, ``mimetype``, ``viewOnce``
         """
-        direct_path = message.get("directPath")
+        direct_path  = message.get("directPath")
         media_key_b64 = message.get("mediaKey")
-        media_type = message.get("type", "image")
-        msg_id = message.get("id_serialized")
-        mimetype = message.get("mimetype") or message.get("mime_type")
-        view_once = bool(message.get("viewOnce") or message.get("isViewOnce"))
-
-        result: Dict[str, Any] = {
-            "success": False,
-            "type": media_type,
-            "mimetype": mimetype,
-            "size_bytes": None,
-            "path": None,
-            "msg_id": msg_id,
-            "view_once": view_once,
-            "used_fallback": False,
-            "error": None,
-        }
+        media_type   = message.get("type", "image")
 
         if not direct_path:
-            result["error"] = "Message has no directPath — not a downloadable media message."
-            return result
+            self.log.debug("extract_media: no directPath — not a downloadable media message.")
+            return None
 
-        # ── Primary: Cache api (zero network) ──────────────────────────────────
-        b64 = None
-        if media_key_b64:
+        if not media_key_b64:
+            self.log.debug(
+                f"extract_media: no mediaKey for {direct_path!r} — "
+                "cannot decrypt from Cache API."
+            )
+            return None
+
+        try:
             b64 = await self._evaluate_stealth(
                 WAJS_Scripts.decrypt_media(
                     direct_path=direct_path,
@@ -687,43 +669,96 @@ class WapiWrapper:
                     media_type=media_type,
                 )
             )
-
-        if b64 is None:
-            # ── Fallback: CDN download (NETWORK) ───────────────────────────────
-            if not msg_id:
-                result["error"] = (
-                    "Cache miss and no id_serialized in message — cannot use CDN fallback."
-                )
-                return result
-
-            self.log.info(
-                f"extract_media: Cache miss for {direct_path!r} — "
-                f"falling back to CDN download via wpp.chat.downloadMedia() [NETWORK]"
-            )
-            result["used_fallback"] = True
-            b64 = await self._evaluate_stealth(WAJS_Scripts.download_media(msg_id=msg_id))
+        except Exception as e:
+            self.log.warning(f"extract_media: Cache API JS error — {e}")
+            return None
 
         if not b64:
-            result["error"] = "Both Cache api and CDN fallback returned None — media unavailable."
-            return result
+            self.log.debug(
+                f"extract_media: Cache API returned nothing for {direct_path!r} — "
+                "blob not yet cached locally."
+            )
+            return None
 
-        raw_bytes = base64.b64decode(b64)
+        try:
+            raw_bytes = base64.b64decode(b64)
+        except Exception as e:
+            self.log.warning(f"extract_media: base64 decode failed — {e}")
+            return None
 
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
         Path(save_path).write_bytes(raw_bytes)
         self.log.info(
-            f"extract_media: [{media_type}] {len(raw_bytes):,} bytes → {save_path}"
-            + (" [CDN fallback]" if result["used_fallback"] else " [Cache api]")
+            f"extract_media: [{media_type}] {len(raw_bytes):,} bytes → {save_path} [Cache API]"
+        )
+        return save_path
+
+    async def extract_media_cdn(
+        self,
+        message: Dict[str, Any],
+        save_path: str,
+    ) -> Optional[str]:
+        """
+        Download and save WhatsApp media via Meta's CDN.
+
+        .. warning::
+            **DO NOT CALL IN PRODUCTION.**
+
+            This function makes a real outbound HTTPS request to Meta's CDN
+            servers (``wpp.chat.downloadMedia()``).  The CDN access is logged
+            server-side and may contribute to the bot-detection signal that
+            WhatsApp uses for rate-limiting and bans.
+
+            It exists as a documented escape hatch for debugging / recovery
+            scenarios where the browser cache is cold.  Use ``extract_media``
+            (Cache API path) for all production downloads.
+
+        Args:
+            message:   Raw MsgModel dict.  ``id_serialized`` is required
+                       (WPP uses it to locate and re-download the blob).
+            save_path: Full filesystem path where the decrypted file is written.
+
+        Returns:
+            Absolute path string on success, or ``None`` on any failure.
+
+        Raw MsgModel fields consumed:
+            ``id_serialized``, ``type``
+        """
+        msg_id     = message.get("id_serialized")
+        media_type = message.get("type", "media")
+
+        if not msg_id:
+            self.log.warning("extract_media_cdn: id_serialized missing — cannot call downloadMedia.")
+            return None
+
+        self.log.info(
+            f"extract_media_cdn: [NETWORK] downloading {msg_id!r} via "
+            "wpp.chat.downloadMedia() — CDN hit will be logged by Meta."
         )
 
-        result.update(
-            {
-                "success": True,
-                "size_bytes": len(raw_bytes),
-                "path": save_path,
-            }
+        try:
+            b64 = await self._evaluate_stealth(WAJS_Scripts.download_media(msg_id=msg_id))
+        except Exception as e:
+            self.log.warning(f"extract_media_cdn: JS error — {e}")
+            return None
+
+        if not b64:
+            self.log.warning(f"extract_media_cdn: downloadMedia returned nothing for {msg_id!r}.")
+            return None
+
+        try:
+            raw_bytes = base64.b64decode(b64)
+        except Exception as e:
+            self.log.warning(f"extract_media_cdn: base64 decode failed — {e}")
+            return None
+
+        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(save_path).write_bytes(raw_bytes)
+        self.log.info(
+            f"extract_media_cdn: [{media_type}] {len(raw_bytes):,} bytes → {save_path} [CDN]"
         )
-        return result
+        return save_path
+
 
     # ─────────────────────────────────────────────
     # 6. NEWSLETTER (CHANNELS)
