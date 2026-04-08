@@ -41,7 +41,10 @@ Returns the entire list of initialized chats residing in memory. Highly performa
 #### `get_active_chat() -> ChatModelAPI | None`
 Returns the `ChatModelAPI` representation of the chat currently open on the user's screen.
 
----
+#### `open_chat(chat: ChatModelAPI, page: Page) -> bool`
+The most advanced **Stealth Hybrid** method for forcibly opening a chat on screen.
+*   **Step 1: Physical Bounding Box Search (Primary Stealth)**: It natively restricts search to the unmounted `div#pane-side` or `aria-label="Chat list"` DOM regions for `chat.formattedTitle`. If found on the active screen, it logs physical telemetry by drawing a `Camoufox` bezier curve to the bounding rectangle and emitting an OS-level layout point click.
+*   **Step 2: Virtualized RAM Bridging (Fallback)**: If the chat is scrolled out of the current viewport (React virtualized unmount), rather than frantically scrolling the page like a classic bot, it performs an ambient pointer move to generate safe noise, sleeps for natural reaction time (~2 seconds), and explicitly pushes WhatsApp's exact internal event router (`WPP.chat.openChatBottom()`).
 
 ## ✉️ MessageApiManager
 

@@ -1,6 +1,8 @@
+from playwright.async_api import Page
 from logging import Logger, LoggerAdapter
 from typing import Any
-
+import random
+import asyncio
 from camouchat.camouchat_logger import camouchatLogger
 from .models import ChatModelAPI
 from .wa_js import WapiWrapper, WAJS_Scripts
@@ -10,6 +12,78 @@ class ChatApiManager:
     def __init__(self, bridge: WapiWrapper, logger: Logger | LoggerAdapter | None = None) -> None:
         self._bridge = bridge
         self.log = logger or camouchatLogger
+
+    async def open_chat(self, chat: ChatModelAPI, page: Page) -> bool:
+        """
+        Opens the chat using a Stealth Hybrid approach.
+        1. Tries to find the chat physically on the screen and injects human CDP mouse clicks.
+        2. If virtualized (hidden), falls back to the RAM bridge.
+        """
+
+        if chat is None:
+            raise ValueError("Chat is None, cannot open chat")
+
+        if chat.isOpened:
+            self.log.debug(f"Chat {chat.id_serialized} is already opened")
+            return True
+
+        # ──────────────────────────────────────────────────────────
+        # HYBRID STRATEGY (Stealth first, RAM second)
+        # ──────────────────────────────────────────────────────────
+        
+        # If we don't have a formatted Title, we cannot safely scrape the DOM. Skip to RAM fallback.
+        if chat.formattedTitle:
+            self.log.debug(f"Locating chat: {chat.formattedTitle} ({chat.id_serialized})")
+            
+            try:
+                chat_locator = (
+                    page.locator("div#pane-side, div[aria-label*='Chat list' i]")
+                    .locator(f"span[title='{chat.formattedTitle}']")
+                    .first
+                )
+
+                if await chat_locator.count() > 0 and await chat_locator.is_visible():
+                    box = await chat_locator.bounding_box()
+                    if box:
+                        # Calculate center coordinates
+                        target_x = box["x"] + (box["width"] / 2)
+                        target_y = box["y"] + (box["height"] / 2)
+
+                        self.log.debug(
+                            f"Chat physically visible. Injecting physical CDP click at {target_x}, {target_y}."
+                        )
+
+                        # Humanize Movement
+                        await page.mouse.move(
+                            target_x + random.uniform(-10, 10), target_y + random.uniform(-10, 10)
+                        )
+                        await asyncio.sleep(random.uniform(0.1, 0.4))
+
+                        # Hardware level click, bypasses execution locks
+                        await page.mouse.click(
+                            target_x + random.uniform(-2, 2),
+                            target_y + random.uniform(-2, 2),
+                        )
+                        return True
+            except Exception as e:
+                self.log.warning(f"Stealth DOM scrape failed for {chat.formattedTitle}, reverting to RAM: {e}")
+
+        # Virtualized DOM Fallback
+        self.log.debug(f"Chat '{chat.formattedTitle or chat.id_serialized}' not visible on screen. Triggering RAM open.")
+
+        # Inject ambient human pointer telemetry before triggering magical DOM re-renders.
+        await page.mouse.move(random.randint(150, 800), random.randint(150, 600))
+        await asyncio.sleep(random.uniform(1.8, 2.5))
+
+        try:
+            await self._bridge._evaluate_stealth(
+                f'window.WPP.chat.openChatBottom("{chat.id_serialized}")'
+            )
+            return True
+
+        except Exception as e:
+            self.log.error(f"Failed to open chat {chat.id_serialized}: {e}")
+            return False
 
     # ──────────────────────────────────────────────
     # RAM BASED METHODS

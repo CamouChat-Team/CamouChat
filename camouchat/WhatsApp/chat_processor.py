@@ -136,40 +136,29 @@ class ChatProcessor(ChatProcessorInterface):
 
         for attempt in range(1, retries + 1):
             try:
-                # Bypass actionability checks entirely by using JS to find exactly
-                # where the chat is located currently.
-                coords = await self.page.evaluate(
-                    """(name) => {
-                        const rows = document.querySelectorAll(
-                            '[role="row"], [role="listitem"]'
-                        );
-                        for (const row of rows) {
-                            const span = row.querySelector('span[title]');
-                            if (span && span.title === name) {
-                                const r = row.getBoundingClientRect();
-                                return {
-                                    x: r.left + r.width / 2,
-                                    y: r.top + r.height / 2
-                                };
-                            }
-                        }
-                        return null;
-                    }""",
-                    chat_name,
+                chat_locator = (
+                    self.page.locator("div#pane-side, div[aria-label*='Chat list' i]")
+                    .locator(f"span[title='{chat_name}']")
+                    .first
                 )
 
-                if coords:
-                    self.log.debug(
-                        f"[_click_chat] Attempt {attempt}/{retries}: "
-                        f"Injecting CDP click at {coords['x']}, {coords['y']} for '{chat_name}'."
-                    )
-                    await asyncio.sleep(random.uniform(0.2, 0.5))
+                if await chat_locator.count() > 0 and await chat_locator.is_visible():
+                    box = await chat_locator.bounding_box()
+                    if box:
+                        target_x = box["x"] + (box["width"] / 2)
+                        target_y = box["y"] + (box["height"] / 2)
 
-                    await self.page.mouse.click(
-                        coords["x"] + random.uniform(-2, 2),
-                        coords["y"] + random.uniform(-2, 2),
-                    )
-                    return True
+                        self.log.debug(
+                            f"[_click_chat] Attempt {attempt}/{retries}: "
+                            f"Injecting CDP click at {target_x}, {target_y} for '{chat_name}'."
+                        )
+                        await asyncio.sleep(random.uniform(0.2, 0.5))
+
+                        await self.page.mouse.click(
+                            target_x + random.uniform(-2, 2),
+                            target_y + random.uniform(-2, 2),
+                        )
+                        return True
 
                 # If no coords, DOM is probably re-rendering. Just fall through to retry.
                 self.log.debug(
