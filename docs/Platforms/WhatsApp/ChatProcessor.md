@@ -1,4 +1,7 @@
-# 💬 ChatProcessor
+# 💬 ChatProcessor (Legacy)
+
+> [!WARNING]
+> **Legacy Architecture:** `ChatProcessor` relies on slow, fragile DOM scraping and scrolling to extract chat data. For high-performance, real-time extraction, please use the new `WapiSession.chat_manager` to access chats instantly from RAM.
 
 `camouchat.WhatsApp.chat_processor`
 
