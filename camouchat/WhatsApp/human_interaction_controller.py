@@ -27,7 +27,7 @@ _lock_file_path = os.path.join(tempfile.gettempdir(), "whatsapp_clipboard.lock")
 _clipboard_file_lock = FileLock(_lock_file_path)
 
 
-class HumanInteractionController():
+class HumanInteractionController:
     """Simulates human-like typing with variable delays."""
 
     _instances: weakref.WeakKeyDictionary[Page, HumanInteractionController] = (
@@ -54,12 +54,12 @@ class HumanInteractionController():
         if hasattr(self, "_initialized") and self._initialized:
             return
 
-        self.page = page 
+        self.page = page
         self.ui_config = ui_config
         self.log = log or camouchatLogger
         if self.page is None:
             raise ValueError("page must not be None")
-        
+
         self._initialized = True
 
     async def typing(self, text: str, **kwargs) -> bool:
@@ -167,43 +167,44 @@ class HumanInteractionController():
                 if previous_clipboard is not None:
                     await loop.run_in_executor(None, pyperclip.copy, previous_clipboard)
                 await loop.run_in_executor(None, _clipboard_file_lock.release)
-    
-    async def send_api_text(self, bridge : WapiWrapper, text : str, chat_id : str) -> bool : 
+
+    async def send_api_text(self, bridge: WapiWrapper, text: str, chat_id: str) -> bool:
         """
         Skips native OS usage & Directly send text via RAM Func.
         Initially supported for direct text msg sending only & works for Qouted Replies also.
         Dont support to send text with Media or other attachments.
-        
+
         Gives Telementry : mouse moves , msg box click & focus , for txt len > 50 chars , add ctrl C & ctrl V telementry.
-        Args : 
+        Args :
             bridge : WapiWrapper instance
             text : Text to be sent
         Returns:
             bool: True if text is sent successfully.
         """
 
-        if bridge is None: 
-            raise ValueError("bridge is not given consider giving WapiSession'bridge or WapiWrapper")
-        
-        try : 
+        if bridge is None:
+            raise ValueError(
+                "bridge is not given consider giving WapiSession'bridge or WapiWrapper"
+            )
+
+        try:
             inputBox = self.ui_config.message_box()
-            await inputBox.click(timeout=5000) # Telementry
+            await inputBox.click(timeout=5000)  # Telementry
 
             if not chat_id:
                 raise HumanizedOperationError("Could not determine active chat ID from bridge.")
 
             await bridge._evaluate_stealth(f"wpp.chat.markIsComposing('{chat_id}', 3000)")
 
-            if len(text) > 50 :  # Telementry
+            if len(text) > 50:  # Telementry
                 await self.page.keyboard.press("Control+C")
                 await asyncio.sleep(random.uniform(0.05, 0.15))
                 await self.page.keyboard.press("Control+V")
-            
+
             await asyncio.sleep(random.uniform(1.2, 2.5))
             await bridge._evaluate_stealth(WAJS_Scripts.send_text_message(chat_id, text))
             return True
 
-        except Exception as e : 
+        except Exception as e:
             self.log.error(f"[HumanInteractionController] send_api_text failed: {e}")
             raise HumanizedOperationError(f"Failed to execute send_api_text: {e}") from e
-

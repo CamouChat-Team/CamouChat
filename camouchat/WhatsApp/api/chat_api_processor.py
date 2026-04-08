@@ -28,11 +28,10 @@ class ChatApiManager:
             self.log.debug(f"Chat {chat.id_serialized} is already the active view based on cache.")
             return True
 
-        
         # If we don't have a formatted Title, we cannot safely scrape the DOM. Skip to RAM fallback.
         if chat.formattedTitle:
             self.log.debug(f"Locating chat: {chat.formattedTitle} ({chat.id_serialized})")
-            
+
             try:
                 chat_locator = (
                     page.locator("div#pane-side, div[aria-label*='Chat list' i]")
@@ -65,10 +64,14 @@ class ChatApiManager:
                         self._last_opened_chat_id = chat.id_serialized
                         return True
             except Exception as e:
-                self.log.warning(f"Stealth DOM scrape failed for {chat.formattedTitle}, reverting to RAM: {e}")
+                self.log.warning(
+                    f"Stealth DOM scrape failed for {chat.formattedTitle}, reverting to RAM: {e}"
+                )
 
         # Virtualized DOM Fallback
-        self.log.debug(f"Chat '{chat.formattedTitle or chat.id_serialized}' not visible on screen. Triggering RAM open.")
+        self.log.debug(
+            f"Chat '{chat.formattedTitle or chat.id_serialized}' not visible on screen. Triggering RAM open."
+        )
 
         # Inject ambient human pointer telemetry before triggering magical DOM re-renders.
         await page.mouse.move(random.randint(150, 800), random.randint(150, 600))
