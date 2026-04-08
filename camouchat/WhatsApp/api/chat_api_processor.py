@@ -12,6 +12,7 @@ class ChatApiManager:
     def __init__(self, bridge: WapiWrapper, logger: Logger | LoggerAdapter | None = None) -> None:
         self._bridge = bridge
         self.log = logger or camouchatLogger
+        self._last_opened_chat_id: str | None = None
 
     async def open_chat(self, chat: ChatModelAPI, page: Page) -> bool:
         """
@@ -23,13 +24,10 @@ class ChatApiManager:
         if chat is None:
             raise ValueError("Chat is None, cannot open chat")
 
-        if chat.isOpened:
-            self.log.debug(f"Chat {chat.id_serialized} is already opened")
+        if chat.id_serialized == self._last_opened_chat_id:
+            self.log.debug(f"Chat {chat.id_serialized} is already the active view based on cache.")
             return True
 
-        # ──────────────────────────────────────────────────────────
-        # HYBRID STRATEGY (Stealth first, RAM second)
-        # ──────────────────────────────────────────────────────────
         
         # If we don't have a formatted Title, we cannot safely scrape the DOM. Skip to RAM fallback.
         if chat.formattedTitle:
@@ -42,7 +40,7 @@ class ChatApiManager:
                     .first
                 )
 
-                if await chat_locator.count() > 0 and await chat_locator.is_visible():
+                if await chat_locator.count() > 0 and await chat_locator.is_visible(timeout=5000):
                     box = await chat_locator.bounding_box()
                     if box:
                         # Calculate center coordinates
@@ -64,6 +62,7 @@ class ChatApiManager:
                             target_x + random.uniform(-2, 2),
                             target_y + random.uniform(-2, 2),
                         )
+                        self._last_opened_chat_id = chat.id_serialized
                         return True
             except Exception as e:
                 self.log.warning(f"Stealth DOM scrape failed for {chat.formattedTitle}, reverting to RAM: {e}")
@@ -79,6 +78,7 @@ class ChatApiManager:
             await self._bridge._evaluate_stealth(
                 f'window.WPP.chat.openChatBottom("{chat.id_serialized}")'
             )
+            self._last_opened_chat_id = chat.id_serialized
             return True
 
         except Exception as e:

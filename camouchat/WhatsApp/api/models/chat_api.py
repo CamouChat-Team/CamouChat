@@ -25,7 +25,6 @@ class ChatModelAPI:
         disappearingModeInitiator (str | None): Who initiated the disappearing mode (e.g., 'chat').
         unreadMentionCount (int | None): Number of times you were explicitly @mentioned and haven't read it yet.
         lastChatEntryTimestamp (int | None): Timestamp of the last time someone typed/sent something to this chat.
-        isOpened (bool | None): True if you have physically opened this chat in the UI session.
         isReadOnly (bool | None): True if you are not allowed to send messages (e.g., Announcements group).
         isTrusted (bool | None): True if the sender is an existing contact or trusted entity.
         formattedTitle (str | None): The display name or group title shown in the UI.
@@ -57,7 +56,6 @@ class ChatModelAPI:
     disappearingModeInitiator: str | None
     unreadMentionCount: int | None
     lastChatEntryTimestamp: int | None
-    isOpened: bool | None
     isReadOnly: bool | None
     isTrusted: bool | None
     formattedTitle: str | None
@@ -109,7 +107,6 @@ class ChatModelAPI:
             disappearingModeInitiator=safe(get_val("disappearingModeInitiator")),
             unreadMentionCount=safe(get_val("unreadMentionCount")),
             lastChatEntryTimestamp=safe(get_val("lastChatEntryTimestamp")),
-            isOpened=safe(get_val("hasOpened")),
             isReadOnly=safe(get_val("isReadOnly")),
             isTrusted=safe(get_val("trusted")),
             formattedTitle=get_val("formattedTitle") or get_val("name"),
@@ -151,8 +148,6 @@ class ChatModelAPI:
             flags.append("spam-flagged")
         if self.canSend is False:
             flags.append("cannot-send")
-        if self.isOpened:
-            flags.append("opened")
 
         if flags:
             lines.append(f"  flags       : {', '.join(flags)}")
@@ -208,7 +203,6 @@ class ChatModelAPI:
             "disappearingModeInitiator": self.disappearingModeInitiator,
             "unreadMentionCount": self.unreadMentionCount,
             "lastChatEntryTimestamp": self.lastChatEntryTimestamp,
-            "isOpened": self.isOpened,
             "isReadOnly": self.isReadOnly,
             "isTrusted": self.isTrusted,
             "formattedTitle": self.formattedTitle,
