@@ -1,8 +1,11 @@
-# ✉️ MessageProcessor
+# ✉️ MessageProcessor (Legacy)
+
+> [!WARNING]
+> **Legacy Architecture:** `MessageProcessor` relies on slow, fragile DOM scraping. For high-performance, real-time message extraction, please migrate to the new RAM-based Event Bridge. See the [Event Hooks Documentation](EventHooks.md) instead!
 
 `camouchat.WhatsApp.message_processor`
 
-`MessageProcessor` is the central orchestrator of the message extraction pipeline. It fetches raw message elements from the WhatsApp Web DOM, optionally encrypts them with AES-256-GCM, deduplicates against the database, enqueues them for async storage, and passes them through the rate-limiting filter.
+`MessageProcessor` is the central orchestrator of the legacy message extraction pipeline. It fetches raw message elements from the WhatsApp Web DOM, optionally encrypts them with AES-256-GCM, deduplicates against the database, enqueues them for async storage, and passes them through the rate-limiting filter.
 
 Like all WhatsApp components, it is a **Singleton-per-Page** instance.
 

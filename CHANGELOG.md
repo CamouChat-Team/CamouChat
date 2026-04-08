@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.0] - [Next Version]
 
 ### Added
+- **Compliance**: Added proper Apache 2.0 attribution and `NOTICE` file for `wa-js` integration.
 - **WA-JS Bridge**: Comprehensive RAM-level API for messages, chats, and privacy settings, bypassing DOM scraping.
 - **Stealth Engine**: Hardened isolation using non-enumerable properties and randomized identifiers to evade integrity scanners.
 - **Media Pipeline**: Automated, multi-category download system (`save_media`) with support for Images, Videos, Audio, and Documents.
