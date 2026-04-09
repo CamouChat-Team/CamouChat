@@ -245,10 +245,11 @@ class MediaCapable(MediaCapableInterface[WebSelectorConfig]):
 
         # Simplified: WPP's downloadMedia handles local cache (LRU) transparently.
         # If auto-download is ON, this call is zero-CDN (stealth).
-        path = await self._wapi.bridge.extract_media(
+        result = await self._wapi.bridge.extract_media(
             message=raw,
             save_path=save_path,
         )
 
+        path = result.get("path") if result.get("success") else None
         self.log.debug(f"[save_media] type={wa_type!r} category={category!r} path={path!r}")
         return path

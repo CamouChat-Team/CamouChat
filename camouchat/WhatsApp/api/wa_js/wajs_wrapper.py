@@ -656,7 +656,7 @@ class WapiWrapper:
         self,
         message: Dict[str, Any],
         save_path: str,
-    ) -> Optional[str]:
+    ) -> Dict[str, Any]:
         """
         Extract and save WhatsApp media using WPP's internal download pipeline.
 
@@ -674,10 +674,25 @@ class WapiWrapper:
         """
         msg_id = message.get("id_serialized")
         media_type = message.get("type", "media")
+        mimetype = message.get("mimetype")
+
+        result_dict: Dict[str, Any] = {
+            "success": False,
+            "type": media_type,
+            "mimetype": mimetype,
+            "size_bytes": None,
+            "path": None,
+            "msg_id": msg_id,
+            "view_once": bool(message.get("isViewOnce")),
+            "used_fallback": False,
+            "latency_ms": 0.0,
+            "error": None,
+        }
 
         if not msg_id:
-            self.log.warning("extract_media: id_serialized missing — skipping.")
-            return None
+            result_dict["error"] = "id_serialized missing — skipping."
+            self.log.warning(f"extract_media: {result_dict['error']}")
+            return result_dict
 
         self.log.info(
             f"extract_media: downloading {msg_id!r} via wpp.chat.downloadMedia() "
@@ -685,29 +700,33 @@ class WapiWrapper:
         )
 
         try:
-            result = await self._evaluate_stealth(WAJS_Scripts.download_media(msg_id=msg_id))
+            js_result = await self._evaluate_stealth(WAJS_Scripts.download_media(msg_id=msg_id))
         except Exception as e:
-            self.log.warning(f"extract_media: JS error — {e}")
-            return None
+            result_dict["error"] = f"JS error: {e}"
+            self.log.warning(f"extract_media: {result_dict['error']}")
+            return result_dict
 
-        if not result:
-            self.log.warning(f"extract_media: downloadMedia returned nothing for {msg_id!r}.")
-            return None
+        if not js_result:
+            result_dict["error"] = f"downloadMedia returned nothing for {msg_id!r}."
+            self.log.warning(f"extract_media: {result_dict['error']}")
+            return result_dict
 
         # Unpack structured result {b64, isCached, latencyMs}
-        b64 = result.get("b64") if isinstance(result, dict) else result
-        is_cached = result.get("isCached", False) if isinstance(result, dict) else False
-        js_latency_ms = result.get("latencyMs", 0.0) if isinstance(result, dict) else 0.0
+        b64 = js_result.get("b64") if isinstance(js_result, dict) else js_result
+        is_cached = js_result.get("isCached", False) if isinstance(js_result, dict) else False
+        js_latency_ms = js_result.get("latencyMs", 0.0) if isinstance(js_result, dict) else 0.0
 
         if not b64:
-            self.log.warning(f"extract_media: null blob for {msg_id!r}.")
-            return None
+            result_dict["error"] = f"null blob for {msg_id!r}."
+            self.log.warning(f"extract_media: {result_dict['error']}")
+            return result_dict
 
         try:
             raw_bytes = base64.b64decode(b64)
         except Exception as e:
-            self.log.warning(f"extract_media: base64 decode failed — {e}")
-            return None
+            result_dict["error"] = f"base64 decode failed: {e}"
+            self.log.warning(f"extract_media: {result_dict['error']}")
+            return result_dict
 
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
         Path(save_path).write_bytes(raw_bytes)
@@ -718,7 +737,15 @@ class WapiWrapper:
             f"extract_media: [{media_type}] {len(raw_bytes):,} bytes → {save_path} "
             f"[{source} | JS:{js_latency_ms:.1f}ms]"
         )
-        return save_path
+
+        result_dict.update({
+            "success": True,
+            "path": save_path,
+            "size_bytes": len(raw_bytes),
+            "used_fallback": not is_cached,
+            "latency_ms": js_latency_ms,
+        })
+        return result_dict
 
     # ─────────────────────────────────────────────
     # 6. NEWSLETTER (CHANNELS)
