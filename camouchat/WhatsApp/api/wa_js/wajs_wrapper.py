@@ -660,9 +660,9 @@ class WapiWrapper:
         """
         Extract and save WhatsApp media using WPP's internal download pipeline.
 
-        **Stealth (Local-First):** This method uses ``wpp.chat.downloadMedia()``, 
-        which automatically probes WA's internal LRU caches (Cache Storage & IndexedDB) 
-        before hitting the CDN. If auto-download is ON in the profile, this 
+        **Stealth (Local-First):** This method uses ``wpp.chat.downloadMedia()``,
+        which automatically probes WA's internal LRU caches (Cache Storage & IndexedDB)
+        before hitting the CDN. If auto-download is ON in the profile, this
         call is essentially a zero-network RAM snatch.
 
         Args:
@@ -719,7 +719,6 @@ class WapiWrapper:
             f"[{source} | JS:{js_latency_ms:.1f}ms]"
         )
         return save_path
-
 
     # ─────────────────────────────────────────────
     # 6. NEWSLETTER (CHANNELS)

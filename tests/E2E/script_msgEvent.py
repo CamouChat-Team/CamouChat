@@ -64,16 +64,6 @@ async def main():
         print("\n --------- New Msg Arrived ───────────────────────────────────")
         print(msg, "\n")
 
-        # Extended Media/Diagnostic Debug
-        if msg.mimetype:
-            import json
-            print("[*] Media Debug:")
-            print(f"    - mediaData: {json.dumps(msg.mediaData, indent=2) if msg.mediaData else None}")
-            print(f"    - staticUrl: {msg.staticUrl}")
-            print(f"    - mms3Url:   {msg.deprecatedMms3Url}")
-            if msg.thumbnailDirectPath:
-                print(f"    - thumbPath: {msg.thumbnailDirectPath}")
-
         print(f"--------------Opening the Chat where msg came from : {msg.jid_From}")
         chat = await wapi.chat_manager.get_chat_by_id(msg.jid_From)  # get chatData
         print("Chat ---")
@@ -105,9 +95,7 @@ async def main():
                 f"\u2022 Is Group: {chat.groupType}\n"
                 f"\u2022 Is Archived: {chat.isArchived}\n"
             )
-            await hum.send_api_text(
-                bridge=wapi.bridge, text=info_text, chat_id=msg.jid_From
-            )
+            await hum.send_api_text(bridge=wapi.bridge, text=info_text, chat_id=msg.jid_From)
 
         elif msg.body == "!me":
             print("[*] Command triggered: !me (Identity Extraction)")
@@ -147,7 +135,7 @@ async def main():
             print(f"[*] Media message received — type={msg.MsgType}")
 
             # 1. Save to disk (WPP managed local-first download)
-            saved_path = await media.save_media(message=msg, force=True)
+            saved_path = await media.save_media(message=msg)
 
             if not saved_path:
                 print("[!] save_media returned None — media could not be retrieved.")
@@ -177,7 +165,9 @@ async def main():
             file_obj = FileTyped(uri=saved_path, name=file_name, mime_type=msg.mimetype)
 
             print(f"[*] Re-uploading {file_name} as {mtype} to {msg.jid_From}")
-            resend_ok = await media.add_media(mtype=mtype, file=file_obj, force=True) # Force it cuz we customly adding then sending.
+            resend_ok = await media.add_media(
+                mtype=mtype, file=file_obj, force=True
+            )  # Force it cuz we customly adding then sending.
             if resend_ok:
                 print("[✔] Media re-sent successfully.")
             else:
@@ -185,9 +175,7 @@ async def main():
 
     # Keep the script running to listen for events
     await new_msg()
-    print(
-        "\n[\u2714] Hook active. Try sending !ping, !info, !me, or !echo <text> in WhatsApp."
-    )
+    print("\n[\u2714] Hook active. Try sending !ping, !info, !me, or !echo <text> in WhatsApp.")
     await asyncio.sleep(3600)  # 1 hour running.
 
 

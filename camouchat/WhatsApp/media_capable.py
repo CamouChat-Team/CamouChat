@@ -63,9 +63,7 @@ class MediaCapable(MediaCapableInterface[WebSelectorConfig]):
         Retries every second until WA's render cycle caches the blob.
     """
 
-    _instances: weakref.WeakKeyDictionary[Page, MediaCapable] = (
-        weakref.WeakKeyDictionary()
-    )
+    _instances: weakref.WeakKeyDictionary[Page, MediaCapable] = weakref.WeakKeyDictionary()
     _initialized: bool = False
 
     def __new__(cls, *args, **kwargs) -> MediaCapable:
@@ -101,14 +99,10 @@ class MediaCapable(MediaCapableInterface[WebSelectorConfig]):
     async def menu_clicker(self) -> None:
         """Open the attachment menu."""
         try:
-            menu_icon = await self.UIConfig.plus_rounded_icon().element_handle(
-                timeout=1000
-            )
+            menu_icon = await self.UIConfig.plus_rounded_icon().element_handle(timeout=1000)
 
             if not menu_icon:
-                raise MenuError(
-                    "Menu Locator return None/Empty / menu_clicker / MediaCapable"
-                )
+                raise MenuError("Menu Locator return None/Empty / menu_clicker / MediaCapable")
 
             await menu_icon.click(timeout=3000)
             await asyncio.sleep(random.uniform(1.0, 1.5))
@@ -139,9 +133,7 @@ class MediaCapable(MediaCapableInterface[WebSelectorConfig]):
             if force:
                 await asyncio.sleep(random.uniform(0.6, 1.0))
                 try:
-                    send_btn = self.page.get_by_role(
-                        "button", name=re.compile(r"send", re.I)
-                    ).last
+                    send_btn = self.page.get_by_role("button", name=re.compile(r"send", re.I)).last
                     await send_btn.click(timeout=4000)
                     self.log.debug("Media preview send button clicked.")
                 except Exception:
@@ -258,8 +250,5 @@ class MediaCapable(MediaCapableInterface[WebSelectorConfig]):
             save_path=save_path,
         )
 
-        self.log.debug(
-            f"[save_media] type={wa_type!r} category={category!r} path={path!r}"
-        )
+        self.log.debug(f"[save_media] type={wa_type!r} category={category!r} path={path!r}")
         return path
-

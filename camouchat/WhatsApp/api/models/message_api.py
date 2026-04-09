@@ -509,15 +509,6 @@ class MessageModelAPI:
         if self.duration:
             lines.append(f"  duration    : {self.duration}s")
 
-        # ── Extended Media Debug ──────────────────────────────────────────────
-        if self.deprecatedMms3Url:
-            lines.append(f"  mms3Url     : {self.deprecatedMms3Url[:60]}...")
-        if self.staticUrl:
-            lines.append(f"  staticUrl   : {self.staticUrl[:60]}...")
-        if self.mediaData:
-            md = self.mediaData
-            lines.append(f"  mediaData   : type={md.get('type')} swcached={md.get('sw-cached')} downloadStage={md.get('downloadStage')}")
-
         # ── Poll detail ───────────────────────────────────────────────────────
         if self.isQuestion:
             if self.pollName:

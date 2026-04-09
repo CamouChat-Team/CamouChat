@@ -256,7 +256,7 @@ class WebSelectorConfig(WebUISelectorCapable):
             .filter(has_text=re.compile("plus-rounded", re.I))
             .first
         )
-    
+
     def menu_item(self, name: str) -> Locator:
         pattern = re.compile(rf"^{re.escape(name)}", re.I)
         return self.page.get_by_role("menuitem", name=pattern)
