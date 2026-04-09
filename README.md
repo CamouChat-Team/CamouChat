@@ -1,5 +1,5 @@
 <div style="text-align: center;">
-  <img src="https://raw.githubusercontent.com/BITS-Rohit/CamouChat/main/assets/text.png" alt="CamouChat Text" />
+  <img src="./assets/text.png" alt="CamouChat Text" />
 </div>
 
 **CamouChat** is a high-performance, stealth-aware WhatsApp automation SDK. Designed for researchers and developers, it
