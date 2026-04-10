@@ -257,37 +257,33 @@ class WebSelectorConfig(WebUISelectorCapable):
             .first
         )
 
+    def menu_item(self, name: str) -> Locator:
+        pattern = re.compile(rf"^{re.escape(name)}", re.I)
+        return self.page.get_by_role("menuitem", name=pattern)
+
     def document(self) -> Locator:
-        """Safely locates the 'Document' upload option in the menu"""
-        return self.page.get_by_role("button", name="Document").first
+        return self.menu_item("document")
 
     def photos_videos(self) -> Locator:
-        """Safely locates the 'Photos & videos' upload option in the menu"""
-        return self.page.get_by_role("button", name="Photos & videos").first
+        return self.menu_item("photos")
 
     def camera(self) -> Locator:
-        """Safely locates the 'Camera' upload option in the menu"""
-        return self.page.get_by_role("button", name="Camera").first
+        return self.menu_item("camera")
 
     def audio(self) -> Locator:
-        """Safely locates the 'Audio' upload option in the menu"""
-        return self.page.get_by_role("button", name="Audio").first
+        return self.menu_item("audio")
 
     def contact(self) -> Locator:
-        """Safely locates the 'Contact' upload option in the menu"""
-        return self.page.get_by_role("button", name="Contact").first
+        return self.menu_item("contact")
 
     def poll(self) -> Locator:
-        """Safely locates the 'Poll' upload option in the menu"""
-        return self.page.get_by_role("button", name="Poll").first
+        return self.menu_item("poll")
 
     def event(self) -> Locator:
-        """Safely locates the 'Event' upload option in the menu"""
-        return self.page.get_by_role("button", name="Event").first
+        return self.menu_item("event")
 
     def new_sticker(self) -> Locator:
-        """Safely locates the 'New sticker' upload option in the menu"""
-        return self.page.get_by_role("button", name="New sticker")
+        return self.menu_item("new sticker")
 
     # -------------------- Message Type Checkers -------------------- #
     @staticmethod

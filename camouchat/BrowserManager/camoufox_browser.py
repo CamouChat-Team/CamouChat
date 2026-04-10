@@ -16,6 +16,7 @@ from camouchat.BrowserManager.platform_manager import Platform
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.Exceptions.base import BrowserException
 from camouchat.BrowserManager.Interfaces.browser_interface import BrowserInterface
+from camouchat.camouchat_logger import get_browser_profile_logger
 
 
 class CamoufoxBrowser(BrowserInterface):
@@ -39,10 +40,12 @@ class CamoufoxBrowser(BrowserInterface):
         Initializes the Camoufox browser manager.
 
         Args:
-            config: Browser configuration (locale, headless, proxy, geoip, etc.)
-            profile: Profile information for session isolation and fingerprint persistence.
+            config: Browser config (locale, headless, proxy, geoip, etc.)
+            profile: Profile info for session isolation and fingerprint persistence.
             log: Logger instance for audit and error tracking.
         """
+        # Use profile-specific browser logger by default
+        log = log or get_browser_profile_logger(profile.profile_id)
         super().__init__(log=log)
         self.config = config
         self.profile = profile

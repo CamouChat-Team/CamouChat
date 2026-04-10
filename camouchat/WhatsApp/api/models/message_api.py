@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from camouchat.Interfaces.message_interface import MessageInterface
+
 
 @dataclass
-class MessageModelAPI:
+class MessageModelAPI(MessageInterface):
     """
     Normalized Data Model for a WhatsApp Message.
     Parses the raw Webpack dictionary into a clean, predictable Python object.
@@ -17,7 +19,7 @@ class MessageModelAPI:
         author (str | None): JID of the specific person who sent it (ONLY present in group chats).
         pushname (str | None): The notification name of the sender.
         broadcast (bool | None): True if sent via a Broadcast List.
-        MsgType (str | None): Message type: 'chat','image','video','ptt','document','revoked', etc.
+        msgtype (str | None): Message type: 'chat','image','video','ptt','document','revoked', etc.
         body (str | None): Text content, or base64 thumbnail for media.
         caption (str | None): Text caption attached to media.
         timestamp (int | None): Unix timestamp of the message.
@@ -55,7 +57,7 @@ class MessageModelAPI:
         fromQuotedMsg (bool | None): True if this message is a reply to another message.
         isQuotedMsgAvailable (bool | None): True if the quoted message still exists in local DB.
         quotedMsgId (str | None): The serialized ID of the message being replied to.
-        quotedMsgType (str | None): Type of the quoted message (e.g. 'image', 'chat').
+        quotedmsgtype (str | None): Type of the quoted message (e.g. 'image', 'chat').
         quotedMsgBody (str | None): First 120 chars of quoted message body/caption.
         quotedParticipant (str | None): JID of the person who sent the original quoted message.
         quotedRemoteJid (str | None): Chat JID where the quoted message lives.
@@ -89,7 +91,7 @@ class MessageModelAPI:
         # ── vCard fields ──────────────────────────────────────────────────────
         vcardFormattedName (str | None): Human-readable resolved display name from the vCard
                                          (FN field). Much cleaner than parsing vcardList.
-        vcardList (list | None): Raw vCard payloads if MsgType == 'vcard' / 'multi_vcard'.
+        vcardList (list | None): Raw vCard payloads if msgtype == 'vcard' / 'multi_vcard'.
 
         # ── Misc ──────────────────────────────────────────────────────────────
         stickerSentTs (int | None): Original creation timestamp for stickers.
@@ -102,6 +104,10 @@ class MessageModelAPI:
 
     # ── Identity ──────────────────────────────────────────────────────────────
     id_serialized: Optional[str]
+    timestamp: Optional[int]
+    msgtype: Optional[str]
+    body: Optional[str]
+    from_chat: str
     rowId: Optional[int]
     fromMe: Optional[bool]
     jid_From: Optional[str]
@@ -109,10 +115,7 @@ class MessageModelAPI:
     author: Optional[str]
     pushname: Optional[str]
     broadcast: Optional[bool]
-    MsgType: Optional[str]
-    body: Optional[str]
     caption: Optional[str]
-    timestamp: Optional[int]
     ack: Optional[int]
 
     # ── Presence / arrival flags ──────────────────────────────────────────────
@@ -144,7 +147,7 @@ class MessageModelAPI:
     fromQuotedMsg: Optional[bool]
     isQuotedMsgAvailable: Optional[bool]
     quotedMsgId: Optional[str]
-    quotedMsgType: Optional[str]
+    quotedmsgtype: Optional[str]
     quotedMsgBody: Optional[str]
     quotedParticipant: Optional[str]
     quotedRemoteJid: Optional[str]
@@ -159,13 +162,19 @@ class MessageModelAPI:
     # ── Diagnostics/Debug ───────────────────────────────────────────────────────────
     optionalAttrList: Optional[Dict[str, str]]
 
-    # ── Media fields ──────────────────────────────────────────────────────────
+    # ── Media fields ──────────────────────────────────────────────────────
     mimetype: Optional[str]
     directPath: Optional[str]
     mediaKey: Optional[str]
     size: Optional[int]
     duration: Optional[int]
     isViewOnce: Optional[bool]
+    mediaData: Optional[Dict[str, Any]]
+    deprecatedMms3Url: Optional[str]
+    staticUrl: Optional[str]
+    thumbnailDirectPath: Optional[str]
+    thumbnailSha256: Optional[str]
+    thumbnailEncSha256: Optional[str]
 
     # ── Poll fields ───────────────────────────────────────────────────────────
     isQuestion: Optional[bool]
@@ -194,7 +203,7 @@ class MessageModelAPI:
     isViewed: Optional[bool]
 
     # ─────────────────────────────────────────────────────────────────────────
-
+    ui: Optional[str] = None  # type: ignore[assignment]
     _MEDIA_THUMB_TYPES: frozenset = frozenset(
         {
             "image",
@@ -220,7 +229,7 @@ class MessageModelAPI:
           to_serialized      → jid_To     (WID._serialized pre-extracted by JS)
           author_serialized  → author     (group messages only)
           t                  → timestamp  (Unix seconds)
-          type               → MsgType
+          type               → msgtype
           body               → body
           notifyName         → pushname
           star               → isStarMsg
@@ -249,17 +258,29 @@ class MessageModelAPI:
         is_poll = g("type") == "poll_creation"
         is_question = g("isAnyQuestion") or is_poll
 
+        id_obj = g("id", {})
+        is_from_me = g("fromMe")
+        if is_from_me is None:
+            if isinstance(id_obj, dict) and "fromMe" in id_obj:
+                is_from_me = id_obj.get("fromMe")
+            elif g("id_serialized") and str(g("id_serialized")).startswith("true_"):
+                is_from_me = True
+            else:
+                is_from_me = False
+        is_from_me = bool(is_from_me)
+
         return cls(
             # ── Identity ──────────────────────────────────────────────────────
             id_serialized=g("id_serialized"),
+            from_chat="",  # this can be personally invoked via get_chat_by_id but initially giving it as Empty saves Ram Call
             rowId=g("rowId"),
-            fromMe=g("fromMe"),
-            jid_From=g("from_serialized"),
+            fromMe=is_from_me,
+            jid_From=g("to_serialized") if is_from_me else g("from_serialized"),
             jid_To=g("to_serialized"),
             author=g("author_serialized"),
             pushname=g("notifyName") or g("pushname"),
             broadcast=g("broadcast"),
-            MsgType=g("type"),
+            msgtype=g("type"),
             body=g("body"),
             caption=g("caption"),
             timestamp=timestamp,
@@ -291,7 +312,7 @@ class MessageModelAPI:
             fromQuotedMsg=bool(g("quotedMsg") or g("quotedMsgId") or g("quotedStanzaID")),
             isQuotedMsgAvailable=bool(g("quotedMsg")),
             quotedMsgId=g("quotedMsgId") or g("quotedStanzaID"),
-            quotedMsgType=g("quotedMsgType"),
+            quotedmsgtype=g("quotedmsgtype"),
             quotedMsgBody=g("quotedMsgBody"),
             quotedParticipant=g("quotedParticipant"),
             quotedRemoteJid=g("quotedRemoteJid"),
@@ -313,6 +334,12 @@ class MessageModelAPI:
             size=size,
             duration=g("duration"),
             isViewOnce=g("isViewOnce", False),
+            mediaData=g("mediaData"),
+            deprecatedMms3Url=g("deprecatedMms3Url"),
+            staticUrl=g("staticUrl"),
+            thumbnailDirectPath=g("thumbnailDirectPath"),
+            thumbnailSha256=g("thumbnailSha256"),
+            thumbnailEncSha256=g("thumbnailEncSha256"),
             # ── Poll ───────────────────────────────────────────────────────────
             isQuestion=is_question,
             pollName=g("pollName"),
@@ -341,7 +368,7 @@ class MessageModelAPI:
         lines = [
             "─── MessageModelAPI ───────────────────────────────",
             f"  id          : {self.id_serialized}",
-            f"  type        : {self.MsgType}",
+            f"  type        : {self.msgtype}",
             f"  from        : {'Me' if self.fromMe else self.jid_From}",
             f"  to          : {self.jid_To}",
         ]
@@ -373,13 +400,12 @@ class MessageModelAPI:
             )
             lines.append(f"  senderProfile: {display_name}{badge_str}")
 
-            # Format the raw dictionary beautifully
-            import json
-
-            pretty_so = json.dumps(so, indent=2)
-            lines.append("  senderRawData:")
-            for j_line in pretty_so.splitlines():
-                lines.append(f"    {j_line}")
+            # Format the raw dictionary beautifully -- Debugging Only
+            # import json
+            # pretty_so = json.dumps(so, indent=2)
+            # lines.append("  senderRawData:")
+            # for j_line in pretty_so.splitlines():
+            #     lines.append(f"    {j_line}")
 
         if self.senderWithDevice:
             lines.append(f"  senderDevice: {self.senderWithDevice}")
@@ -390,11 +416,11 @@ class MessageModelAPI:
         # ── Body / caption ────────────────────────────────────────────────────
         if self.body:
             body = self.body
-            if self.MsgType == "vcard":
+            if self.msgtype == "vcard":
                 # vCard body is raw VCF text — show first 3 lines cleanly
                 preview = "\n         ".join(body.splitlines()[:3])
                 body_display = preview + ("…[vCard]" if len(body) > 120 else "")
-            elif self.MsgType in self._MEDIA_THUMB_TYPES and len(body) > 100:
+            elif self.msgtype in self._MEDIA_THUMB_TYPES and len(body) > 100:
                 # Only media types carry a base64 JPEG thumbnail in `body`.
                 # A long body on a chat/text message is just normal long text.
                 body_display = f"{body[:40]}…[thumbnail b64, {len(body)} chars]"
@@ -435,7 +461,7 @@ class MessageModelAPI:
             flags.append("botStreaming")
         if self.pendingDeleteForMe:
             flags.append("pendingDelete")
-        if self.MsgType == "ciphertext":
+        if self.msgtype == "ciphertext":
             flags.append("⚠ ciphertext(pending-decrypt)")
         if flags:
             lines.append(f"  flags       : {', '.join(flags)}")
@@ -461,8 +487,8 @@ class MessageModelAPI:
         # ── Quoted message ────────────────────────────────────────────────────
         if self.fromQuotedMsg:
             lines.append(f"  ↩ quotedId   : {self.quotedMsgId}")
-            if self.quotedMsgType:
-                lines.append(f"  ↩ quotedType : {self.quotedMsgType}")
+            if self.quotedmsgtype:
+                lines.append(f"  ↩ quotedType : {self.quotedmsgtype}")
             if self.quotedMsgBody:
                 lines.append(
                     f"  ↩ quotedBody : {self.quotedMsgBody[:80]}"
@@ -508,7 +534,7 @@ class MessageModelAPI:
                 lines.append(f"  pollSelect  : {sel if sel else 'unlimited'} option(s) per voter")
 
         # ── Event detail ──────────────────────────────────────────────────────
-        if self.MsgType == "event_creation":
+        if self.msgtype == "event_creation":
             if self.eventName:
                 lines.append(f"  eventName   : {self.eventName}")
             if self.eventDescription:
@@ -524,7 +550,7 @@ class MessageModelAPI:
                 lines.append("  eventKind   : scheduled call")
 
         # ── vCard detail ──────────────────────────────────────────────────────
-        if self.MsgType in ("vcard", "multi_vcard"):
+        if self.msgtype in ("vcard", "multi_vcard"):
             if self.vcardFormattedName:
                 lines.append(f"  vcardName   : {self.vcardFormattedName}")
             if self.vcardList:
@@ -537,7 +563,7 @@ class MessageModelAPI:
         return (
             f"MessageModelAPI("
             f"id='{self.id_serialized}', "
-            f"type='{self.MsgType}', "
+            f"type='{self.msgtype}', "
             f"fromMe={self.fromMe}, "
             f"timestamp={self.timestamp}"
             f")"
@@ -572,7 +598,7 @@ class MessageModelAPI:
             "author": self.author,
             "pushname": self.pushname,
             "broadcast": self.broadcast,
-            "MsgType": self.MsgType,
+            "msgtype": self.msgtype,
             "body": self.body,
             "caption": self.caption,
             "timestamp": self.timestamp,
@@ -602,7 +628,7 @@ class MessageModelAPI:
             "fromQuotedMsg": self.fromQuotedMsg,
             "isQuotedMsgAvailable": self.isQuotedMsgAvailable,
             "quotedMsgId": self.quotedMsgId,
-            "quotedMsgType": self.quotedMsgType,
+            "quotedmsgtype": self.quotedmsgtype,
             "quotedMsgBody": self.quotedMsgBody,
             "quotedParticipant": self.quotedParticipant,
             "quotedRemoteJid": self.quotedRemoteJid,
@@ -615,6 +641,12 @@ class MessageModelAPI:
             "size": self.size,
             "duration": self.duration,
             "isViewOnce": self.isViewOnce,
+            "mediaData": self.mediaData,
+            "deprecatedMms3Url": self.deprecatedMms3Url,
+            "staticUrl": self.staticUrl,
+            "thumbnailDirectPath": self.thumbnailDirectPath,
+            "thumbnailSha256": self.thumbnailSha256,
+            "thumbnailEncSha256": self.thumbnailEncSha256,
             # ── Poll ──────────────────────────────────────────────────────────
             "isQuestion": self.isQuestion,
             "pollName": self.pollName,

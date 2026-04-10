@@ -16,7 +16,7 @@ from camouchat.directory import DirectoryManager
 try:
     from concurrent_log_handler import ConcurrentRotatingFileHandler
 except ImportError:
-    ConcurrentRotatingFileHandler = RotatingFileHandler
+    ConcurrentRotatingFileHandler = RotatingFileHandler  # type: ignore[assignment, misc]
 
 
 class JSONFormatter(logging.Formatter):
@@ -65,7 +65,7 @@ class CamouChatLoggerAdapter(logging.LoggerAdapter):
 
 # ------ Logger Configs ---------
 logger = logging.getLogger("camouchat")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 logger.propagate = False  # Avoid duplication
 
 

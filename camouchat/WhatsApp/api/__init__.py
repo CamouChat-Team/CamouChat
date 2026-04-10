@@ -18,7 +18,7 @@ class WapiSession:
     def __init__(self, page: Page):
         self.page = page
         self.bridge = WapiWrapper(page)
-        self.chat_manager = ChatApiManager(self.bridge, camouchatLogger)
+        self.chat_manager = ChatApiManager(self.page, self.bridge, camouchatLogger)
         self.message_manager = MessageApiManager(self.bridge, camouchatLogger)
         self.log = camouchatLogger
         self.is_ready = False

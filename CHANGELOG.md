@@ -5,104 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.0] - [Next Version]
-### Moved
-- Decorator Folder moved to WhatsApp/ 
+---
 
-### Removed 
-- BrowserForge Interface removed
-
-### Added 
-- ChatModelAPI dataclass added at camouchat/WhatsApp/models/chat_api.py & Structure Extended 
-- MessageModelAPI dataclass added at camouchat/WhatsApp/models/message_api.py & Structure Extended 
-
-- **WA-JS API Layer (`wajs_scripts.py` + `wajs_wrapper.py`)**: Built a full programmatic bridge
-  into WhatsApp Web's internal Webpack store — reading messages, chats, contacts, groups,
-  newsletters, connection info, privacy settings, and more, all directly from browser RAM.
-  No UI clicks, no scraping, zero detection surface compared to the old ChatProcessor approach.
-
-- **Stealth Engine**: The `WPP` (wa-js) handle is injected into a hidden non-enumerable
-  `window` property and the global `window.WPP` is destroyed immediately after — making it
-  invisible to WA's integrity scanners while still fully accessible from our bridge.
-
-- **Media Extraction Pipeline**: Added `decrypt_media()` and a high-level `extract_media()`
-  wrapper that lifts encrypted media blobs from WhatsApp Web without triggering CDN logs.
-  It reads directly from the browser's **Cache API** first (zero network cost), and only
-  falls back to a CDN download if the blob hasn't been pre-cached — clearly logged as
-  `[NETWORK]` so you always know which path fired.
-
-- **`extract_media(message, save_path) → dict`**: The main entry point for media extraction.
-  Pass in any raw MsgModel dict from `get_messages()` and a save path — it handles everything
-  and returns a structured result: `{success, type, mimetype, size_bytes, path, view_once, used_fallback, error}`.
-
-- **`media_save_path(message, save_dir) → str`**: Auto-generates a clean filename from the
-  message's mimetype + serialized ID so you never have to name files manually.
-
-- **MIME → Extension Map**: Covers `image/jpeg`, `image/webp`, `video/mp4`, `audio/ogg`,
-  `application/pdf`, Office formats, and more — falls back gracefully by media type.
-
-- **Modular Smoke Test Suite (`tests/smoke_test.py`)**: Replaced the old monolithic smoke test
-  with a proper modular framework. Each of the 24 API tests is its own function — pick and run
-  exactly what you need via CLI, prefix matching, or a hardcoded list. Tests that are known to
-  hang the XMPP bridge are flagged `[ON HOLD]` and skipped automatically.
-
-  ```bash
-  uv run tests/smoke_test.py --list                    # see all tests + on-hold status
-  uv run tests/smoke_test.py                           # run all runnable tests
-  uv run tests/smoke_test.py test_conn_session         # run one
-  uv run tests/smoke_test.py test_conn test_privacy    # run by prefix
-  ```
-
-### Changed
-
-- `get_messages()` JS dump now converts `Uint8Array` / `ArrayBuffer` fields to base64 —
-  previously `mediaKey` (stored as a raw binary buffer on freshly-arrived messages) was
-  silently dropped, causing media filters to miss brand-new messages.
-
-- `get_message_by_id()` received the same binary → base64 serialization fix.
-
-
-### Fixed 
--  BrowserForge Profiles existing fingerprint validation with same platform level to prevent duplication .
-
-
-## [0.6.1] - 2026-03-20
+## [0.7.0] — Unreleased
 
 ### Added
 
-- **SEO Optimization**: Project visibility and meta-description enhancements.
-- **Documentation Updates**: Refined all files in the `docs/` directory for better structural clarity.
+- **License Compliance**: Introduced a `NOTICE` file and correct Apache 2.0 attribution headers for the bundled `wa-js` integration.
+- **RAM-Level Bridge**: Implemented a comprehensive internal JavaScript bridge for real-time access to messages, chats, contacts, and privacy state — eliminating all DOM scraping.
+- **Stealth Engine**: Hardened the bridge with non-enumerable, randomly-keyed property handles to resist WhatsApp integrity scanner enumeration.
+- **Media Extraction Pipeline**: Introduced `save_media` with automatic type-based categorisation (image, video, audio, document, sticker) and local-first retrieval prioritising the browser LRU cache over CDN calls.
+- **Message Event Hook**: Added the `@msg_event_hook` decorator for zero-latency, asynchronous interception of incoming WhatsApp messages.
+- **Extended Data Models**: Expanded `ChatModelAPI` and `MessageModelAPI` to achieve full schema parity with internal WhatsApp structures.
+- **Unified Boolean Direction**: Introduced type-safe `fromMe` boolean across all models and storage layers, replacing legacy string-based `direction` literals.
+- **Normalized Attribute Schema**: Standardized `Chat` and `Message` models with `id_serialized`, `name`, and `ui` fields for cross-platform consistency.
+- **Contextual Reply**: Integrated `WapiSession` into `ReplyCapable`, enabling precise message quoting via DOM-focus fallback and scroll-to-message support.
+- **Bridge API Parity**: Added `mark_is_composing` and `decrypt_media` methods to the `WAJS_Scripts` layer, completing the internal API surface.
+- **Test Infrastructure**: Decoupled interactive E2E and smoke validation scripts from the automated Pytest suite, enabling clean CI/CD execution without live browser dependencies.
+
+### Changed
+
+- **Storage Architecture Hardening**: Refactored `SQLAlchemyStorage` into a normalized ingestion pipeline supporting both Browser (DOM) and API (RAM) message sources.
+- **Type-Safe Filtering**: Rebuilt `MessageFilter` to utilize `id_serialized` for deterministic message identification and deduplication.
+- **Media API Contract**: Unified the `extract_media` return schema across `WapiWrapper`, `MessageApiManager`, and `MediaCapable`, providing consistent structured output including success state, file path, MIME type, byte size, and cache/CDN latency telemetry.
+- **Module Organisation**: Relocated decorator modules into the `WhatsApp/` package for improved structural cohesion.
+- **Binary Serialisation**: Improved `Uint8Array`-to-base64 handling in message fetching to ensure reliable `mediaKey` and media metadata extraction.
 
 ### Fixed
 
-- **README.md**: Addressed minor content and layout inconsistencies.
+- **Static Analysis**: Resolved all Mypy type errors across 82 source files via protocol stubs, strict assertions, and corrected Liskov substitution principle violations.
+- **Unit Test Parity**: Restored 100% pass rate across the full test suite by aligning mocks with the updated attribute naming and boolean logic.
+- **Manager Instantiation**: Fixed critical initialization bug in `WapiSession` ensuring all API managers receive the required browser page references.
+- **Concurrent Logging**: Hardened `camouchat_logger` with a graceful conditional import for `concurrent-log-handler`, falling back to a standard rotating handler when unavailable.
+- **Unit Tests**: Corrected `ReplyCapable` test suite to reflect method renames and updated mock object requirements introduced during the `quote_only` API refactor.
+- **Initialisation**: Fixed indentation errors and potential initialisation races in `CamoufoxBrowser` and `ProfileManager`.
 
-## [0.6.0] - 2026-03-20
+### Removed
+
+- **Diagnostic Verbosity**: Stripped redundant media debug output from `MessageModelAPI.__str__` to produce clean, production-safe log lines.
+- **Legacy Scraping Layer**: Removed the monolithic `ChatProcessor` DOM scraper and the first-generation `BrowserForge` wrapper.
+- **Deprecated Attrs**: Eliminated legacy `chat_name`, `chat_ui`, and `direction` string references throughout the core messaging pipeline.
+
+---
+
+## [0.6.1] — 2026-03-20
 
 ### Added
 
-- **Anti-Detection Browser Layer**: Integrated [Camoufox](https://github.com/daijro/camoufox) for a stealthy browser core.
-- **Dynamic Fingerprinting**: Incorporated [BrowserForge](https://github.com/daijro/browserforge) for realistic browser fingerprinting.
-- **Encrypted Storage**: Implemented **AES-GCM-256** encryption for secure local message and credential storage.
-- **Multi-Account & Multi-Platform Support**: Enhanced support for managing multiple profiles across Linux, macOS, and Windows.
-- **Database Flexibility**: Transitioned to **SQLAlchemy**, supporting SQLite, PostgreSQL, and MySQL.
-- **Sandboxed Profiles**: Fully isolated directories per profile for cookies, cache, and fingerprints.
-- **Humanized Interaction Layer**: Mimicking real user behavior to reduce detection risks.
-- **Dedicated CamouChat Logger**: Color console, rotating file, and JSON logging.
-- **OS-Independent Directory Resolve**: Internal management of platform-specific directories.
+- **Documentation**: Refined all files in the `docs/` directory for improved clarity and structural consistency.
+
+### Fixed
+
+- **README**: Addressed minor content inaccuracies and formatting inconsistencies.
+
+---
+
+## [0.6.0] — 2026-03-20
+
+### Added
+
+- **Anti-Detection Browser Core**: Integrated [Camoufox](https://github.com/daijro/camoufox) as the stealth browser foundation.
+- **Dynamic Fingerprinting**: Incorporated [BrowserForge](https://github.com/daijro/browserforge) for realistic, per-session browser fingerprint generation.
+- **Encrypted Storage**: Implemented AES-GCM-256 encryption for all locally persisted messages and credentials.
+- **Multi-Account Support**: Full support for managing isolated profiles across Linux, macOS, and Windows.
+- **Database Abstraction**: Introduced a SQLAlchemy-backed storage layer with support for SQLite, PostgreSQL, and MySQL.
+- **Profile Sandboxing**: Fully isolated per-profile directories for cookies, cache, and fingerprint state.
+- **Humanised Interaction**: Implemented keyboard telemetry and timing simulation to reduce behavioural detection risk.
+- **Structured Logging**: Added a dedicated logger with colour console output, rotating file handler, and JSON formatter.
+- **Directory Resolution**: Introduced platform-aware internal directory management.
 
 ### Changed
 
-- Major architectural shift to an **interface-driven** design for easier extensibility.
-- Improved test coverage to >= 76%.
-- Fixed reports for MYPY, Black, Ruff, and deptry.
+- **Architecture**: Transitioned to an interface-driven design pattern for improved extensibility and testability.
+- **Test Coverage**: Raised automated test coverage to ≥ 76%.
+- **Static Analysis**: Achieved clean passes under Mypy, Black, Ruff, and deptry.
 
-### Migrated
+---
 
-- **0.1.5 -> 0.6.0**: Significant codebase overhaul, moving from basic automation to a comprehensive, stealth-focused SDK.
+## [0.1.5] — 2026-02-01
 
-## [0.1.5] - 2026-02-01
-
-### Changed
-
-- Final release in the 0.1.x series before the 0.6 core infrastructure overhaul.
+Final release in the 0.1.x series prior to the 0.6.0 core infrastructure overhaul.

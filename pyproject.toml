@@ -67,6 +67,7 @@ dependencies = [
     "browserforge>=1.2.4",
     "platformdirs>=4.0.0",
     "filelock>=3.25.2",
+    "concurrent-log-handler>=0.9.29",
 ]
 
 [project.optional-dependencies]

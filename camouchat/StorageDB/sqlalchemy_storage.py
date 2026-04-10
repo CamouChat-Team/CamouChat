@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import asyncio
 from logging import Logger, LoggerAdapter
+
+from camouchat.WhatsApp.api.models import MessageModelAPI
 from camouchat.camouchat_logger import camouchatLogger
 from typing import List, Dict, Any, Optional, Sequence, Union
 
@@ -24,6 +26,7 @@ from camouchat.Exceptions.base import StorageError
 from camouchat.Interfaces.message_interface import MessageInterface
 from camouchat.Interfaces.storage_interface import StorageInterface
 from camouchat.StorageDB.models import Base, Message
+from camouchat.WhatsApp.models import Message as WhatsAppMessage
 
 
 class SQLAlchemyStorage(StorageInterface):
@@ -94,7 +97,7 @@ class SQLAlchemyStorage(StorageInterface):
         cls,
         profile: ProfileInfo,
         queue: asyncio.Queue,
-        log: Optional[Union[Logger, LoggerAdapter]],
+        log: Optional[Union[Logger, LoggerAdapter]] = None,
         batch_size: int = 50,
         flush_interval: float = 2.0,
     ) -> "SQLAlchemyStorage":
@@ -175,10 +178,7 @@ class SQLAlchemyStorage(StorageInterface):
         from sqlalchemy import text
 
         migration_sqls = [
-            "ALTER TABLE messages ADD COLUMN encrypted_message TEXT",
             "ALTER TABLE messages ADD COLUMN encryption_nonce VARCHAR(255)",
-            "ALTER TABLE messages ADD COLUMN encrypted_chat_name TEXT",
-            "ALTER TABLE messages ADD COLUMN chat_name_nonce VARCHAR(255)",
         ]
         if not self._engine:
             return
@@ -258,7 +258,13 @@ class SQLAlchemyStorage(StorageInterface):
         message_models = []
         for msg in msgs:
             try:
-                model = SQLAlchemyStorage._message_to_model(msg=msg)
+                if isinstance(msg, WhatsAppMessage):
+                    model = SQLAlchemyStorage._message_to_model(msg=msg)
+                elif isinstance(msg, MessageModelAPI):
+                    model = SQLAlchemyStorage._msg_api_to_model(msg=msg)
+                else:
+                    # Fallback duck-typing attempt
+                    model = SQLAlchemyStorage._message_to_model(msg=msg)  # type: ignore
                 message_models.append(model)
             except Exception as e:
                 self.log.warning(f"Failed to convert message: {e}")
@@ -279,9 +285,7 @@ class SQLAlchemyStorage(StorageInterface):
                 await session.commit()
                 self.log.debug(f"Inserted {len(message_models)} messages.")
             except IntegrityError:
-                # Some messages may already exist (duplicate message_id)
                 await session.rollback()
-                # Try inserting one by one to skip duplicates
                 success_count = 0
                 for model in message_models:
                     try:
@@ -293,7 +297,7 @@ class SQLAlchemyStorage(StorageInterface):
                     except IntegrityError:
                         continue  # Skip duplicate
                     except Exception as e:
-                        self.log.warning(f"Failed to insert message {model.message_id}: {e}")
+                        self.log.warning(f"Failed to insert message {model.id_serialized}: {e}")
 
                 self.log.debug(
                     f"Inserted {success_count}/{len(message_models)} messages (some duplicates)."
@@ -304,52 +308,48 @@ class SQLAlchemyStorage(StorageInterface):
                 raise StorageError(f"Batch insert failed: {e}") from e
 
     @staticmethod
-    def _message_to_model(msg: MessageInterface) -> Message:
+    def _message_to_model(msg: WhatsAppMessage) -> Message:
         """Convert MessageInterface to Message model."""
-        message_id = getattr(msg, "message_id", None) or getattr(msg, "data_id", "unknown")
-        raw_data = getattr(msg, "raw_data", "")
-        data_type = getattr(msg, "data_type", None)
-        direction = getattr(msg, "direction", None)
-        system_hit_time = getattr(msg, "system_hit_time", 0.0)
-
-        encrypted_message = getattr(msg, "encrypted_message", None)
+        msg_id = getattr(msg, "id_serialized", "unknown")
+        body = getattr(msg, "body", "")
+        msgtype = getattr(msg, "msgtype", None)
+        fromme = getattr(msg, "fromMe", None)
+        timestamp = getattr(msg, "timestamp", 0.0)
         encryption_nonce = getattr(msg, "encryption_nonce", None)
-        encrypted_chat_name = getattr(msg, "encrypted_chat_name", None)
-        chat_name_nonce = getattr(msg, "chat_name_nonce", None)
-
-        # When encryption is enabled, plaintext and ciphertext must not coexist.
-        if encrypted_message and raw_data:
-            raw_data = ""
-
-        parent_chat = getattr(msg, "parent_chat", None)
-        parent_chat_name = ""
-        parent_chat_id = ""
-        if parent_chat:
-            parent_chat_name = getattr(parent_chat, "chatName", "") or getattr(
-                parent_chat, "chat_name", ""
-            )
-            parent_chat_id = getattr(parent_chat, "chatID", "") or getattr(
-                parent_chat, "chat_id", ""
-            )
-
-        # When chat name is encrypted, the index column holds an HMAC digest
-        # so queries remain functional without exposing the real name.
-        index_name = getattr(msg, "parent_chat_name_index", None)
-        if encrypted_chat_name and index_name:
-            parent_chat_name = index_name
+        from_chat = getattr(msg, "from_chat", None)
+        from_chat_id = ""
+        if from_chat:
+            from_chat_id = getattr(from_chat, "id_serialized", "")
 
         return Message(
-            message_id=str(message_id),
-            raw_data=str(raw_data) if raw_data else "",
-            encrypted_message=encrypted_message,
+            id_serialized=str(msg_id),
+            body=str(body) if body else "",
             encryption_nonce=encryption_nonce,
-            encrypted_chat_name=encrypted_chat_name,
-            chat_name_nonce=chat_name_nonce,
-            data_type=str(data_type) if data_type else None,
-            direction=str(direction) if direction else None,
-            parent_chat_name=str(parent_chat_name),
-            parent_chat_id=str(parent_chat_id),
-            system_hit_time=float(system_hit_time),
+            msgtype=str(msgtype) if msgtype else None,
+            fromMe=fromme,
+            chat_id=str(from_chat_id),
+            timestamp=float(timestamp),
+        )
+
+    @staticmethod
+    def _msg_api_to_model(msg: MessageModelAPI) -> Message:
+        """Convert MessageModelAPI to unified Message DB model."""
+        msg_id = getattr(msg, "id_serialized", "unknown")
+        body = getattr(msg, "body", "")
+        msgtype = getattr(msg, "msgtype", None)
+        fromme = getattr(msg, "fromMe", None)
+        timestamp = getattr(msg, "timestamp", 0.0)
+        encryption_nonce = getattr(msg, "encryption_nonce", None)
+        chat_id = getattr(msg, "jid_From", "")
+
+        return Message(
+            id_serialized=str(msg_id),
+            body=str(body) if body else "",
+            encryption_nonce=encryption_nonce,
+            msgtype=str(msgtype) if msgtype else None,
+            fromMe=fromme,
+            chat_id=str(chat_id),
+            timestamp=float(timestamp),
         )
 
     def check_message_if_exists(self, msg_id: str, **kwargs) -> bool:
@@ -372,7 +372,7 @@ class SQLAlchemyStorage(StorageInterface):
         session_factory = self._get_session_factory()
         async with session_factory() as session:
             try:
-                stmt = select(exists().where(Message.message_id == msg_id))
+                stmt = select(exists().where(Message.id_serialized == msg_id))
                 result = await session.execute(stmt)
                 return result.scalar() or False
             except Exception as e:
@@ -409,8 +409,8 @@ class SQLAlchemyStorage(StorageInterface):
                 self.log.error(f"Async get all messages failed: {e}")
                 return []
 
-    async def get_messages_by_chat(self, chat_name: str, **kwargs) -> List[Dict[str, Any]]:
-        """Get messages filtered by chat name (or HMAC digest if encryption is enabled)."""
+    async def get_messages_by_chat(self, chat_id: str, **kwargs) -> List[Dict[str, Any]]:
+        """Get messages filtered by chat id (or HMAC digest if encryption is enabled)."""
         if not self._session_factory:
             return []
 
@@ -421,7 +421,7 @@ class SQLAlchemyStorage(StorageInterface):
             try:
                 stmt = (
                     select(Message)
-                    .where(Message.parent_chat_name == chat_name)
+                    .where(Message.chat_id == chat_id)
                     .order_by(Message.id.desc())
                     .limit(limit)
                 )
@@ -430,6 +430,52 @@ class SQLAlchemyStorage(StorageInterface):
                 return [msg.to_dict() for msg in messages]
             except Exception as e:
                 self.log.error(f"Get messages by chat failed: {e}")
+                return []
+
+    async def get_messages_by_ids_async(self, message_ids: list[str]) -> List[Dict[str, Any]]:
+        """Retrieve specific messages by their serialized IDs."""
+        if not self._session_factory or not message_ids:
+            return []
+
+        session_factory = self._get_session_factory()
+        async with session_factory() as session:
+            try:
+                stmt = select(Message).where(Message.id_serialized.in_(message_ids))
+                result = await session.execute(stmt)
+                messages = result.scalars().all()
+                return [msg.to_dict() for msg in messages]
+            except Exception as e:
+                self.log.error(f"Failed to fetch messages by IDs: {e}")
+                return []
+
+    async def execute_raw_sql(
+        self, query: str, params: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Execute a raw SQL query and return results as a list of dictionaries.
+        Supports both SELECT and DML (INSERT/UPDATE/DELETE).
+        """
+        from sqlalchemy import text
+
+        if not self._session_factory:
+            return []
+
+        session_factory = self._get_session_factory()
+        async with session_factory() as session:
+            try:
+                stmt = text(query)
+                result = await session.execute(stmt, params or {})
+
+                # If query returns rows (like SELECT), convert to dicts
+                if getattr(result, "returns_rows", False):
+                    return [dict(row._mapping) for row in result.all()]
+
+                # For DML, commit and return empty
+                await session.commit()
+                return []
+            except Exception as e:
+                self.log.error(f"Raw SQL execution failed: {e}")
+                await session.rollback()
                 return []
 
     async def get_decrypted_messages_async(
@@ -450,12 +496,9 @@ class SQLAlchemyStorage(StorageInterface):
             limit:  Max rows to fetch.
             offset: Pagination offset.
 
-        Returns:
             List of dicts identical to ``to_dict()`` but with:
-            - ``raw_data`` populated with decrypted plaintext (or original value
+            - ``body`` populated with decrypted plaintext (or original value
               when the row was stored without encryption).
-            - ``parent_chat_name`` populated with decrypted chat name (or the
-              HMAC digest / original value when not encrypted).
 
         Example::
 
@@ -474,31 +517,18 @@ class SQLAlchemyStorage(StorageInterface):
             out = dict(row)
 
             # Decrypt message body
-            enc_msg = row.get("encrypted_message")
             enc_nonce = row.get("encryption_nonce")
-            if enc_msg and enc_nonce:
+            if enc_nonce and out.get("body"):
                 try:
                     nonce_bytes = _b64.b64decode(enc_nonce)
-                    cipher_bytes = _b64.b64decode(enc_msg)
-                    msg_id = row.get("message_id", "")
-                    out["raw_data"] = decryptor.decrypt_message(
+                    cipher_bytes = _b64.b64decode(out["body"])
+                    msg_id = row.get("id_serialized", "")
+                    out["body"] = decryptor.decrypt_message(
                         nonce_bytes, cipher_bytes, msg_id or None
                     )
                 except Exception as e:
-                    self.log.warning(f"Failed to decrypt message {row.get('message_id')}: {e}")
-                    out["raw_data"] = "<decryption failed>"
-
-            # Decrypt chat name
-            enc_chat = row.get("encrypted_chat_name")
-            chat_nonce = row.get("chat_name_nonce")
-            if enc_chat and chat_nonce:
-                try:
-                    nonce_bytes = _b64.b64decode(chat_nonce)
-                    cipher_bytes = _b64.b64decode(enc_chat)
-                    out["parent_chat_name"] = decryptor.decrypt(nonce_bytes, cipher_bytes)
-                except Exception as e:
-                    self.log.warning(f"Failed to decrypt chat name: {e}")
-                    out["parent_chat_name"] = "<decryption failed>"
+                    self.log.warning(f"Failed to decrypt message {row.get('id_serialized')}: {e}")
+                    out["body"] = "<decryption failed>"
 
             result.append(out)
 
@@ -527,12 +557,16 @@ class SQLAlchemyStorage(StorageInterface):
             self._session_factory = None
             self.log.info("Database connection closed.")
 
-    async def __aenter__(self):
-        """Async context manager entry."""
+    async def start(self, **kwargs) -> None:
+        """Start database and background writer."""
         await self.init_db()
         await self.create_table()
         await self._migrate_add_encryption_columns()
         await self.start_writer()
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        await self.start()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

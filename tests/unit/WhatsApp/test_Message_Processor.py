@@ -95,9 +95,9 @@ async def test_init_page_none(mock_logger, mock_ui_config, mock_chat_processor):
 async def test_sort_messages_incoming():
     """Test sorting returns only incoming messages."""
     msg1 = Mock(spec=Message)
-    msg1.direction = "in"
+    msg1.fromMe = False
     msg2 = Mock(spec=Message)
-    msg2.direction = "out"
+    msg2.fromMe = True
 
     result = await MessageProcessor.sort_messages([msg1, msg2], incoming=True)
 
@@ -109,9 +109,9 @@ async def test_sort_messages_incoming():
 async def test_sort_messages_outgoing():
     """Test sorting returns only outgoing messages."""
     msg1 = Mock(spec=Message)
-    msg1.direction = "in"
+    msg1.fromMe = False
     msg2 = Mock(spec=Message)
-    msg2.direction = "out"
+    msg2.fromMe = True
 
     result = await MessageProcessor.sort_messages([msg1, msg2], incoming=False)
 
@@ -148,7 +148,7 @@ async def test_get_wrapped_messages_success(message_processor_instance, mock_ui_
 
     # Direction check (incoming)
     mock_inner_locator = AsyncMock(spec=Locator)
-    mock_inner_locator.count.return_value = 1
+    mock_inner_locator.count.return_value = 0
     mock_msg_ui.locator.return_value = mock_inner_locator
 
     mock_ui_config.isReacted = AsyncMock(return_value=False)
@@ -159,9 +159,9 @@ async def test_get_wrapped_messages_success(message_processor_instance, mock_ui_
 
     # Verification
     assert len(msgs) == 1
-    assert msgs[0].raw_data == "Hello"
-    assert msgs[0].data_id == "msg-123"
-    assert msgs[0].direction == "in"
+    assert msgs[0].body == "Hello"
+    assert msgs[0].id_serialized == "msg-123"
+    assert msgs[0].fromMe is False
 
 
 @pytest.mark.asyncio
@@ -190,9 +190,9 @@ async def test_fetcher_with_storage_deduplication(
 
     # Mock wrapped messages
     msg1 = Mock(spec=Message)
-    msg1.message_id = "msg-1"
+    msg1.id_serialized = "msg-1"
     msg2 = Mock(spec=Message)
-    msg2.message_id = "msg-2"
+    msg2.id_serialized = "msg-2"
 
     processor._get_wrapped_Messages = AsyncMock(return_value=[msg1, msg2])
 
@@ -207,7 +207,7 @@ async def test_fetcher_with_storage_deduplication(
     mock_storage.enqueue_insert.assert_called_once()
     _, kwargs = mock_storage.enqueue_insert.call_args
     assert len(kwargs["msgs"]) == 1
-    assert kwargs["msgs"][0].message_id == "msg-2"
+    assert kwargs["msgs"][0].id_serialized == "msg-2"
 
 
 @pytest.mark.asyncio
@@ -225,7 +225,7 @@ async def test_fetcher_with_filter(
     )
 
     msg1 = Mock(spec=Message)
-    msg1.message_id = "msg-1"
+    msg1.id_serialized = "msg-1"
     processor._get_wrapped_Messages = AsyncMock(return_value=[msg1])
 
     mock_filter.apply.side_effect = None  # Clear default lambda
@@ -254,7 +254,7 @@ async def test_fetcher_empty_after_filter(
     )
 
     msg1 = Mock(spec=Message)
-    msg1.message_id = "msg-1"
+    msg1.id_serialized = "msg-1"
     processor._get_wrapped_Messages = AsyncMock(return_value=[msg1])
 
     mock_filter.apply.side_effect = None  # Clear default lambda

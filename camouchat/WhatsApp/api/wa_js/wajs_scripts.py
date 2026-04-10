@@ -1239,116 +1239,23 @@ class WAJS_Scripts:
     # ─────────────────────────────────────────────
 
     @classmethod
-    def decrypt_media(cls, direct_path: str, media_key_b64: str, media_type: str) -> str:
-        """
-        Decrypt a WhatsApp media blob from the browser Cache api using the embedded mediaKey.
-        Type: RAM (Cache api) — Zero network cost if WA has already pre-downloaded the blob.
-
-        How it works:
-            1. Looks up the encrypted blob in WA's internal Cache api by CDN URL.
-            2. Derives IV + cipherKey via HKDF-SHA256 (WhatsApp media key spec).
-            3. Decrypts via AES-256-CBC, strips the trailing 10-byte MAC.
-            4. Returns the raw decrypted bytes as base64 for Python transfer.
-
-        Args:
-            direct_path:   msg['directPath']  — e.g. "/v/t62.7117-24/..."
-            media_key_b64: msg['mediaKey']    — base64-encoded 32-byte AES root key
-            media_type:    msg['type']        — 'image'|'video'|'audio'|'ptt'|'document'|'sticker'
-
-        Returns:
-            base64 string of decrypted media bytes, or null if not yet cached.
-
-        Raw MsgModel fields needed:
-            directPath, mediaKey, type, mimetype, encFilehash, filehash
-        """
-        safe_path = json.dumps(direct_path)
-        safe_key = json.dumps(media_key_b64)
-        safe_type = json.dumps(media_type)
-        return f"""
-            (async () => {{
-                try {{
-                    // 1. Locate the encrypted blob in WA's Cache api
-                    const cdnUrl = 'https://mmg.whatsapp.net' + {safe_path};
-                    const cacheNames = await caches.keys();
-                    let encBytes = null;
-                    for (const name of cacheNames) {{
-                        const c = await caches.open(name);
-                        const resp = await c.match(cdnUrl);
-                        if (resp) {{
-                            encBytes = new Uint8Array(await resp.arrayBuffer());
-                            break;
-                        }}
-                    }}
-                    if (!encBytes) return null; // Not yet cached — trigger fallback in Python
-
-                    // 2. HKDF-SHA256 key derivation (WhatsApp media encryption spec)
-                    const infoMap = {{
-                        'image':    'WhatsApp Image Keys',
-                        'video':    'WhatsApp Video Keys',
-                        'audio':    'WhatsApp Audio Keys',
-                        'ptt':      'WhatsApp Audio Keys',
-                        'document': 'WhatsApp Document Keys',
-                        'sticker':  'WhatsApp Image Keys'
-                    }};
-                    const rawKey = Uint8Array.from(atob({safe_key}), c => c.charCodeAt(0));
-                    const keyMaterial = await crypto.subtle.importKey(
-                        'raw', rawKey, 'HKDF', false, ['deriveBits']
-                    );
-                    const infoStr = infoMap[{safe_type}] || 'WhatsApp Image Keys';
-                    const info    = new TextEncoder().encode(infoStr);
-                    const derived = new Uint8Array(await crypto.subtle.deriveBits(
-                        {{ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info }},
-                        keyMaterial,
-                        112 * 8  // 112 bytes total
-                    ));
-
-                    // 3. AES-256-CBC decrypt — strip last 10 bytes (truncated MAC)
-                    const iv        = derived.slice(0, 16);
-                    const cipherKey = derived.slice(16, 48);
-                    const aesKey = await crypto.subtle.importKey(
-                        'raw', cipherKey, {{ name: 'AES-CBC' }}, false, ['decrypt']
-                    );
-                    const decrypted = await crypto.subtle.decrypt(
-                        {{ name: 'AES-CBC', iv }},
-                        aesKey,
-                        encBytes.slice(0, -10)
-                    );
-
-                    // 4. Encode as base64 for zero-copy Python transfer
-                    const bytes  = new Uint8Array(decrypted);
-                    const chunk  = 8192;
-                    let b64 = '';
-                    for (let i = 0; i < bytes.length; i += chunk) {{
-                        b64 += String.fromCharCode(...bytes.subarray(i, i + chunk));
-                    }}
-                    return btoa(b64);
-                }} catch(e) {{
-                    return {{ error: e.toString() }};
-                }}
-            }})()
-        """
-
-    @classmethod
     def download_media(cls, msg_id: str) -> str:
         """
-        Fallback: Download + decrypt media via wa-js's internal downloader.
-        Type: NETWORK — Makes one HTTPS request to Meta's CDN. Use only when
-        decrypt_media() returns null (blob not yet cached).
-
-        Args:
-            msg_id: Full serialized message ID — msg['id_serialized']
+        Download + decrypt media via wa-js's internal downloader.
+        Measures JS-native download latency to predict CACHE vs NETWORK.
 
         Returns:
-            base64 string of decrypted media bytes.
-
-        Raw MsgModel fields needed:
-            id_serialized
+            { b64: string, isCached: boolean, latencyMs: number }
+            isCached: true  → fast local read from WPP's internal stores (safe)
+            isCached: false → likely CDN hit (logged by Meta)
         """
         safe_id = json.dumps(msg_id)
         return f"""
             (async () => {{
                 try {{
+                    const t0 = performance.now();
                     const blob = await wpp.chat.downloadMedia({safe_id});
+                    const latencyMs = performance.now() - t0;
                     if (!blob) return null;
                     const buf   = await blob.arrayBuffer();
                     const bytes = new Uint8Array(buf);
@@ -1357,9 +1264,25 @@ class WAJS_Scripts:
                     for (let i = 0; i < bytes.length; i += chunk) {{
                         b64 += String.fromCharCode(...bytes.subarray(i, i + chunk));
                     }}
-                    return btoa(b64);
+                    // Heuristic: cache reads are <100ms even for large files.
+                    // CDN hits add DNS+TLS+server latency — reliably >200ms.
+                    const isCached = latencyMs < 150;
+                    return {{ b64: btoa(b64), isCached: isCached, latencyMs: latencyMs }};
                 }} catch(e) {{
                     return {{ error: e.toString() }};
                 }}
             }})()
         """
+
+    @classmethod
+    def mark_is_composing(cls, chat_id: str, duration_ms: int = 3000) -> str:
+        """Sends typing state to the chat."""
+        return f"wpp.chat.markIsComposing('{chat_id}', {duration_ms}).then(() => true)"
+
+    @classmethod
+    def decrypt_media(cls, direct_path: str, media_key_b64: str, media_type: str) -> str:
+        """
+        Tier 1 Cache extraction. Legacy/Redundant now that we use downloadMedia,
+        but kept for API compatibility. Returns null to force Tier 2/3 fallback.
+        """
+        return "Promise.resolve(null)"

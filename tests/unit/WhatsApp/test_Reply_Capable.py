@@ -67,7 +67,9 @@ async def test_reply_success(reply_capable_instance, mock_humanize, mock_ui_conf
     """Test reply successfully types and sends text."""
     # Setup Mocks
     mock_msg = Mock(spec=Message)
-    reply_capable_instance._side_edge_click = AsyncMock()  # Skip real click
+    mock_msg.id_serialized = "test-id"
+    mock_msg.fromMe = False
+    reply_capable_instance.quote_only = AsyncMock()  # Skip real click
 
     mock_input_box = AsyncMock(spec=Locator)
     mock_input_box.element_handle.return_value = AsyncMock()
@@ -83,7 +85,7 @@ async def test_reply_success(reply_capable_instance, mock_humanize, mock_ui_conf
 
     # Verification
     assert result is True
-    reply_capable_instance._side_edge_click.assert_called_once()
+    reply_capable_instance.quote_only.assert_called_once()
     mock_humanize.typing.assert_called_once()
     reply_capable_instance.page.keyboard.press.assert_called_with("Enter")
 
@@ -92,9 +94,8 @@ async def test_reply_success(reply_capable_instance, mock_humanize, mock_ui_conf
 async def test_reply_timeout(reply_capable_instance, mock_humanize):
     """Test reply raises error on timeout."""
     mock_msg = Mock(spec=Message)
-    reply_capable_instance._side_edge_click = AsyncMock(
-        side_effect=PlaywrightTimeoutError("Timeout")
-    )
+    mock_msg.id_serialized = "test-id"
+    reply_capable_instance.quote_only = AsyncMock(side_effect=PlaywrightTimeoutError("Timeout"))
 
     with pytest.raises(ReplyCapableError, match="reply timed out"):
         await reply_capable_instance.reply(message=mock_msg, humanize=mock_humanize, text="Hello")
@@ -102,14 +103,14 @@ async def test_reply_timeout(reply_capable_instance, mock_humanize):
 
 @pytest.mark.asyncio
 async def test_side_edge_click_success(reply_capable_instance, mock_page):
-    """Test _side_edge_click successfully triggers reply click."""
+    """Test quote_only successfully triggers reply click."""
     mock_msg = Mock(spec=Message)
-    mock_msg.data_id = "test-id"
-    mock_msg.direction = "IN"
+    mock_msg.id_serialized = "test-id"
+    mock_msg.fromMe = False
 
     mock_page.evaluate.return_value = {"x": 100, "y": 200, "width": 50, "height": 30}
 
-    await reply_capable_instance._side_edge_click(mock_msg)
+    await reply_capable_instance.quote_only(mock_msg)
 
     assert mock_page.mouse.click.called
     kwargs = mock_page.mouse.click.call_args.kwargs
@@ -120,12 +121,13 @@ async def test_side_edge_click_success(reply_capable_instance, mock_page):
 
 @pytest.mark.asyncio
 async def test_side_edge_click_no_bbox(reply_capable_instance, mock_page):
-    """Test _side_edge_click raises error if bbox is None."""
+    """Test quote_only raises error if bbox is None."""
     mock_msg = Mock(spec=Message)
-    mock_msg.data_id = "test-id"
+    mock_msg.id_serialized = "test-id"
+    mock_msg.fromMe = False
 
     mock_page.evaluate.return_value = None
 
     with patch("asyncio.sleep", new_callable=AsyncMock):
         with pytest.raises(ReplyCapableError, match="side_edge_click failed after"):
-            await reply_capable_instance._side_edge_click(mock_msg)
+            await reply_capable_instance.quote_only(mock_msg)

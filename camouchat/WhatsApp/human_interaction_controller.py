@@ -8,18 +8,17 @@ import random
 import tempfile
 import weakref
 from logging import Logger, LoggerAdapter
-from typing import Union, Optional
+from typing import Union, Optional, Any
 
 import pyperclip
 from filelock import FileLock
 from playwright.async_api import Page, ElementHandle, Locator
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError, Error as PlaywrightError
+from camouchat.WhatsApp.api import WapiWrapper
 
 from camouchat.Exceptions.base import ElementNotFoundError, HumanizedOperationError
-from camouchat.Interfaces.human_interaction_controller_interface import (
-    HumanInteractionControllerInterface,
-)
-from camouchat.Interfaces.web_ui_selector import WebUISelectorCapable
+from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.camouchat_logger import camouchatLogger
 
 _clipboard_async_lock = asyncio.Lock()
 
@@ -27,7 +26,7 @@ _lock_file_path = os.path.join(tempfile.gettempdir(), "whatsapp_clipboard.lock")
 _clipboard_file_lock = FileLock(_lock_file_path)
 
 
-class HumanInteractionController(HumanInteractionControllerInterface):
+class HumanInteractionController:
     """Simulates human-like typing with variable delays."""
 
     _instances: weakref.WeakKeyDictionary[Page, HumanInteractionController] = (
@@ -47,16 +46,19 @@ class HumanInteractionController(HumanInteractionControllerInterface):
     def __init__(
         self,
         page: Page,
-        ui_config: WebUISelectorCapable,
+        ui_config: WebSelectorConfig,
         log: Optional[Union[Logger, LoggerAdapter]] = None,
     ) -> None:
 
         if hasattr(self, "_initialized") and self._initialized:
             return
 
-        super().__init__(page=page, log=log, UIConfig=ui_config)
+        self.page = page
+        self.ui_config = ui_config
+        self.log = log or camouchatLogger
         if self.page is None:
             raise ValueError("page must not be None")
+
         self._initialized = True
 
     async def typing(self, text: str, **kwargs) -> bool:
@@ -164,3 +166,65 @@ class HumanInteractionController(HumanInteractionControllerInterface):
                 if previous_clipboard is not None:
                     await loop.run_in_executor(None, pyperclip.copy, previous_clipboard)
                 await loop.run_in_executor(None, _clipboard_file_lock.release)
+
+    async def send_api_text(
+        self, bridge: WapiWrapper, text: str, chat_id: str, quoted_msg_id: Optional[str] = None
+    ) -> bool:
+        """
+        Skips native OS usage & Directly send text via RAM Func.
+        Initially supported for direct text msg sending only & works for Qouted Replies also.
+        Dont support to send text with Media or other attachments.
+
+        Gives Telementry : mouse moves , msg box click & focus , for txt len > 50 chars , add ctrl C & ctrl V telementry.
+        Args :
+            bridge : WapiWrapper instance
+            text : Text to be sent
+            chat_id: Target chat ID
+            quoted_msg_id: Optional message ID to quote/reply to
+        Returns:
+            bool: True if text is sent successfully.
+        """
+
+        if bridge is None:
+            raise ValueError(
+                "bridge is not given consider giving WapiSession'bridge or WapiWrapper"
+            )
+
+        try:
+            inputBox = self.ui_config.message_box()
+            await inputBox.click(timeout=5000)  # Telementry
+            self.log.debug("Msg Box Clicked.")
+
+            if not chat_id:
+                raise HumanizedOperationError("Could not determine active chat ID from bridge.")
+
+            # typing state
+            if await bridge.mark_is_composing(chat_id=chat_id, duration_ms=3000):
+                self.log.debug("Sent MarkisComposing Successfully.")
+            else:
+                self.log.error("Failed to send MarkIsComposing.")
+
+            if len(text) > 50:  # Telementry
+                await self.page.keyboard.press("Control+C")
+                await asyncio.sleep(random.uniform(0.1, 0.4))
+                await self.page.keyboard.press("Control+V")
+                self.log.debug("Adding Ctrl C & Ctrl V Telementry - DONE")
+
+            sec = random.uniform(1.2, 2.5)
+            self.log.debug(f"Sleeping for {sec} before API send to {chat_id}...")
+            await asyncio.sleep(sec)
+
+            options: dict[str, Any] = {"waitForAck": False}
+            if quoted_msg_id:
+                options["quotedMsg"] = quoted_msg_id
+
+            self.log.debug("Invoking bridge.send_text_message...")
+            success = await bridge.send_text_message(chat_id=chat_id, message=text, options=options)
+            if success:
+                self.log.debug("Text Sent via RAM Func.")
+            else:
+                self.log.error("Failed to send text via RAM Func.")
+            return success
+
+        except Exception as e:
+            raise HumanizedOperationError(f"API Text typing failed: {e}") from e

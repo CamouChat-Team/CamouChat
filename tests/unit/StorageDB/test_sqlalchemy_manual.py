@@ -24,24 +24,21 @@ log = logging.getLogger("SQLAlchemyTest")
 class MockMessage:
     """Mock message for testing (implements MessageInterface)."""
 
-    def __init__(self, message_id, raw_data, direction, chat_name):
-        self.message_id = message_id
-        self.data_id = message_id
-        self.raw_data = raw_data
-        self.data_type = "text"
-        self.direction = direction
-        self.system_hit_time = 123.45
-        self.parent_chat = MockChat(chat_name)
+    def __init__(self, message_id, raw_data, fromMe, chat_name):
+        self.id_serialized = message_id
+        self.body = raw_data
+        self.msgtype = "text"
+        self.fromMe = fromMe
+        self.timestamp = 123.45
+        self.from_chat = MockChat(chat_name)
 
 
 class MockChat:
     """Mock chat for testing."""
 
     def __init__(self, name):
-        self.chatName = name
-        self.chat_name = name
-        self.chatID = f"chat_{name}"
-        self.chat_id = f"chat_{name}"
+        self.name = name
+        self.id_serialized = f"chat_{name}"
 
 
 async def test_basic_operations():
@@ -63,8 +60,7 @@ async def test_basic_operations():
     async with storage:
         # Create test messages
         messages = [
-            MockMessage(f"msg_{i}", f"Hello {i}", "in" if i % 2 == 0 else "out", "TestChat")
-            for i in range(10)
+            MockMessage(f"msg_{i}", f"Hello {i}", i % 2 != 0, "TestChat") for i in range(10)
         ]
 
         print(f"\n📝 Enqueueing {len(messages)} messages...")
@@ -85,7 +81,7 @@ async def test_basic_operations():
         all_msgs = await storage.get_all_messages_async(limit=10)
         print(f"  Found {len(all_msgs)} messages")
         for msg in all_msgs[:3]:
-            print(f"    - {msg['message_id']}: {msg['raw_data'][:30]} ({msg['direction']})")
+            print(f"    - {msg['id_serialized']}: {msg['body'][:30]} (fromMe={msg['fromMe']})")
 
         # Query by chat
         print("\n💬 Querying messages by chat:")
@@ -120,7 +116,7 @@ async def test_profile_integration():
     async with storage:
         # Add test messages
         messages = [
-            MockMessage(f"profile_msg_{i}", f"Test message {i}", "in", "ProfileTestChat")
+            MockMessage(f"profile_msg_{i}", f"Test message {i}", False, "ProfileTestChat")
             for i in range(5)
         ]
 
@@ -172,8 +168,8 @@ async def test_message_processor_compatibility():
         print("\n🔄 Round 1: inserting 2 unique messages...")
 
         round1 = [
-            MockMessage("mp_msg_1", "First message", "in", "MPChat"),
-            MockMessage("mp_msg_2", "Second message", "out", "MPChat"),
+            MockMessage("mp_msg_1", "First message", False, "MPChat"),
+            MockMessage("mp_msg_2", "Second message", True, "MPChat"),
         ]
         await storage.enqueue_insert(round1)
         await asyncio.sleep(0.5)  # let writer flush
@@ -184,19 +180,19 @@ async def test_message_processor_compatibility():
         print("\n🔄 Round 2: checking dedup against 1 duplicate + 1 new...")
 
         round2_candidates = [
-            MockMessage("mp_msg_1", "Duplicate!", "in", "MPChat"),  # already in DB
-            MockMessage("mp_msg_3", "Third message", "in", "MPChat"),  # new
+            MockMessage("mp_msg_1", "Duplicate!", False, "MPChat"),  # already in DB
+            MockMessage("mp_msg_3", "Third message", False, "MPChat"),  # new
         ]
 
         new_msgs = []
         for msg in round2_candidates:
-            exists = await storage.check_message_if_exists_async(msg.message_id)
+            exists = await storage.check_message_if_exists_async(msg.id_serialized)
             if not exists:
                 new_msgs.append(msg)
 
         print(f"  - Candidates: {len(round2_candidates)},  New: {len(new_msgs)}")
         assert len(new_msgs) == 1, f"Expected 1 new msg in round 2, got {len(new_msgs)}"
-        assert new_msgs[0].message_id == "mp_msg_3"
+        assert new_msgs[0].id_serialized == "mp_msg_3"
 
         await storage.enqueue_insert(new_msgs)
         await asyncio.sleep(0.5)
@@ -227,7 +223,7 @@ async def test_batch_performance():
         # Generate large batch
         batch_size = 100
         messages = [
-            MockMessage(f"batch_{i}", f"Batch message {i}", "in", "BatchChat")
+            MockMessage(f"batch_{i}", f"Batch message {i}", False, "BatchChat")
             for i in range(batch_size)
         ]
 

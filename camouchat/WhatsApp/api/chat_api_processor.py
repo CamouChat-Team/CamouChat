@@ -1,15 +1,107 @@
+import asyncio
+import random
 from logging import Logger, LoggerAdapter
-from typing import Any
+from typing import Any, Sequence
 
-from camouchat.camouchat_logger import camouchatLogger
+from playwright.async_api import Page
+
 from .models import ChatModelAPI
 from .wa_js import WapiWrapper, WAJS_Scripts
+from ...Interfaces.chat_interface import ChatInterface
+from ...Interfaces.chat_processor_interface import ChatProcessorInterface
 
 
-class ChatApiManager:
-    def __init__(self, bridge: WapiWrapper, logger: Logger | LoggerAdapter | None = None) -> None:
+class ChatApiManager(ChatProcessorInterface):
+    def __init__(
+        self, page: Page, bridge: WapiWrapper, logger: Logger | LoggerAdapter | None = None
+    ) -> None:
+        super().__init__(page=page, ui_config=None, log=logger)
         self._bridge = bridge
-        self.log = logger or camouchatLogger
+        self._last_opened_chat_id: str | None = None
+
+    async def fetch_chats(self, **kwargs) -> Sequence[ChatInterface]:
+        return await self.get_chat_list(**kwargs)
+
+    async def _click_chat(self, chat: ChatInterface | None, **kwargs) -> bool:
+        return await self.open_chat(chat=chat)  # type: ignore
+
+    async def open_chat(self, chat: ChatModelAPI) -> bool:
+        """
+        Opens the chat using a Stealth Hybrid approach.
+        1. Tries to find the chat physically on the screen and injects human CDP mouse clicks.
+        2. If virtualized (hidden), falls back to the RAM bridge.
+        """
+        assert self.page is not None
+        assert self.log is not None
+        page = self.page
+        if chat is None:
+            raise ValueError("Chat is None, cannot open chat")
+
+        if chat.id_serialized == self._last_opened_chat_id:
+            self.log.debug(f"Chat {chat.id_serialized} is already the active view based on cache.")
+            return True
+
+        # If we don't have a formatted Title, we cannot safely scrape the DOM. Skip to RAM fallback.
+        if chat.formattedTitle:
+            self.log.debug(f"Locating chat: {chat.formattedTitle} ({chat.id_serialized})")
+
+            try:
+                chat_locator = (
+                    page.locator("div#pane-side, div[aria-label*='Chat list' i]")
+                    .locator(f"span[title='{chat.formattedTitle}']")
+                    .first
+                )
+
+                if await chat_locator.count() > 0 and await chat_locator.is_visible(timeout=5000):
+                    box = await chat_locator.bounding_box()
+                    if box:
+                        # Calculate center coordinates
+                        target_x = box["x"] + (box["width"] / 2)
+                        target_y = box["y"] + (box["height"] / 2)
+
+                        self.log.debug(
+                            f"Chat physically visible. Injecting physical CDP click at {target_x}, {target_y}."
+                        )
+
+                        # Humanize Movement
+                        await page.mouse.move(
+                            target_x + random.uniform(-10, 10), target_y + random.uniform(-10, 10)
+                        )
+                        await asyncio.sleep(random.uniform(0.1, 0.4))
+
+                        # Hardware level click, bypasses execution locks
+                        assert page is not None
+                        await page.mouse.click(
+                            target_x + random.uniform(-2, 2),
+                            target_y + random.uniform(-2, 2),
+                        )
+                        self._last_opened_chat_id = chat.id_serialized
+                        return True
+            except Exception as e:
+                self.log.warning(
+                    f"Stealth DOM scrape failed for {chat.formattedTitle}, reverting to RAM: {e}"
+                )
+
+        # Virtualized DOM Fallback
+        self.log.debug(
+            f"Chat '{chat.formattedTitle or chat.id_serialized}' not visible on screen. Triggering RAM open."
+        )
+
+        # Inject ambient human pointer telemetry before triggering magical DOM re-renders.
+        assert page is not None
+        await page.mouse.move(random.randint(150, 800), random.randint(150, 600))
+        await asyncio.sleep(random.uniform(1.8, 2.5))
+
+        try:
+            await self._bridge._evaluate_stealth(
+                f'window.WPP.chat.openChatBottom("{chat.id_serialized}")'
+            )
+            self._last_opened_chat_id = chat.id_serialized
+            return True
+
+        except Exception as e:
+            self.log.error(f"Failed to open chat {chat.id_serialized}: {e}")
+            return False
 
     # ──────────────────────────────────────────────
     # RAM BASED METHODS
@@ -25,6 +117,8 @@ class ChatApiManager:
         Returns:
             ChatModelAPI containing the chat metadata.
         """
+        if chat_id is None:
+            raise ValueError("Chat ID is None, cannot get chat")
         raw_data = await self._bridge._evaluate_stealth(WAJS_Scripts.get_chat(chat_id))
         return ChatModelAPI.from_dict(raw_data)
 

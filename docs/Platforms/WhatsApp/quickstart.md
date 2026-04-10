@@ -126,12 +126,12 @@ msg_proc = MessageProcessor(
 messages = await msg_proc.fetch_messages(chat=chats[0], retry=3)
 
 # Separate by direction
-inbound  = await MessageProcessor.sort_messages(messages, incoming=True)
+inbound = await MessageProcessor.sort_messages(messages, incoming=True)
 outbound = await MessageProcessor.sort_messages(messages, incoming=False)
 
 print(f"Received {len(inbound)} messages, sent {len(outbound)}.")
 for msg in inbound:
-    print(f"  [{msg.data_id}] {msg.raw_data}")
+    print(f"  [{msg.id_serialized}] {msg.raw_data}")
 ```
 
 > [!TIP]

@@ -71,6 +71,7 @@ class ChatProcessor(ChatProcessorInterface):
     async def _get_Wrapped_Chat(self, limit: int = 5, retry: int = 5, **kwargs) -> Sequence[Chat]:
         """Extract chat elements and wrap them."""
 
+        assert self.UIConfig is not None
         sc = self.UIConfig
 
         for attempt in range(1, retry + 1):
@@ -92,8 +93,8 @@ class ChatProcessor(ChatProcessorInterface):
 
                     wrapped.append(
                         Chat(
-                            chat_ui=chat_el,
-                            chat_name=name,
+                            ui=chat_el,
+                            name=name,
                         )
                     )
 
@@ -132,44 +133,35 @@ class ChatProcessor(ChatProcessorInterface):
         if not chat:
             raise ChatNotFoundError("None passed, expected Chat in _click_chat")
 
-        chat_name = chat.chat_name
+        chat_name = chat.name
 
         for attempt in range(1, retries + 1):
             try:
-                # Bypass actionability checks entirely by using JS to find exactly
-                # where the chat is located currently.
-                coords = await self.page.evaluate(
-                    """(name) => {
-                        const rows = document.querySelectorAll(
-                            '[role="row"], [role="listitem"]'
-                        );
-                        for (const row of rows) {
-                            const span = row.querySelector('span[title]');
-                            if (span && span.title === name) {
-                                const r = row.getBoundingClientRect();
-                                return {
-                                    x: r.left + r.width / 2,
-                                    y: r.top + r.height / 2
-                                };
-                            }
-                        }
-                        return null;
-                    }""",
-                    chat_name,
+                assert self.page is not None
+                chat_locator = (
+                    self.page.locator("div#pane-side, div[aria-label*='Chat list' i]")
+                    .locator(f"span[title='{chat_name}'], div[title='{chat_name}']")
+                    .first
                 )
 
-                if coords:
-                    self.log.debug(
-                        f"[_click_chat] Attempt {attempt}/{retries}: "
-                        f"Injecting CDP click at {coords['x']}, {coords['y']} for '{chat_name}'."
-                    )
-                    await asyncio.sleep(random.uniform(0.2, 0.5))
+                if await chat_locator.count() > 0 and await chat_locator.is_visible():
+                    box = await chat_locator.bounding_box()
+                    if box:
+                        target_x = box["x"] + (box["width"] / 2)
+                        target_y = box["y"] + (box["height"] / 2)
 
-                    await self.page.mouse.click(
-                        coords["x"] + random.uniform(-2, 2),
-                        coords["y"] + random.uniform(-2, 2),
-                    )
-                    return True
+                        self.log.debug(
+                            f"[_click_chat] Attempt {attempt}/{retries}: "
+                            f"Injecting CDP click at {target_x}, {target_y} for '{chat_name}'."
+                        )
+                        await asyncio.sleep(random.uniform(0.2, 0.5))
+
+                        assert self.page is not None
+                        await self.page.mouse.click(
+                            target_x + random.uniform(-2, 2),
+                            target_y + random.uniform(-2, 2),
+                        )
+                        return True
 
                 # If no coords, DOM is probably re-rendering. Just fall through to retry.
                 self.log.debug(
@@ -203,9 +195,9 @@ class ChatProcessor(ChatProcessorInterface):
                 raise ChatNotFoundError("none passed , expected chat in is_unread")
 
             handle: ElementHandle = (
-                await chat.chat_ui.element_handle(timeout=1500)
-                if isinstance(chat.chat_ui, Locator)
-                else chat.chat_ui  # type: ignore[assignment]
+                await chat.ui.element_handle(timeout=1500)
+                if isinstance(chat.ui, Locator)
+                else chat.ui  # type: ignore[assignment]
             )
 
             unread_Badge = await handle.query_selector("[aria-label*='unread']")
@@ -221,6 +213,7 @@ class ChatProcessor(ChatProcessorInterface):
 
     async def do_unread(self, chat: Optional[Chat]) -> bool:
         """Mark a chat as unread via context menu."""
+        assert self.page is not None
         page = self.page
 
         if chat is None:
@@ -228,12 +221,12 @@ class ChatProcessor(ChatProcessorInterface):
 
         try:
             chat_handle: ElementHandle = (
-                await chat.chat_ui.element_handle(timeout=1500)
-                if isinstance(chat.chat_ui, Locator)
-                else chat.chat_ui  # type: ignore[assignment]
+                await chat.ui.element_handle(timeout=1500)
+                if isinstance(chat.ui, Locator)
+                else chat.ui  # type: ignore[assignment]
             )
 
-            if chat.chat_ui is None:
+            if chat.ui is None:
                 raise ChatError("chat UI not initialized")
 
             await chat_handle.click(button="right")

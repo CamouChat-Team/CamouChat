@@ -245,6 +245,16 @@ MIT — see [LICENSE](https://github.com/BITS-Rohit/CamouChat/blob/main/LICENSE)
 
 ---
 
+## Acknowledgements & Third-Party Code
+
+CamouChat utilizes portions of the highly innovative work done by the [wppconnect-team](https://github.com/wppconnect-team/wa-js). 
+Their WhatsApp DOM implementation (`wa-js`) is distributed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0). 
+We are incredibly grateful to their contributors for mapping out the internal WhatsApp application layer. 
+
+Please see the [NOTICE](https://github.com/CamouChat-Team/camouchat/blob/main/NOTICE) file for full compliance details.
+
+---
+
 ## Thanks to all the Contributors
 
 <!-- readme: contributors -start -->

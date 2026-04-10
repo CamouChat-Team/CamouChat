@@ -116,9 +116,9 @@ def test_init_missing_logger(mock_browser_config, mock_profile_info):
         profile=mock_profile_info,
         log=None,
     )
-    from camouchat.camouchat_logger import camouchatLogger
+    from camouchat.camouchat_logger import get_browser_profile_logger
 
-    assert browser.log == camouchatLogger
+    assert browser.log == get_browser_profile_logger(mock_profile_info.profile_id)
 
 
 def test_init_missing_browserforge(mock_browser_config, mock_profile_info, mock_logger):

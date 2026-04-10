@@ -15,7 +15,7 @@ from camouchat.BrowserManager.camoufox_browser import CamoufoxBrowser
 from camouchat.BrowserManager.platform_manager import Platform
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.StorageDB.storage_type import StorageType
-from camouchat.camouchat_logger import camouchatLogger
+from camouchat.camouchat_logger import browser_logger, get_browser_profile_logger
 from camouchat.directory import DirectoryManager
 
 
@@ -34,7 +34,7 @@ class ProfileManager:
 
     def __init__(self, log: Optional[Union[LoggerAdapter, Logger]] = None) -> None:
         self.directory = DirectoryManager()
-        self.log = log or camouchatLogger
+        self.log = log or browser_logger
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -154,7 +154,10 @@ class ProfileManager:
             database_url=database_url,
         )
         self._write_metadata(platform, profile_id, metadata)
-        self.log.info(f"Profile created with name [{profile_id}] & stored at [{profile_dir}]")
+
+        # Use profile-specific browser logger
+        p_log = get_browser_profile_logger(profile_id)
+        p_log.info(f"Profile created with name [{profile_id}] & stored at [{profile_dir}]")
         return ProfileInfo.from_metadata(metadata, self.directory)
 
     def get_profile(self, platform: Platform, profile_id: str) -> ProfileInfo:

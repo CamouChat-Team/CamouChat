@@ -7,14 +7,11 @@ from typing import Generic, Optional, TypeVar, Union
 
 from playwright.async_api import Page
 
-from camouchat.Interfaces.human_interaction_controller_interface import (
-    HumanInteractionControllerInterface,
-)
 from camouchat.Interfaces.message_interface import MessageInterface
 from camouchat.Interfaces.web_ui_selector import WebUISelectorCapable
 
 M = TypeVar("M", bound=MessageInterface)
-H = TypeVar("H", bound=HumanInteractionControllerInterface)
+H = TypeVar("H")
 U = TypeVar("U", bound=WebUISelectorCapable)
 
 

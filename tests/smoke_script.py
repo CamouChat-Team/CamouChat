@@ -1,12 +1,12 @@
 """
-CamouChat WA-JS Smoke Test Suite — Modular Edition
+CamouChat WA-JS Smoke Script — Modular Edition
 ====================================================
 Run specific tests by name, or run all of them.
 
 Usage:
-    uv run tests/smoke_test.py                        # runs ALL registered tests
-    uv run tests/smoke_test.py test_conn_session       # runs a single test
-    uv run tests/smoke_test.py test_conn test_privacy  # runs multiple (prefix match)
+    uv run tests/smoke_script.py                        # runs ALL registered tests
+    uv run tests/smoke_script.py test_conn_session       # runs a single test
+    uv run tests/smoke_script.py test_conn test_privacy  # runs multiple (prefix match)
 
 Or set TESTS_TO_RUN at the bottom of this file to hardcode a subset.
 Pass --list to print all available tests without running them.
@@ -594,10 +594,10 @@ async def main() -> None:
             print(f"    {name:<30}  {desc}")
         print()
         print("  Usage:")
-        print("    uv run tests/smoke_test.py                        # run all")
-        print("    uv run tests/smoke_test.py test_conn_session       # one test")
-        print("    uv run tests/smoke_test.py test_conn test_privacy  # multiple / prefix")
-        print("    uv run tests/smoke_test.py --list                  # this screen")
+        print("    uv run tests/smoke_script.py                        # run all")
+        print("    uv run tests/smoke_script.py test_conn_session       # one test")
+        print("    uv run tests/smoke_script.py test_conn test_privacy  # multiple / prefix")
+        print("    uv run tests/smoke_script.py --list                  # this screen")
         print()
         return
 

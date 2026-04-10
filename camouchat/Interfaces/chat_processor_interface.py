@@ -20,10 +20,9 @@ class ChatProcessorInterface(ABC):
 
     def __init__(
         self,
-        page: Page,
-        ui_config: WebSelectorConfig,
+        page: Optional[Page],
+        ui_config: Optional[WebSelectorConfig],
         log: Optional[Union[Logger, LoggerAdapter]] = None,
-        **kwargs,
     ) -> None:
         self.log = log or camouchatLogger
         self.page = page
@@ -37,11 +36,4 @@ class ChatProcessorInterface(ABC):
     @abstractmethod
     async def _click_chat(self, chat: Optional[ChatInterface], **kwargs) -> bool:
         """Click to open a chat."""
-        ...
-
-    @abstractmethod
-    async def _get_Wrapped_Chat(
-        self, limit: int = 5, retry: int = 5, **kwargs
-    ) -> Sequence[ChatInterface]:
-        """Extract and wrap chat elements."""
         ...
