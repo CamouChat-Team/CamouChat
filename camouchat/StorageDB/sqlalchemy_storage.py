@@ -28,7 +28,6 @@ from camouchat.Interfaces.storage_interface import StorageInterface
 from camouchat.StorageDB.models import Base, Message
 from camouchat.WhatsApp.models import Message as WhatsAppMessage
 
-
 class SQLAlchemyStorage(StorageInterface):
     """
     Generic SQLAlchemy storage implementation for MessageInterface data.
@@ -97,7 +96,7 @@ class SQLAlchemyStorage(StorageInterface):
         cls,
         profile: ProfileInfo,
         queue: asyncio.Queue,
-        log: Optional[Union[Logger, LoggerAdapter]],
+        log: Optional[Union[Logger, LoggerAdapter]] = None,
         batch_size: int = 50,
         flush_interval: float = 2.0,
     ) -> "SQLAlchemyStorage":
@@ -432,6 +431,52 @@ class SQLAlchemyStorage(StorageInterface):
                 self.log.error(f"Get messages by chat failed: {e}")
                 return []
 
+    async def get_messages_by_ids_async(self, message_ids: list[str]) -> List[Dict[str, Any]]:
+        """Retrieve specific messages by their serialized IDs."""
+        if not self._session_factory or not message_ids:
+            return []
+
+        session_factory = self._get_session_factory()
+        async with session_factory() as session:
+            try:
+                stmt = select(Message).where(Message.id_serialized.in_(message_ids))
+                result = await session.execute(stmt)
+                messages = result.scalars().all()
+                return [msg.to_dict() for msg in messages]
+            except Exception as e:
+                self.log.error(f"Failed to fetch messages by IDs: {e}")
+                return []
+
+    async def execute_raw_sql(
+        self, query: str, params: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Execute a raw SQL query and return results as a list of dictionaries.
+        Supports both SELECT and DML (INSERT/UPDATE/DELETE).
+        """
+        from sqlalchemy import text
+
+        if not self._session_factory:
+            return []
+
+        session_factory = self._get_session_factory()
+        async with session_factory() as session:
+            try:
+                stmt = text(query)
+                result = await session.execute(stmt, params or {})
+
+                # If query returns rows (like SELECT), convert to dicts
+                if result.returns_rows:
+                    return [dict(row._mapping) for row in result.all()]
+
+                # For DML, commit and return empty
+                await session.commit()
+                return []
+            except Exception as e:
+                self.log.error(f"Raw SQL execution failed: {e}")
+                await session.rollback()
+                return []
+
     async def get_decrypted_messages_async(
         self,
         key: bytes,
@@ -511,12 +556,16 @@ class SQLAlchemyStorage(StorageInterface):
             self._session_factory = None
             self.log.info("Database connection closed.")
 
-    async def __aenter__(self):
-        """Async context manager entry."""
+    async def start(self, **kwargs) -> None:
+        """Start database and background writer."""
         await self.init_db()
         await self.create_table()
         await self._migrate_add_encryption_columns()
         await self.start_writer()
+
+    async def __aenter__(self):
+        """Async context manager entry."""
+        await self.start()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):

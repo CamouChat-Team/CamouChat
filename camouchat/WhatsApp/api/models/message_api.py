@@ -258,13 +258,24 @@ class MessageModelAPI(MessageInterface):
         is_poll = g("type") == "poll_creation"
         is_question = g("isAnyQuestion") or is_poll
 
+        id_obj = g("id", {})
+        is_from_me = g("fromMe")
+        if is_from_me is None:
+            if isinstance(id_obj, dict) and "fromMe" in id_obj:
+                is_from_me = id_obj.get("fromMe")
+            elif g("id_serialized") and str(g("id_serialized")).startswith("true_"):
+                is_from_me = True
+            else:
+                is_from_me = False
+        is_from_me = bool(is_from_me)
+
         return cls(
             # ── Identity ──────────────────────────────────────────────────────
             id_serialized=g("id_serialized"),
             from_chat="",  # this can be personally invoked via get_chat_by_id but initially giving it as Empty saves Ram Call
             rowId=g("rowId"),
-            fromMe=g("fromMe"),
-            jid_From=g("to_serialized") if g("fromMe") else g("from_serialized"),
+            fromMe=is_from_me,
+            jid_From=g("to_serialized") if is_from_me else g("from_serialized"),
             jid_To=g("to_serialized"),
             author=g("author_serialized"),
             pushname=g("notifyName") or g("pushname"),
