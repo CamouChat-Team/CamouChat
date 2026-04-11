@@ -17,11 +17,10 @@ from playwright.async_api import TimeoutError as PlaywrightTimeoutError, Error a
 
 from camouchat.Exceptions.base import ElementNotFoundError, HumanizedOperationError
 from camouchat.Exceptions.whatsapp import ReplyCapableError
-from camouchat.Interfaces.interaction_controller_interface import InteractionControllerInterface
+from camouchat.contracts.interaction_controller_interface import InteractionControllerInterface
 from camouchat.WhatsApp.api import WapiSession
 from camouchat.WhatsApp.api.models import MessageModelAPI
 from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
-from camouchat.WhatsApp.dom.models import Message
 from camouchat.camouchat_logger import camouchatLogger
 
 _clipboard_async_lock = asyncio.Lock()
@@ -125,7 +124,7 @@ class ReplyCapable(InteractionControllerInterface):
 
     # ----------------------------------------------------
 
-    async def reply(self, message: Message | MessageModelAPI, text: Optional[str]) -> bool:
+    async def reply(self, message: MessageModelAPI, text: Optional[str]) -> bool:
         """Reply to a message with optional text."""
         try:
             await self.quote(message)
@@ -141,12 +140,12 @@ class ReplyCapable(InteractionControllerInterface):
         except PlaywrightTimeoutError as e:
             raise ReplyCapableError("reply timed out while preparing input box") from e
 
-    async def quote(self, message: Message | MessageModelAPI) -> bool:
+    async def quote(self, message: MessageModelAPI) -> bool:
         """Double-click the message container's side padding to trigger reply."""
         # ── Resolve data_id and direction ─────────────────────────────────────
-        if not isinstance(message, (Message, MessageModelAPI)):
+        if not isinstance(message, MessageModelAPI):
             raise ReplyCapableError(
-                f"Unsupported message type: {type(message)}. Expected Message or MessageModelAPI."
+                f"Unsupported message type: {type(message)}. Expected MessageModelAPI."
             )
 
         if not message.id_serialized:
@@ -312,8 +311,7 @@ class ReplyCapable(InteractionControllerInterface):
         )
         return True
 
-    @staticmethod
-    def _message_from_me(message: Message | MessageModelAPI, data_id: str) -> bool:
+    def _message_from_me(self, message: MessageModelAPI, data_id: str) -> bool:
         """Resolve message direction, falling back to WhatsApp's data-id prefix."""
         from_me = getattr(message, "fromMe", None)
         if from_me is not None:

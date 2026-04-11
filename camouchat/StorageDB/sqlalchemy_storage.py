@@ -24,9 +24,8 @@ from sqlalchemy.ext.asyncio import (
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.Exceptions.base import StorageError
 from camouchat.contracts.message_interface import MessageInterface
-from camouchat.Interfaces.storage_interface import StorageInterface
+from camouchat.contracts.storage_interface import StorageInterface
 from camouchat.StorageDB.models import Base, Message
-from camouchat.WhatsApp.dom.models import Message as WhatsAppMessage
 
 
 class SQLAlchemyStorage(StorageInterface):
@@ -259,9 +258,7 @@ class SQLAlchemyStorage(StorageInterface):
         message_models = []
         for msg in msgs:
             try:
-                if isinstance(msg, WhatsAppMessage):
-                    model = SQLAlchemyStorage._message_to_model(msg=msg)
-                elif isinstance(msg, MessageModelAPI):
+                if isinstance(msg, MessageModelAPI):
                     model = SQLAlchemyStorage._msg_api_to_model(msg=msg)
                 else:
                     # Fallback duck-typing attempt
@@ -309,7 +306,7 @@ class SQLAlchemyStorage(StorageInterface):
                 raise StorageError(f"Batch insert failed: {e}") from e
 
     @staticmethod
-    def _message_to_model(msg: WhatsAppMessage) -> Message:
+    def _message_to_model(msg: MessageInterface) -> Message:
         """Convert MessageInterface to Message model."""
         msg_id = getattr(msg, "id_serialized", "unknown")
         body = getattr(msg, "body", "")

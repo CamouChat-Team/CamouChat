@@ -1,15 +1,15 @@
 import asyncio
 import random
 from logging import Logger, LoggerAdapter
-from typing import Any
+from typing import Any, Sequence
 
 from playwright.async_api import Page
 
 from camouchat.contracts.chat_interface import ChatInterface
-from .models import ChatModelAPI
-from .wa_js import WapiWrapper, WAJS_Scripts
-from ...Interfaces.chat_processor_interface import ChatProcessorInterface
-from ...camouchat_logger import camouchatLogger
+from camouchat.WhatsApp.api.models import ChatModelAPI
+from camouchat.WhatsApp.api.wa_js import WapiWrapper, WAJS_Scripts
+from camouchat.contracts.chat_processor_interface import ChatProcessorInterface
+from camouchat.camouchat_logger import camouchatLogger
 
 
 class ChatApiManager(ChatProcessorInterface):
@@ -24,21 +24,33 @@ class ChatApiManager(ChatProcessorInterface):
 
     async def fetch_chats(
             self,
-            count: int | None = None,
-            direction: str = "after",
-            only_users: bool = False,
-            only_groups: bool = False,
-            only_communities: bool = False,
-            only_unread: bool = False,
-            only_archived: bool = False,
-            only_newsletter: bool = False,
-            with_labels: list | None = None,
-            anchor_chat_id: str | None = None,
-            ignore_group_metadata: bool = True,
-    ) -> list[ChatInterface]:
-        return await self.get_chat_list()
+            count: int | None,
+            direction: str,
+            only_users: bool,
+            only_groups: bool,
+            only_communities: bool,
+            only_unread: bool,
+            only_archived: bool,
+            only_newsletter: bool,
+            with_labels: list | None,
+            anchor_chat_id: str | None,
+            ignore_group_metadata: bool,
+    ) -> Sequence[ChatInterface]:
+        return await self.get_chat_list(
+            count=count,
+            direction=direction,
+            only_users=only_users,
+            only_groups=only_groups,
+            only_communities=only_communities,
+            only_unread=only_unread,
+            only_archived=only_archived,
+            only_newsletter=only_newsletter,
+            with_labels=with_labels,
+            anchor_chat_id=anchor_chat_id,
+            ignore_group_metadata=ignore_group_metadata,
+        )  # type: ignore[return-value]
 
-    async def _click_chat(self, chat: ChatInterface | None, **kwargs) -> bool:
+    async def _click_chat(self, chat: ChatInterface | None = None, **kwargs) -> bool:  # type: ignore[override]
         return await self.open_chat(chat=chat)  # type: ignore
 
     async def open_chat(self, chat: ChatModelAPI) -> bool:

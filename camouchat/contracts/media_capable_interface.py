@@ -1,9 +1,8 @@
 """Contracts and value objects for media capabilities."""
 
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Generic, Optional, TypeVar
+from typing import Generic, Optional, TypeVar, Protocol
 
 from camouchat.contracts.web_ui_selector import WebUISelectorCapable
 
@@ -30,7 +29,7 @@ class FileTyped:
     size_bytes: Optional[int] = None
 
 
-class MediaCapableInterface(ABC, Generic[T]):
+class MediaCapableInterface(Protocol, Generic[T]):
     """Base contract for media operations.
 
     Concrete implementations own platform-specific selectors, browser state,
@@ -39,7 +38,6 @@ class MediaCapableInterface(ABC, Generic[T]):
 
     ui_config: T
 
-    @abstractmethod
-    async def add_media(self) -> bool:
+    async def add_media(self, **kwargs) -> bool:
         """Upload media file to a chat."""
         ...

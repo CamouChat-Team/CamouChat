@@ -18,14 +18,15 @@ from pathlib import Path
 from logging import Logger, LoggerAdapter
 from typing import Any, Callable, Dict, List, Optional, Union
 
+from camouchat.contracts.message_processor_interface import MessageProcessorInterface
 from camouchat.camouchat_logger import camouchatLogger
-from camouchat.Interfaces.message_processor_interface import MessageProcessorInterface
+
 from camouchat.contracts.chat_interface import ChatInterface
-from camouchat.Interfaces.storage_interface import StorageInterface
+from camouchat.contracts.storage_interface import StorageInterface
 from camouchat.Filter.message_filter import MessageFilter
 from camouchat.NoOpPattern import NoOpMessageFilter, NoOpStorage
-from .models.message_api import MessageModelAPI
-from .wa_js import WapiWrapper, WAJS_Scripts
+from camouchat.WhatsApp.api.models.message_api import MessageModelAPI
+from camouchat.WhatsApp.api.wa_js import WapiWrapper, WAJS_Scripts
 
 
 class MessageApiManager(MessageProcessorInterface[MessageModelAPI, Any]):

@@ -10,7 +10,7 @@ import pytest
 from playwright.async_api import Page, Locator, FileChooser, TimeoutError as PlaywrightTimeoutError
 
 from camouchat.Exceptions.whatsapp import MediaCapableError
-from camouchat.Interfaces.media_capable_interface import MediaType, FileTyped
+from camouchat.contracts.media_capable_interface import MediaType, FileTyped
 from camouchat.WhatsApp.features.media_capable import MediaCapable
 from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
 

@@ -4,7 +4,7 @@ from typing import Sequence, List, Dict, Any
 
 from camouchat.Filter.message_filter import MessageFilter
 from camouchat.contracts.message_interface import MessageInterface
-from camouchat.Interfaces.storage_interface import StorageInterface
+from camouchat.contracts.storage_interface import StorageInterface
 
 
 # -----------------------------

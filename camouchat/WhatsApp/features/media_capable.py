@@ -19,7 +19,7 @@ from playwright.async_api import (
 
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.Exceptions.whatsapp import MenuError, MediaCapableError, WhatsAppError
-from camouchat.Interfaces.media_capable_interface import (
+from camouchat.contracts.media_capable_interface import (
     MediaCapableInterface,
     MediaType,
     FileTyped,

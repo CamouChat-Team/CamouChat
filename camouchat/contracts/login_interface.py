@@ -1,20 +1,17 @@
 """Contracts for platform authentication handlers."""
 
-from abc import ABC, abstractmethod
+from typing import Protocol
 
-
-class LoginInterface(ABC):
+class LoginInterface(Protocol):
     """Base contract for authentication handlers.
 
     Implementations own platform-specific logger defaults and selector wiring.
     """
 
-    @abstractmethod
-    async def login(self) -> bool:
+    async def login(self, **kwargs) -> bool:
         """Perform login authentication."""
         ...
 
-    @abstractmethod
-    async def is_login_successful(self) -> bool:
+    async def is_login_successful(self, **kwargs) -> bool:
         """Check if login was successful."""
         ...

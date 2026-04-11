@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Dict, Sequence
+from typing import Dict, Sequence, Protocol
 
 from camouchat.contracts.chat_interface import ChatInterface
 
 
-class ChatProcessorInterface(ABC):
+class ChatProcessorInterface(Protocol):
     """Base contract for components that list chats and activate a chat.
 
     Implementations own platform-specific state such as selectors, browser
@@ -18,12 +17,10 @@ class ChatProcessorInterface(ABC):
 
     capabilities: Dict[str, bool]
 
-    @abstractmethod
-    async def fetch_chats(self) -> Sequence[ChatInterface]:
+    async def fetch_chats(self, **kwargs) -> Sequence[ChatInterface]:
         """Fetch available chats from the UI."""
         ...
 
-    @abstractmethod
-    async def _click_chat(self) -> bool:
+    async def _click_chat(self, chat: ChatInterface | None = None, **kwargs) -> bool:
         """Click to open a chat."""
         ...

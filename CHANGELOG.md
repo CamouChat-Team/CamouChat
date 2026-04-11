@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Test Infrastructure**: Decoupled interactive E2E and smoke validation scripts from the automated Pytest suite, enabling clean CI/CD execution without live browser dependencies.
 
 ### Changed
-
+- **Interfaces to Contracts** : Moved all interfaces to contracts , simpler organisation.
 - **Storage Architecture Hardening**: Refactored `SQLAlchemyStorage` into a normalized ingestion pipeline supporting both Browser (DOM) and API (RAM) message sources.
 - **Type-Safe Filtering**: Rebuilt `MessageFilter` to utilize `id_serialized` for deterministic message identification and deduplication.
 - **Media API Contract**: Unified the `extract_media` return schema across `WapiWrapper`, `MessageApiManager`, and `MediaCapable`, providing consistent structured output including success state, file path, MIME type, byte size, and cache/CDN latency telemetry.

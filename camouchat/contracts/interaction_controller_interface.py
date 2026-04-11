@@ -1,10 +1,8 @@
 """Generic low-level interaction controller interface."""
 
-from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Protocol
 
-
-class InteractionControllerInterface(ABC):
+class InteractionControllerInterface(Protocol):
     """Base contract for reusable browser interaction primitives.
 
     This interface intentionally avoids feature-level operations such as
@@ -13,22 +11,18 @@ class InteractionControllerInterface(ABC):
     common input actions that higher-level capabilities can compose.
     """
 
-    @abstractmethod
-    async def focus_input(self) -> Any:
+    async def focus_input(self, **kwargs) -> Any:
         """Focus an input-like target and return the focused target when useful."""
         ...
 
-    @abstractmethod
-    async def type_text(self) -> bool:
+    async def type_text(self, **kwargs) -> bool:
         """Type text into an input-like target."""
         ...
 
-    @abstractmethod
-    async def clear_input(self) -> None:
+    async def clear_input(self, **kwargs) -> None:
         """Clear an input-like target."""
         ...
 
-    @abstractmethod
-    async def enter(self) -> None:
+    async def enter(self, **kwargs) -> None:
         """Confirm the current input, usually by pressing Enter."""
         ...

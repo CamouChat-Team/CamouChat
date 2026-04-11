@@ -11,7 +11,7 @@ from camouchat.BrowserManager import (
     Platform,
     ProfileManager,
 )
-from camouchat.Interfaces.media_capable_interface import FileTyped, MediaType
+from camouchat.contracts.media_capable_interface import FileTyped, MediaType
 from camouchat.StorageDB import StorageType
 from camouchat.WhatsApp import Login, MediaCapable, WebSelectorConfig
 
