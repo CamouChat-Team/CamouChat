@@ -7,12 +7,12 @@ from dataclasses import dataclass, field
 from queue import Queue
 from typing import List, Optional, TypeVar, Sequence
 
-from camouchat.contracts.chat_interface import ChatInterface
-from camouchat.contracts.message_interface import MessageInterface
+from camouchat.contracts.chat import ChatProtocol
+from camouchat.contracts.message import MessageProtocol
 
 from camouchat.Exceptions.base import MessageFilterError
 
-T = TypeVar("T", bound=MessageInterface)
+T = TypeVar("T", bound=MessageProtocol)
 
 
 @dataclass
@@ -36,8 +36,8 @@ class State:
 class BindData:
     """Bind Data for the Queue Filtering"""
 
-    chat: ChatInterface
-    Messages: Sequence[MessageInterface]
+    chat: ChatProtocol
+    Messages: Sequence[MessageProtocol]
     seen: float
 
 
@@ -88,10 +88,10 @@ class MessageFilter:
         if not msgs:
             return []
 
-        m0: MessageInterface = msgs[0]
+        m0: MessageProtocol = msgs[0]
         # Check Single-same chat or not in List[messages]
         for m in msgs:
-            mi: MessageInterface = m
+            mi: MessageProtocol = m
             if mi.from_chat != m0.from_chat:
                 raise MessageFilterError("MessageFilter.apply expects messages from a single chat")
 

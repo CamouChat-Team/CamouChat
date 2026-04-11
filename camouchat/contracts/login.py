@@ -2,7 +2,8 @@
 
 from typing import Protocol
 
-class LoginInterface(Protocol):
+
+class LoginProtocol(Protocol):
     """Base contract for authentication handlers.
 
     Implementations own platform-specific logger defaults and selector wiring.

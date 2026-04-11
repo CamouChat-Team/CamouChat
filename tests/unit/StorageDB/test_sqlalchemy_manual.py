@@ -22,7 +22,7 @@ log = logging.getLogger("SQLAlchemyTest")
 
 
 class MockMessage:
-    """Mock message for testing (implements MessageInterface)."""
+    """Mock message for testing (implements MessageProtocol)."""
 
     def __init__(self, message_id, raw_data, fromMe, chat_name):
         self.id_serialized = message_id

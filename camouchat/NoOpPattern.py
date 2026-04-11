@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Sequence, List, Dict, Any
 
 from camouchat.Filter.message_filter import MessageFilter
-from camouchat.contracts.message_interface import MessageInterface
-from camouchat.contracts.storage_interface import StorageInterface
+from camouchat.contracts.message import MessageProtocol
+from camouchat.contracts.storage import StorageProtocol
 
 
 # -----------------------------
@@ -24,7 +24,7 @@ class NoOpMessageFilter(MessageFilter):
 # -----------------------------
 # NoOp Storage
 # -----------------------------
-class NoOpStorage(StorageInterface):
+class NoOpStorage(StorageProtocol):
     """No-op storage → disables persistence safely."""
 
     def __init__(self):
@@ -42,10 +42,10 @@ class NoOpStorage(StorageInterface):
     async def start_writer(self, **kwargs) -> None:
         return None
 
-    async def enqueue_insert(self, msgs: Sequence[MessageInterface], **kwargs) -> None:
+    async def enqueue_insert(self, msgs: Sequence[MessageProtocol], **kwargs) -> None:
         return None
 
-    async def _insert_batch_internally(self, msgs: Sequence[MessageInterface], **kwargs) -> None:
+    async def _insert_batch_internally(self, msgs: Sequence[MessageProtocol], **kwargs) -> None:
         return None
 
     def check_message_if_exists(self, msg_id: str, **kwargs) -> bool:

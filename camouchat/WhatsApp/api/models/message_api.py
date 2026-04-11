@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
-
+from typing import Any, Dict, List, Optional, Union
+from playwright.async_api import ElementHandle, Locator
+from camouchat.contracts.message import MessageProtocol
 
 @dataclass
-class MessageModelAPI:
+class MessageModelAPI(MessageProtocol):
     """
     Normalized Data Model for a WhatsApp Message.
     Parses the raw Webpack dictionary into a clean, predictable Python object.
@@ -201,7 +202,7 @@ class MessageModelAPI:
     isViewed: Optional[bool]
 
     # ─────────────────────────────────────────────────────────────────────────
-    ui: Optional[str] = None  # type: ignore[assignment]
+    ui: Optional[Union[ElementHandle, Locator]] = None # type: ignore[assignment]
     _MEDIA_THUMB_TYPES: frozenset = frozenset(
         {
             "image",

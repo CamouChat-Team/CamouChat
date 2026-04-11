@@ -8,7 +8,6 @@ from __future__ import annotations
 import asyncio
 from logging import Logger, LoggerAdapter
 
-from camouchat.WhatsApp.api.models import MessageModelAPI
 from camouchat.camouchat_logger import camouchatLogger
 from typing import List, Dict, Any, Optional, Sequence, Union
 
@@ -23,20 +22,20 @@ from sqlalchemy.ext.asyncio import (
 
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.Exceptions.base import StorageError
-from camouchat.contracts.message_interface import MessageInterface
-from camouchat.contracts.storage_interface import StorageInterface
+from camouchat.contracts.message import MessageProtocol
+from camouchat.contracts.storage import StorageProtocol
 from camouchat.StorageDB.models import Base, Message
 
 
-class SQLAlchemyStorage(StorageInterface):
+class SQLAlchemyStorage(StorageProtocol):
     """
-    Generic SQLAlchemy storage implementation for MessageInterface data.
+    Generic SQLAlchemy storage implementation for MessageProtocol data.
 
     Features:
     - Async queue-based batch insertion
     - Background writer task for performance
     - Support for SQLite, PostgreSQL, MySQL via connection string
-    - Generic message storage (works with any MessageInterface implementation)
+    - Generic message storage (works with any MessageProtocol implementation)
 
     Connection string examples:
     - SQLite: sqlite+aiosqlite:///path/to/messages.db
@@ -203,7 +202,7 @@ class SQLAlchemyStorage(StorageInterface):
 
     async def _writer_loop(self) -> None:
         """Background loop that consumes queue and writes batches."""
-        batch: List[MessageInterface] = []
+        batch: List[MessageProtocol] = []
         last_flush = asyncio.get_event_loop().time()
 
         while self._running:
@@ -236,7 +235,7 @@ class SQLAlchemyStorage(StorageInterface):
         if batch:
             await self._insert_batch_internally(batch)
 
-    async def enqueue_insert(self, msgs: Sequence[MessageInterface], **kwargs) -> None:
+    async def enqueue_insert(self, msgs: Sequence[MessageProtocol], **kwargs) -> None:
         """Add messages to queue for batch insertion."""
         if not msgs:
             return
@@ -246,7 +245,7 @@ class SQLAlchemyStorage(StorageInterface):
 
         self.log.debug(f"Enqueued {len(msgs)} messages for insertion.")
 
-    async def _insert_batch_internally(self, msgs: Sequence[MessageInterface], **kwargs) -> None:
+    async def _insert_batch_internally(self, msgs: Sequence[MessageProtocol], **kwargs) -> None:
         """Insert batch of messages into database."""
         if not self._session_factory:
             raise StorageError("Database not initialized.")
@@ -258,11 +257,7 @@ class SQLAlchemyStorage(StorageInterface):
         message_models = []
         for msg in msgs:
             try:
-                if isinstance(msg, MessageModelAPI):
-                    model = SQLAlchemyStorage._msg_api_to_model(msg=msg)
-                else:
-                    # Fallback duck-typing attempt
-                    model = SQLAlchemyStorage._message_to_model(msg=msg)  # type: ignore
+                model = SQLAlchemyStorage._message_to_model(msg=msg)
                 message_models.append(model)
             except Exception as e:
                 self.log.warning(f"Failed to convert message: {e}")
@@ -306,39 +301,21 @@ class SQLAlchemyStorage(StorageInterface):
                 raise StorageError(f"Batch insert failed: {e}") from e
 
     @staticmethod
-    def _message_to_model(msg: MessageInterface) -> Message:
-        """Convert MessageInterface to Message model."""
+    def _message_to_model(msg: MessageProtocol) -> Message:
+        """Convert any MessageProtocol implementation to unified Message DB model."""
         msg_id = getattr(msg, "id_serialized", "unknown")
         body = getattr(msg, "body", "")
         msgtype = getattr(msg, "msgtype", None)
         fromme = getattr(msg, "fromMe", None)
         timestamp = getattr(msg, "timestamp", 0.0)
         encryption_nonce = getattr(msg, "encryption_nonce", None)
-        from_chat = getattr(msg, "from_chat", None)
-        from_chat_id = ""
-        if from_chat:
-            from_chat_id = getattr(from_chat, "id_serialized", "")
 
-        return Message(
-            id_serialized=str(msg_id),
-            body=str(body) if body else "",
-            encryption_nonce=encryption_nonce,
-            msgtype=str(msgtype) if msgtype else None,
-            fromMe=fromme,
-            chat_id=str(from_chat_id),
-            timestamp=float(timestamp),
-        )
-
-    @staticmethod
-    def _msg_api_to_model(msg: MessageModelAPI) -> Message:
-        """Convert MessageModelAPI to unified Message DB model."""
-        msg_id = getattr(msg, "id_serialized", "unknown")
-        body = getattr(msg, "body", "")
-        msgtype = getattr(msg, "msgtype", None)
-        fromme = getattr(msg, "fromMe", None)
-        timestamp = getattr(msg, "timestamp", 0.0)
-        encryption_nonce = getattr(msg, "encryption_nonce", None)
+        # Support both API (jid_From) and DOM (from_chat.id_serialized) formats
         chat_id = getattr(msg, "jid_From", "")
+        if not chat_id:
+            from_chat = getattr(msg, "from_chat", None)
+            if from_chat:
+                chat_id = getattr(from_chat, "id_serialized", "")
 
         return Message(
             id_serialized=str(msg_id),

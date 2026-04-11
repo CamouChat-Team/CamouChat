@@ -19,8 +19,8 @@ from playwright.async_api import (
 
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.Exceptions.whatsapp import MenuError, MediaCapableError, WhatsAppError
-from camouchat.contracts.media_capable_interface import (
-    MediaCapableInterface,
+from camouchat.contracts.media_capable import (
+    MediaCapableProtocol,
     MediaType,
     FileTyped,
 )
@@ -51,7 +51,7 @@ _CATEGORY_TO_PROFILE_ATTR: Dict[str, str] = {
 }
 
 
-class MediaCapable(MediaCapableInterface[WebSelectorConfig]):
+class MediaCapable(MediaCapableProtocol[WebSelectorConfig]):
     """Handles media file uploads and downloads for WhatsApp chats.
 
     Upload (add_media):

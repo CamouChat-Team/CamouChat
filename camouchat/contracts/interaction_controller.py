@@ -2,7 +2,8 @@
 
 from typing import Any, Protocol
 
-class InteractionControllerInterface(Protocol):
+
+class InteractionControllerProtocol(Protocol):
     """Base contract for reusable browser interaction primitives.
 
     This interface intentionally avoids feature-level operations such as
@@ -11,15 +12,15 @@ class InteractionControllerInterface(Protocol):
     common input actions that higher-level capabilities can compose.
     """
 
-    async def focus_input(self, **kwargs) -> Any:
+    async def focus_input(self, source: Any = None, **kwargs) -> Any:
         """Focus an input-like target and return the focused target when useful."""
         ...
 
-    async def type_text(self, **kwargs) -> bool:
+    async def type_text(self, text: str, **kwargs) -> bool:
         """Type text into an input-like target."""
         ...
 
-    async def clear_input(self, **kwargs) -> None:
+    async def clear_input(self, source: Any = None, **kwargs) -> None:
         """Clear an input-like target."""
         ...
 

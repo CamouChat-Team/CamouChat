@@ -1,10 +1,8 @@
-"""Contracts for asynchronous message storage backends."""
+from typing import List, Dict, Any, Protocol, Sequence
+from camouchat.contracts.message import MessageProtocol
 
-from __future__ import annotations
 
-from typing import List, Dict, Any, Protocol
-
-class StorageInterface(Protocol):
+class StorageProtocol(Protocol):
     """Base contract for storage implementations.
 
     All storage backends (SQLite, PostgreSQL, MongoDB, etc.) must implement
@@ -25,19 +23,19 @@ class StorageInterface(Protocol):
         """Start background writer task for batch processing."""
         ...
 
-    async def enqueue_insert(self, **kwargs) -> None:
+    async def enqueue_insert(self, msgs: Sequence[MessageProtocol], **kwargs) -> None:
         """Add messages to queue for batch insertion."""
         ...
 
-    async def _insert_batch_internally(self, **kwargs) -> None:
+    async def _insert_batch_internally(self, msgs: Sequence[MessageProtocol], **kwargs) -> None:
         """Internal method to insert a batch of messages."""
         ...
 
-    def check_message_if_exists(self, **kwargs) -> bool:
+    def check_message_if_exists(self, msg_id: str, **kwargs) -> bool:
         """Check if a message exists by ID."""
         ...
 
-    async def check_message_if_exists_async(self, **kwargs) -> bool:
+    async def check_message_if_exists_async(self, msg_id: str, **kwargs) -> bool:
         """Check if a message exists by ID asynchronously."""
         ...
 

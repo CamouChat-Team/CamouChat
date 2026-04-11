@@ -29,7 +29,7 @@ class FileTyped:
     size_bytes: Optional[int] = None
 
 
-class MediaCapableInterface(Protocol, Generic[T]):
+class MediaCapableProtocol(Protocol, Generic[T]):
     """Base contract for media operations.
 
     Concrete implementations own platform-specific selectors, browser state,
@@ -38,6 +38,6 @@ class MediaCapableInterface(Protocol, Generic[T]):
 
     ui_config: T
 
-    async def add_media(self, **kwargs) -> bool:
+    async def add_media(self, mtype: MediaType, file: FileTyped, **kwargs) -> bool:
         """Upload media file to a chat."""
         ...

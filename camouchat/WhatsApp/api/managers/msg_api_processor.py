@@ -18,18 +18,18 @@ from pathlib import Path
 from logging import Logger, LoggerAdapter
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from camouchat.contracts.message_processor_interface import MessageProcessorInterface
+from camouchat.contracts.message_processor import MessageProcessorProtocol
 from camouchat.camouchat_logger import camouchatLogger
 
-from camouchat.contracts.chat_interface import ChatInterface
-from camouchat.contracts.storage_interface import StorageInterface
+from camouchat.contracts.chat import ChatProtocol
+from camouchat.contracts.storage import StorageProtocol
 from camouchat.Filter.message_filter import MessageFilter
 from camouchat.NoOpPattern import NoOpMessageFilter, NoOpStorage
 from camouchat.WhatsApp.api.models.message_api import MessageModelAPI
 from camouchat.WhatsApp.api.wa_js import WapiWrapper, WAJS_Scripts
 
 
-class MessageApiManager(MessageProcessorInterface[MessageModelAPI, Any]):
+class MessageApiManager(MessageProcessorProtocol[MessageModelAPI, Any]):
     """
     Domain manager for all WhatsApp message operations.
     It does not need page/ui_config , skipped.
@@ -50,7 +50,7 @@ class MessageApiManager(MessageProcessorInterface[MessageModelAPI, Any]):
         self,
         bridge: WapiWrapper,
         log: Optional[Union[Logger, LoggerAdapter]] = None,
-        storage_obj: Optional[StorageInterface] = None,
+        storage_obj: Optional[StorageProtocol] = None,
         filter_obj: Optional[MessageFilter] = None,
     ) -> None:
         self.page = None
@@ -251,12 +251,12 @@ class MessageApiManager(MessageProcessorInterface[MessageModelAPI, Any]):
         return [MessageModelAPI.from_dict(r) for r in (raw_list or [])]
 
     async def fetch_messages(
-        self, chat: ChatInterface, retry: int = 5, **kwargs
+        self, chat: ChatProtocol, retry: int = 5, **kwargs
     ) -> List[MessageModelAPI]:
         """[Type: RAM] Fetch messages, fulfilling interface via generic storage pass."""
         chat_id = chat.id_serialized
         assert chat_id is not None
-        msgList = await self.get_messages(chat_id, count=kwargs.get("count", 50))
+        msgList = await self.get_messages(chat_id, **kwargs)
 
         new_msgs = msgList
         if self.storage and hasattr(self.storage, "check_message_if_exists_async"):

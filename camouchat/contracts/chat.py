@@ -2,7 +2,7 @@ from typing import Protocol
 from playwright.async_api import ElementHandle, Locator
 
 
-class ChatInterface(Protocol):
+class ChatProtocol(Protocol):
     """Chat Interface Base Class"""
 
     name: str | None

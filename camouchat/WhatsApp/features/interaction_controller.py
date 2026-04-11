@@ -17,7 +17,7 @@ from playwright.async_api import TimeoutError as PlaywrightTimeoutError, Error a
 
 from camouchat.Exceptions.base import ElementNotFoundError, HumanizedOperationError
 from camouchat.Exceptions.whatsapp import ReplyCapableError
-from camouchat.contracts.interaction_controller_interface import InteractionControllerInterface
+from camouchat.contracts.interaction_controller import InteractionControllerProtocol
 from camouchat.WhatsApp.api import WapiSession
 from camouchat.WhatsApp.api.models import MessageModelAPI
 from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
@@ -29,7 +29,7 @@ _lock_file_path = os.path.join(tempfile.gettempdir(), "whatsapp_clipboard.lock")
 _clipboard_file_lock = FileLock(_lock_file_path)
 
 
-class ReplyCapable(InteractionControllerInterface):
+class ReplyCapable(InteractionControllerProtocol):
     """Enables replying to specific WhatsApp messages."""
 
     _instances: weakref.WeakKeyDictionary[Page, ReplyCapable] = weakref.WeakKeyDictionary()
@@ -196,7 +196,7 @@ class ReplyCapable(InteractionControllerInterface):
         raise ReplyCapableError("side_edge_click failed after max attempts.")
 
     async def focus_input(
-        self, source: ElementHandle | Locator | None = None
+        self, source: ElementHandle | Locator | None = None, **kwargs
     ) -> ElementHandle | Locator:
         """Focus the WhatsApp message input or a provided input target."""
         target = source or self.ui_config.message_box()
@@ -211,6 +211,7 @@ class ReplyCapable(InteractionControllerInterface):
         text: str,
         source: ElementHandle | Locator | None = None,
         send: bool = False,
+        **kwargs,
     ) -> bool:
         """
         Type text with human-like delays.
@@ -246,7 +247,7 @@ class ReplyCapable(InteractionControllerInterface):
             self.log.debug("Typing failed → fallback to instant fill", exc_info=e)
             return await self._Instant_fill(text=text, source=target or source, send=send)
 
-    async def enter(self) -> None:
+    async def enter(self, **kwargs) -> None:
         """
         Presses Enter on the page, use it for confirm send after type.
         Given separately for Media based sending.
@@ -255,7 +256,7 @@ class ReplyCapable(InteractionControllerInterface):
         """
         await self.page.keyboard.press("Enter")
 
-    async def clear_input(self, source: ElementHandle | Locator | None = None) -> None:
+    async def clear_input(self, source: ElementHandle | Locator | None = None, **kwargs) -> None:
         """Clear the WhatsApp message input or a provided input target."""
         target = source or self.ui_config.message_box()
         if not target:

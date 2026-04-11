@@ -15,12 +15,12 @@ from playwright.async_api import (
 )
 from typing import Optional, Union
 from camouchat.Exceptions.whatsapp import LoginError
-from camouchat.contracts.login_interface import LoginInterface
+from camouchat.contracts.login import LoginProtocol
 from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
 from camouchat.camouchat_logger import camouchatLogger
 
 
-class Login(LoginInterface):
+class Login(LoginProtocol):
     """Handles WhatsApp Web authentication via QR code or phone number."""
 
     _instances: weakref.WeakKeyDictionary[Page, Login] = weakref.WeakKeyDictionary()
