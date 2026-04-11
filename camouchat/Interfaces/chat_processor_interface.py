@@ -1,39 +1,29 @@
-"""Abstract base class for chat processors."""
+"""Contracts for chat discovery and chat activation."""
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from logging import Logger, LoggerAdapter
-from typing import Dict, Optional, Sequence, Union
+from typing import Dict, Sequence
 
-from playwright.async_api import Page
-
-from camouchat.Interfaces.chat_interface import ChatInterface
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
-from camouchat.camouchat_logger import camouchatLogger
+from camouchat.contracts.chat_interface import ChatInterface
 
 
 class ChatProcessorInterface(ABC):
-    """Base interface for chat fetching and management."""
+    """Base contract for components that list chats and activate a chat.
+
+    Implementations own platform-specific state such as selectors, browser
+    pages, bridge clients, and logger defaults. The interface only captures the
+    behavior expected by callers.
+    """
 
     capabilities: Dict[str, bool]
 
-    def __init__(
-        self,
-        page: Optional[Page],
-        ui_config: Optional[WebSelectorConfig],
-        log: Optional[Union[Logger, LoggerAdapter]] = None,
-    ) -> None:
-        self.log = log or camouchatLogger
-        self.page = page
-        self.UIConfig = ui_config
-
     @abstractmethod
-    async def fetch_chats(self, **kwargs) -> Sequence[ChatInterface]:
+    async def fetch_chats(self) -> Sequence[ChatInterface]:
         """Fetch available chats from the UI."""
         ...
 
     @abstractmethod
-    async def _click_chat(self, chat: Optional[ChatInterface], **kwargs) -> bool:
+    async def _click_chat(self) -> bool:
         """Click to open a chat."""
         ...

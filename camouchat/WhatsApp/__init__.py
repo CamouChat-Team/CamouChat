@@ -5,20 +5,20 @@ Provides chat processing, message handling, media operations,
 and human-like interaction capabilities for WhatsApp Web automation.
 """
 
-from .chat_processor import ChatProcessor
-from .login import Login
-from .message_processor import MessageProcessor
-from .media_capable import MediaCapable
-from .human_interaction_controller import HumanInteractionController
-from .web_ui_config import WebSelectorConfig
-from .reply_capable import ReplyCapable
+# from camouchat.WhatsApp.dom.managers.chat_processor import ChatProcessor
+# from camouchat.WhatsApp.core.login import Login
+# from camouchat.WhatsApp.dom.managers.message_processor import MessageProcessor
+# from camouchat.WhatsApp.features.media_capable import MediaCapable
+# from camouchat.WhatsApp.features.human_interaction_controller import HumanInteractionController
+# from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
+# from camouchat.WhatsApp.features.reply_capable import ReplyCapable
 
-__all__ = [
-    "ChatProcessor",
-    "Login",
-    "MessageProcessor",
-    "MediaCapable",
-    "HumanInteractionController",
-    "ReplyCapable",
-    "WebSelectorConfig",
-]
+# __all__ = [
+#     "ChatProcessor",
+#     "Login",
+#     "MessageProcessor",
+#     "MediaCapable",
+#     "HumanInteractionController",
+#     "ReplyCapable",
+#     "WebSelectorConfig",
+# ]

@@ -46,7 +46,7 @@ class CamoufoxBrowser(BrowserInterface):
         """
         # Use profile-specific browser logger by default
         log = log or get_browser_profile_logger(profile.profile_id)
-        super().__init__(log=log)
+        self.log = log
         self.config = config
         self.profile = profile
         self.BrowserForge = config.fingerprint_obj

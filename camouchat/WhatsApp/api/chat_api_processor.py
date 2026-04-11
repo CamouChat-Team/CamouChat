@@ -1,26 +1,42 @@
 import asyncio
 import random
 from logging import Logger, LoggerAdapter
-from typing import Any, Sequence
+from typing import Any
 
 from playwright.async_api import Page
 
+from camouchat.contracts.chat_interface import ChatInterface
 from .models import ChatModelAPI
 from .wa_js import WapiWrapper, WAJS_Scripts
-from ...Interfaces.chat_interface import ChatInterface
 from ...Interfaces.chat_processor_interface import ChatProcessorInterface
+from ...camouchat_logger import camouchatLogger
 
 
 class ChatApiManager(ChatProcessorInterface):
     def __init__(
-        self, page: Page, bridge: WapiWrapper, logger: Logger | LoggerAdapter | None = None
+            self, page: Page, bridge: WapiWrapper, logger: Logger | LoggerAdapter | None = None
     ) -> None:
-        super().__init__(page=page, ui_config=None, log=logger)
+        self.page = page
+        self.ui_config = None
+        self.log = logger or camouchatLogger
         self._bridge = bridge
         self._last_opened_chat_id: str | None = None
 
-    async def fetch_chats(self, **kwargs) -> Sequence[ChatInterface]:
-        return await self.get_chat_list(**kwargs)
+    async def fetch_chats(
+            self,
+            count: int | None = None,
+            direction: str = "after",
+            only_users: bool = False,
+            only_groups: bool = False,
+            only_communities: bool = False,
+            only_unread: bool = False,
+            only_archived: bool = False,
+            only_newsletter: bool = False,
+            with_labels: list | None = None,
+            anchor_chat_id: str | None = None,
+            ignore_group_metadata: bool = True,
+    ) -> list[ChatInterface]:
+        return await self.get_chat_list()
 
     async def _click_chat(self, chat: ChatInterface | None, **kwargs) -> bool:
         return await self.open_chat(chat=chat)  # type: ignore
@@ -123,18 +139,18 @@ class ChatApiManager(ChatProcessorInterface):
         return ChatModelAPI.from_dict(raw_data)
 
     async def get_chat_list(
-        self,
-        count: int | None = None,
-        direction: str = "after",
-        only_users: bool = False,
-        only_groups: bool = False,
-        only_communities: bool = False,
-        only_unread: bool = False,
-        only_archived: bool = False,
-        only_newsletter: bool = False,
-        with_labels: list | None = None,
-        anchor_chat_id: str | None = None,
-        ignore_group_metadata: bool = True,
+            self,
+            count: int | None = None,
+            direction: str = "after",
+            only_users: bool = False,
+            only_groups: bool = False,
+            only_communities: bool = False,
+            only_unread: bool = False,
+            only_archived: bool = False,
+            only_newsletter: bool = False,
+            with_labels: list | None = None,
+            anchor_chat_id: str | None = None,
+            ignore_group_metadata: bool = True,
     ) -> list[ChatModelAPI]:
         """
         [Type: RAM]

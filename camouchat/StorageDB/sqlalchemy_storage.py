@@ -23,10 +23,10 @@ from sqlalchemy.ext.asyncio import (
 
 from camouchat.BrowserManager.profile_info import ProfileInfo
 from camouchat.Exceptions.base import StorageError
-from camouchat.Interfaces.message_interface import MessageInterface
+from camouchat.contracts.message_interface import MessageInterface
 from camouchat.Interfaces.storage_interface import StorageInterface
 from camouchat.StorageDB.models import Base, Message
-from camouchat.WhatsApp.models import Message as WhatsAppMessage
+from camouchat.WhatsApp.dom.models import Message as WhatsAppMessage
 
 
 class SQLAlchemyStorage(StorageInterface):
@@ -79,7 +79,8 @@ class SQLAlchemyStorage(StorageInterface):
             flush_interval: Seconds before auto-flush even if batch not full
             echo: Enable SQL query logging (for debugging)
         """
-        super().__init__(queue=queue, log=log)
+        self.queue = queue
+        self.log = log or camouchatLogger
 
         self.database_url = database_url
         self._initialized = True

@@ -52,7 +52,7 @@ The primary typing method. Types text into the browser with human-like behavior,
 ```python
 msg_box_handle = await ui_config.message_box().element_handle(timeout=1000)
 
-success = await humanizer.typing(
+success = await humanizer.type_text(
     text="Hello from CamouChat! 🤖",
     source=msg_box_handle,
 )

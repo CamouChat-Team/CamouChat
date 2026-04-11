@@ -20,9 +20,10 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from camouchat.camouchat_logger import camouchatLogger
 from camouchat.Interfaces.message_processor_interface import MessageProcessorInterface
-from camouchat.Interfaces.chat_interface import ChatInterface
+from camouchat.contracts.chat_interface import ChatInterface
 from camouchat.Interfaces.storage_interface import StorageInterface
 from camouchat.Filter.message_filter import MessageFilter
+from camouchat.NoOpPattern import NoOpMessageFilter, NoOpStorage
 from .models.message_api import MessageModelAPI
 from .wa_js import WapiWrapper, WAJS_Scripts
 
@@ -51,9 +52,12 @@ class MessageApiManager(MessageProcessorInterface[MessageModelAPI, Any]):
         storage_obj: Optional[StorageInterface] = None,
         filter_obj: Optional[MessageFilter] = None,
     ) -> None:
-        super().__init__(storage_obj=storage_obj, filter_obj=filter_obj, log=log)
-        self._bridge = bridge
+        self.page = None
+        self.ui_config = None
+        self.storage = storage_obj or NoOpStorage()
+        self.filter = filter_obj or NoOpMessageFilter()
         self.log = log or camouchatLogger
+        self._bridge = bridge
         self._bridge_active: bool = False
         self._handlers: List[Callable[[MessageModelAPI], Any]] = []
         self._id_queue: asyncio.Queue = asyncio.Queue()

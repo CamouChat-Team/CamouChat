@@ -1,55 +1,37 @@
-"""Storage Interface - Abstract base for all storage implementations."""
+"""Contracts for asynchronous message storage backends."""
 
 from __future__ import annotations
 
-import asyncio
-from logging import Logger, LoggerAdapter
-from camouchat.camouchat_logger import camouchatLogger
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Sequence, Optional, Union
-
-from camouchat.Interfaces.message_interface import MessageInterface
+from typing import List, Dict, Any
 
 
 class StorageInterface(ABC):
-    """
-    Abstract base class for storage implementations.
+    """Base contract for storage implementations.
 
     All storage backends (SQLite, PostgreSQL, MongoDB, etc.) must implement
-    this interface to ensure consistent behavior across the SDK.
+    this interface to provide consistent batching, lookup, retrieval, and
+    cleanup behavior. Concrete classes own logger defaults and backend-specific
+    configuration.
     """
 
-    def __init__(
-        self, queue: asyncio.Queue, log: Optional[Union[Logger, LoggerAdapter]] = None, **kwargs
-    ) -> None:
-        """
-        Initialize storage with a queue for batch operations.
-
-        Args:
-            queue: Async queue for message batching
-            log: Logger instance
-            **kwargs: Additional implementation-specific options
-        """
-        self.queue = queue
-        self.log = log or camouchatLogger
-
     @abstractmethod
-    async def init_db(self, **kwargs) -> None:
+    async def init_db(self) -> None:
         """Initialize database connection."""
         ...
 
     @abstractmethod
-    async def create_table(self, **kwargs) -> None:
+    async def create_table(self) -> None:
         """Create required tables/collections."""
         ...
 
     @abstractmethod
-    async def start_writer(self, **kwargs) -> None:
+    async def start_writer(self) -> None:
         """Start background writer task for batch processing."""
         ...
 
     @abstractmethod
-    async def enqueue_insert(self, msgs: Sequence[MessageInterface], **kwargs) -> None:
+    async def enqueue_insert(self) -> None:
         """
         Add messages to queue for batch insertion.
 
@@ -59,7 +41,7 @@ class StorageInterface(ABC):
         ...
 
     @abstractmethod
-    async def _insert_batch_internally(self, msgs: Sequence[MessageInterface], **kwargs) -> None:
+    async def _insert_batch_internally(self) -> None:
         """
         Internal method to insert a batch of messages.
 
@@ -69,7 +51,7 @@ class StorageInterface(ABC):
         ...
 
     @abstractmethod
-    def check_message_if_exists(self, msg_id: str, **kwargs) -> bool:
+    def check_message_if_exists(self) -> bool:
         """
         Check if a message exists by ID.
 
@@ -82,7 +64,7 @@ class StorageInterface(ABC):
         ...
 
     @abstractmethod
-    async def check_message_if_exists_async(self, msg_id: str, **kwargs) -> bool:
+    async def check_message_if_exists_async(self) -> bool:
         """
         Check if a message exists by ID asynchronously.
 
@@ -95,7 +77,7 @@ class StorageInterface(ABC):
         ...
 
     @abstractmethod
-    def get_all_messages(self, **kwargs) -> List[Dict[str, Any]]:
+    def get_all_messages(self) -> List[Dict[str, Any]]:
         """
         Retrieve all messages from storage.
 
@@ -108,6 +90,6 @@ class StorageInterface(ABC):
         ...
 
     @abstractmethod
-    async def close_db(self, **kwargs) -> None:
+    async def close_db(self) -> None:
         """Close database connection and cleanup resources."""
         ...

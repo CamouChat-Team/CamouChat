@@ -7,8 +7,8 @@ from dataclasses import dataclass, field
 from queue import Queue
 from typing import List, Optional, TypeVar, Sequence
 
-from camouchat.Interfaces.chat_interface import ChatInterface
-from camouchat.Interfaces.message_interface import MessageInterface
+from camouchat.contracts.chat_interface import ChatInterface
+from camouchat.contracts.message_interface import MessageInterface
 
 from camouchat.Exceptions.base import MessageFilterError
 

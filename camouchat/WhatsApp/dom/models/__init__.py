@@ -5,10 +5,8 @@ Concrete implementations of chat and message objects
 tailored for WhatsApp Web's data model and behavior.
 
 gives :
--Message  ( Old)
--Chat  ( Old )
--MessageModelAPI ( new )
--ChatModelAPI ( new )
+-Message
+-Chat
 """
 
 from .chat import Chat

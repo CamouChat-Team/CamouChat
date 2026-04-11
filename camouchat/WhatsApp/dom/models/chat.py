@@ -10,11 +10,13 @@ from typing import Optional, Union
 
 from playwright.async_api import ElementHandle, Locator
 
-from camouchat.Interfaces.chat_interface import ChatInterface
-
 
 @dataclass
-class Chat(ChatInterface):
+class Chat:
+    """
+    DoM based WhatsApp Chat.
+    """
+
     name: str
     ui: Optional[Union[ElementHandle, Locator]]
     id_serialized: str = field(init=False)

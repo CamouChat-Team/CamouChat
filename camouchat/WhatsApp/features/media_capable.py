@@ -26,7 +26,8 @@ from camouchat.Interfaces.media_capable_interface import (
 )
 from camouchat.WhatsApp.api import WapiSession
 from camouchat.WhatsApp.api.models import MessageModelAPI
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
+from camouchat.camouchat_logger import camouchatLogger
 
 # ── Media-type → category bucket ──────────────────────────────────────────────
 _WA_TYPE_TO_CATEGORY: Dict[str, str] = {
@@ -78,14 +79,20 @@ class MediaCapable(MediaCapableInterface[WebSelectorConfig]):
     def __init__(
         self,
         page: Page,
-        UIConfig: WebSelectorConfig,
+        ui_config: Optional[WebSelectorConfig] = None,
         log: Optional[Union[Logger, LoggerAdapter]] = None,
         wapi: Optional[WapiSession] = None,
         profile: Optional[ProfileInfo] = None,
+        **kwargs,
     ):
         if hasattr(self, "_initialized") and self._initialized:
             return
-        super().__init__(page=page, log=log, UIConfig=UIConfig)
+        ui_config = ui_config or kwargs.pop("UIConfig", None)
+        if ui_config is None:
+            raise ValueError("ui_config must not be None")
+        self.page = page
+        self.ui_config = ui_config
+        self.log = log or camouchatLogger
         if self.page is None:
             raise ValueError("page must not be None")
         self._wapi: Optional[WapiSession] = wapi
@@ -99,7 +106,7 @@ class MediaCapable(MediaCapableInterface[WebSelectorConfig]):
     async def menu_clicker(self) -> None:
         """Open the attachment menu."""
         try:
-            menu_icon = await self.UIConfig.plus_rounded_icon().element_handle(timeout=1000)
+            menu_icon = await self.ui_config.plus_rounded_icon().element_handle(timeout=1000)
 
             if not menu_icon:
                 raise MenuError("Menu Locator return None/Empty / menu_clicker / MediaCapable")
@@ -154,7 +161,7 @@ class MediaCapable(MediaCapableInterface[WebSelectorConfig]):
 
     async def _getOperational(self, mtype: MediaType) -> Locator:
         """Get the appropriate menu locator for the media type."""
-        sc = self.UIConfig
+        sc = self.ui_config
         if mtype in (MediaType.TEXT, MediaType.IMAGE, MediaType.VIDEO):
             self.log.debug("photo&Video locator selected")
             return sc.photos_videos()

@@ -49,10 +49,10 @@ async def main():
     from camouchat.WhatsApp.api import WapiSession
     from camouchat.WhatsApp.api.models import MessageModelAPI
     from camouchat.WhatsApp.decorator import msg_event_hook
-    from camouchat.WhatsApp.human_interaction_controller import (
+    from camouchat.WhatsApp.features.human_interaction_controller import (
         HumanInteractionController,
     )
-    from camouchat.WhatsApp.reply_capable import ReplyCapable
+    from camouchat.WhatsApp.features.interaction_controller import ReplyCapable
 
     wapi = WapiSession(page=page)
     replyObj = ReplyCapable(page=page, ui_config=ui, wapi=wapi)

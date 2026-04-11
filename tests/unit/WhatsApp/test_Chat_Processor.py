@@ -20,9 +20,9 @@ from camouchat.Exceptions import (
     ChatProcessorError,
     ChatUnreadError,
 )
-from camouchat.WhatsApp.models.chat import Chat
-from camouchat.WhatsApp.chat_processor import ChatProcessor
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.WhatsApp.dom.models.chat import Chat
+from camouchat.WhatsApp.dom.managers.chat_processor import ChatProcessor
+from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
 
 # ============================================================================
 # FIXTURES

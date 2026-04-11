@@ -15,8 +15,8 @@ from playwright.async_api import (
 )
 
 from camouchat.Exceptions.whatsapp import LoginError
-from camouchat.WhatsApp.login import Login
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.WhatsApp.core.login import Login
+from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
 
 # ============================================================================
 # FIXTURES

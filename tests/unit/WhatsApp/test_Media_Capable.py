@@ -11,8 +11,8 @@ from playwright.async_api import Page, Locator, FileChooser, TimeoutError as Pla
 
 from camouchat.Exceptions.whatsapp import MediaCapableError
 from camouchat.Interfaces.media_capable_interface import MediaType, FileTyped
-from camouchat.WhatsApp.media_capable import MediaCapable
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.WhatsApp.features.media_capable import MediaCapable
+from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
 
 # ============================================================================
 # FIXTURES

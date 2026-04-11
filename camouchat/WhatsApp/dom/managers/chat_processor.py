@@ -19,8 +19,9 @@ from camouchat.Exceptions.whatsapp import (
     ChatError,
 )
 from camouchat.Interfaces.chat_processor_interface import ChatProcessorInterface
-from camouchat.WhatsApp.models.chat import Chat
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.WhatsApp.dom.models.chat import Chat
+from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
+from camouchat.camouchat_logger import camouchatLogger
 
 
 class ChatProcessor(ChatProcessorInterface):
@@ -46,7 +47,9 @@ class ChatProcessor(ChatProcessorInterface):
     ) -> None:
         if hasattr(self, "_initialized") and self._initialized:
             return
-        super().__init__(page=page, log=log, ui_config=ui_config)
+        self.page = page
+        self.ui_config = ui_config
+        self.log = log or camouchatLogger
         self.capabilities: Dict[str, bool] = {}
         if self.page is None:
             raise ValueError("page must not be None")
@@ -71,8 +74,8 @@ class ChatProcessor(ChatProcessorInterface):
     async def _get_Wrapped_Chat(self, limit: int = 5, retry: int = 5, **kwargs) -> Sequence[Chat]:
         """Extract chat elements and wrap them."""
 
-        assert self.UIConfig is not None
-        sc = self.UIConfig
+        assert self.ui_config is not None
+        sc = self.ui_config
 
         for attempt in range(1, retry + 1):
             try:

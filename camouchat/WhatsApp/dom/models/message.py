@@ -8,16 +8,14 @@ from typing import Union, Optional
 
 from playwright.async_api import ElementHandle, Locator
 
-from camouchat.Interfaces.message_interface import MessageInterface
-from camouchat.WhatsApp.models.chat import Chat
+from camouchat.WhatsApp.dom.models.chat import Chat
 
 
 @dataclass
-class Message(MessageInterface):
+class Message:
     """Represents a WhatsApp message entity with safe logging and structured metadata."""
 
     fromMe: bool
-
     body: str
     from_chat: Chat
     ui: Optional[Union[ElementHandle, Locator]]

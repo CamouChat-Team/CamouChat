@@ -21,10 +21,11 @@ from camouchat.Filter.message_filter import MessageFilter
 from camouchat.Interfaces.message_processor_interface import MessageProcessorInterface
 from camouchat.Interfaces.storage_interface import StorageInterface
 from camouchat.NoOpPattern import NoOpStorage, NoOpMessageFilter
-from camouchat.WhatsApp.chat_processor import ChatProcessor
-from camouchat.WhatsApp.models.chat import Chat
-from camouchat.WhatsApp.models.message import Message
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.WhatsApp.dom.managers.chat_processor import ChatProcessor
+from camouchat.WhatsApp.dom.models.chat import Chat
+from camouchat.WhatsApp.dom.models import Message
+from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
+from camouchat.camouchat_logger import camouchatLogger
 
 
 class MessageProcessor(MessageProcessorInterface[Message, WebSelectorConfig]):
@@ -66,13 +67,9 @@ class MessageProcessor(MessageProcessorInterface[Message, WebSelectorConfig]):
     ) -> None:
         if hasattr(self, "_initialized") and self._initialized:
             return
-        super().__init__(
-            storage_obj=storage_obj,
-            filter_obj=filter_obj,
-            log=log,
-            page=page,
-            UIConfig=ui_config,
-        )
+        self.page = page
+        self.ui_config = ui_config
+        self.log = log or camouchatLogger
 
         self.storage = storage_obj or NoOpStorage()
         self.filter = filter_obj or NoOpMessageFilter()
@@ -115,8 +112,8 @@ class MessageProcessor(MessageProcessorInterface[Message, WebSelectorConfig]):
     @ensure_chat_clicked(lambda self, chat: self.chat_processor._click_chat(chat))
     async def _get_wrapped_Messages(self, chat: Chat, retry: int) -> List[Message]:
 
-        assert self.UIConfig is not None
-        sc = self.UIConfig
+        assert self.ui_config is not None
+        sc = self.ui_config
 
         for attempt in range(1, retry + 1):
             try:

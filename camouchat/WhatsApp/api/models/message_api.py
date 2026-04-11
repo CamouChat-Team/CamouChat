@@ -1,11 +1,9 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from camouchat.Interfaces.message_interface import MessageInterface
-
 
 @dataclass
-class MessageModelAPI(MessageInterface):
+class MessageModelAPI:
     """
     Normalized Data Model for a WhatsApp Message.
     Parses the raw Webpack dictionary into a clean, predictable Python object.

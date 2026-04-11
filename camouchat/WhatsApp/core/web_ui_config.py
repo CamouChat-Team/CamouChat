@@ -13,14 +13,16 @@ from typing import Union, Optional
 
 from playwright.async_api import ElementHandle, Locator, Page
 
-from camouchat.Interfaces.web_ui_selector import WebUISelectorCapable
+from camouchat.contracts.web_ui_selector import WebUISelectorCapable
+from camouchat.camouchat_logger import camouchatLogger
 
 
 class WebSelectorConfig(WebUISelectorCapable):
     """Generic Custom Class , Different from every Platform"""
 
     def __init__(self, page: Page, log: Optional[Union[Logger, LoggerAdapter]] = None) -> None:
-        super().__init__(page=page, log=log)
+        self.page = page
+        self.log = log or camouchatLogger
         if self.page is None:
             raise ValueError("page must not be None")
 

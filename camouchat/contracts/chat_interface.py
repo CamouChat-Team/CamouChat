@@ -1,9 +1,8 @@
-from abc import ABC
-
+from typing import Protocol
 from playwright.async_api import ElementHandle, Locator
 
 
-class ChatInterface(ABC):
+class ChatInterface(Protocol):
     """Chat Interface Base Class"""
 
     name: str | None

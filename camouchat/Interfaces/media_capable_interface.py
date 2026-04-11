@@ -1,15 +1,11 @@
-"""Abstract base class for media upload functionality."""
+"""Contracts and value objects for media capabilities."""
 
-from logging import Logger, LoggerAdapter
-from camouchat.camouchat_logger import camouchatLogger
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Generic, Optional, TypeVar, Union
+from typing import Generic, Optional, TypeVar
 
-from playwright.async_api import Page
-
-from camouchat.Interfaces.web_ui_selector import WebUISelectorCapable
+from camouchat.contracts.web_ui_selector import WebUISelectorCapable
 
 T = TypeVar("T", bound=WebUISelectorCapable)
 
@@ -35,23 +31,15 @@ class FileTyped:
 
 
 class MediaCapableInterface(ABC, Generic[T]):
-    """Base interface for media upload operations."""
+    """Base contract for media operations.
 
-    UIConfig: T
+    Concrete implementations own platform-specific selectors, browser state,
+    and logger defaults. This interface only defines the shared upload action.
+    """
 
-    @abstractmethod
-    def __init__(
-        self,
-        page: Page,
-        log: Optional[Union[Logger, LoggerAdapter]],
-        UIConfig: T,
-        **kwargs,
-    ):
-        self.page = page
-        self.log = log or camouchatLogger
-        self.UIConfig = UIConfig
+    ui_config: T
 
     @abstractmethod
-    async def add_media(self, mtype: MediaType, file: FileTyped, **kwargs) -> bool:
+    async def add_media(self) -> bool:
         """Upload media file to a chat."""
         ...

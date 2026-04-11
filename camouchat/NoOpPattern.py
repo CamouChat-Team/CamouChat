@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Sequence, List, Dict, Any
 
 from camouchat.Filter.message_filter import MessageFilter
-from camouchat.Interfaces.message_interface import MessageInterface
+from camouchat.contracts.message_interface import MessageInterface
 from camouchat.Interfaces.storage_interface import StorageInterface
 
 

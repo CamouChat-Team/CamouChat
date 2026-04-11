@@ -12,11 +12,11 @@ from playwright.async_api import Page, Locator
 from camouchat.Exceptions import MessageListEmptyError, MessageProcessorError, WhatsAppError
 from camouchat.Filter.message_filter import MessageFilter
 from camouchat.Interfaces.storage_interface import StorageInterface
-from camouchat.WhatsApp.models.chat import Chat
-from camouchat.WhatsApp.models.message import Message
-from camouchat.WhatsApp.chat_processor import ChatProcessor
-from camouchat.WhatsApp.message_processor import MessageProcessor
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.WhatsApp.dom.models.chat import Chat
+from camouchat.WhatsApp.dom.models import Message
+from camouchat.WhatsApp.dom.managers.chat_processor import ChatProcessor
+from camouchat.WhatsApp.dom.managers.message_processor import MessageProcessor
+from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
 
 # ============================================================================
 # FIXTURES

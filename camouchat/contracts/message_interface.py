@@ -1,12 +1,11 @@
-from abc import ABC
-from typing import Optional, Union
+from typing import Optional, Union, Protocol
 
 from playwright.async_api import ElementHandle, Locator
 
-from camouchat.Interfaces.chat_interface import ChatInterface
+from camouchat.contracts.chat_interface import ChatInterface
 
 
-class MessageInterface(ABC):
+class MessageInterface(Protocol):
     """Message Interface Base Class"""
 
     timestamp: float | int | None

@@ -16,7 +16,8 @@ from playwright.async_api import (
 from typing import Optional, Union
 from camouchat.Exceptions.whatsapp import LoginError
 from camouchat.Interfaces.login_interface import LoginInterface
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
+from camouchat.camouchat_logger import camouchatLogger
 
 
 class Login(LoginInterface):
@@ -37,22 +38,27 @@ class Login(LoginInterface):
     def __init__(
         self,
         page: Page,
-        UIConfig: WebSelectorConfig,
+        ui_config: Optional[WebSelectorConfig] = None,
         log: Optional[Union[Logger, LoggerAdapter]] = None,
+        **kwargs,
     ):
         if hasattr(self, "_initialized") and self._initialized:
             return
         if page is None:
             raise ValueError("page must not be None")
 
-        super().__init__(page=page, UIConfig=UIConfig, log=log)
-        self.UIConfig: WebSelectorConfig = UIConfig
+        ui_config = ui_config or kwargs.pop("UIConfig", None)
+        if ui_config is None:
+            raise ValueError("ui_config must not be None")
+        self.page = page
+        self.ui_config = ui_config
+        self.log = log or camouchatLogger
         self._initialized = True
 
     async def is_login_successful(self, **kwargs) -> bool:
         """Verify if login was successful by checking for chat list visibility."""
         timeout: int = kwargs.get("timeout", 10_000)
-        chats = self.UIConfig.chat_list()
+        chats = self.ui_config.chat_list()
         try:
             await chats.wait_for(timeout=timeout, state="visible")
             return True
@@ -109,11 +115,11 @@ class Login(LoginInterface):
 
     async def __qr_login(self, wait_time: int) -> bool:
         """Wait for user to scan QR code."""
-        canvas = self.UIConfig.qr_canvas()
+        canvas = self.ui_config.qr_canvas()
         self.log.info("Waiting for QR scan (%s seconds)...", wait_time // 1000)
 
         try:
-            await self.UIConfig.chat_list().wait_for(timeout=wait_time, state="visible")
+            await self.ui_config.chat_list().wait_for(timeout=wait_time, state="visible")
             if await canvas.is_visible():
                 raise LoginError("QR not scanned within allowed time.")
             return True
@@ -127,7 +133,7 @@ class Login(LoginInterface):
 
         self.log.info("Starting code-based login...")
 
-        btn = self.UIConfig.link_phone_number_button()
+        btn = self.ui_config.link_phone_number_button()
         if await btn.count() == 0:
             raise LoginError("Login-with-phone-number button not found.")
 
@@ -137,7 +143,7 @@ class Login(LoginInterface):
         except PlaywrightTimeoutError as e:
             raise LoginError("Failed to open phone login screen.") from e
 
-        ctl = self.UIConfig.country_selector_button()
+        ctl = self.ui_config.country_selector_button()
         if await ctl.count() == 0:
             raise LoginError("Country selector not found.")
 
@@ -145,7 +151,7 @@ class Login(LoginInterface):
         await self.page.keyboard.type(country, delay=random.randint(80, 120))
         await asyncio.sleep(1)
 
-        countries: Locator = self.UIConfig.country_list_items()
+        countries: Locator = self.ui_config.country_list_items()
         if await countries.count() == 0:
             raise LoginError(f"No countries found for input: {country}")
 
@@ -167,14 +173,14 @@ class Login(LoginInterface):
         if not selected:
             raise LoginError(f"Country '{country}' not selectable.")
 
-        inp = self.UIConfig.phone_number_input()
+        inp = self.ui_config.phone_number_input()
         if await inp.count() == 0:
             raise LoginError("Phone number input not found.")
 
         await inp.type(str(number), delay=random.randint(80, 120))
         await self.page.keyboard.press("Enter")
 
-        code_el = self.UIConfig.link_code_container()
+        code_el = self.ui_config.link_code_container()
         try:
             await code_el.wait_for(timeout=10_000)
             code = await code_el.get_attribute("data-link-code")

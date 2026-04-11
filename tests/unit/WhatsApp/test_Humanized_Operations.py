@@ -10,8 +10,8 @@ import pytest
 from playwright.async_api import Page, Locator, TimeoutError as PlaywrightTimeoutError
 
 from camouchat.Exceptions.base import ElementNotFoundError, HumanizedOperationError
-from camouchat.WhatsApp.human_interaction_controller import HumanInteractionController
-from camouchat.WhatsApp.web_ui_config import WebSelectorConfig
+from camouchat.WhatsApp.features.human_interaction_controller import HumanInteractionController
+from camouchat.WhatsApp.core.web_ui_config import WebSelectorConfig
 
 # ============================================================================
 # FIXTURES
@@ -61,7 +61,7 @@ async def test_typing_success_short(humanize_fixture):
     humanize, mock_clip = humanize_fixture
     mock_source = AsyncMock(spec=Locator)
 
-    result = await humanize.typing(text="Hello World", source=mock_source)
+    result = await humanize.type_text(text="Hello World", source=mock_source)
 
     assert result is True
     # Should click source
@@ -90,7 +90,7 @@ async def test_typing_success_long(humanize_fixture):
     # Configure mock_clip to not fail
     mock_clip.copy = Mock()
 
-    result = await humanize.typing(text=long_text, source=mock_source)
+    result = await humanize.type_text(text=long_text, source=mock_source)
 
     assert result is True
 
@@ -111,7 +111,7 @@ async def test_typing_timeout_fallback(humanize_fixture):
     # Use patch to mock _Instant_fill to verify it gets called?
     # Or just verify behavior provided it works.
 
-    result = await humanize.typing(text="test", source=mock_source)
+    result = await humanize.type_text(text="test", source=mock_source)
 
     assert result is True
     # Verify fallback behavior: fill was called if _Instant_fill called fill
@@ -160,4 +160,4 @@ async def test_typing_no_source(humanize_fixture):
     """Test typing raises error if source is None."""
     humanize, _ = humanize_fixture
     with pytest.raises(ElementNotFoundError):
-        await humanize.typing(text="test", source=None)
+        await humanize.type_text(text="test", source=None)
