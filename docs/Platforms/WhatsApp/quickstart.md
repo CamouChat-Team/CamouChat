@@ -186,7 +186,7 @@ async with storage:   # Starts DB, creates tables, starts background writer
 ## Step 7: Reply to a Message ↩️
 
 ```python
-from camouchat.WhatsApp import ReplyCapable, HumanInteractionController
+from camouchat.WhatsApp import InteractionController, HumanInteractionController
 
 humanizer = HumanInteractionController(
     page=page,
@@ -194,7 +194,7 @@ humanizer = HumanInteractionController(
     log=camouchatLogger,
 )
 
-reply_handler = ReplyCapable(
+reply_handler = InteractionController(
     page=page,
     ui_config=ui_config,    # snake_case here too
     log=camouchatLogger,
@@ -251,7 +251,7 @@ Different components use slightly different naming conventions for the same conc
 | `Login` | `UIConfig` (PascalCase) |
 | `MediaCapable` | `UIConfig` (PascalCase) |
 | `ChatProcessor` | `ui_config` (snake_case) |
-| `ReplyCapable` | `ui_config` (snake_case) |
+| `InteractionController` | `ui_config` (snake_case) |
 | `MessageProcessor` | `ui_config` (snake_case) |
 | `HumanInteractionController` | `ui_config` (snake_case) |
 
@@ -266,5 +266,5 @@ Different components use slightly different naming conventions for the same conc
 
 For detailed method references, see:
 - [Login Guide](Login.md) | [ChatProcessor Guide](ChatProcessor.md) | [MessageProcessor Guide](MessageProcessor.md)
-- [ReplyCapable Guide](ReplyCapable.md) | [MediaCapable Guide](MediaCapable.md)
+- [InteractionController Guide](InteractionController.md) | [MediaCapable Guide](MediaCapable.md)
 - [HumanInteractionController Guide](HumanInteractionController.md)

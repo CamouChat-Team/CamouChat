@@ -34,7 +34,7 @@ CamouChatError  (base.py)
     │
     ├── LoginError                         # Any WhatsApp login flow failure
     │
-    ├── ReplyCapableError                  # Any reply interaction failure
+    ├── InteractionControllerError                  # Any reply interaction failure
     │
     └── MediaCapableError                  # Any media upload failure
         └── MenuError                      # Attachment menu not found or timed out
@@ -116,7 +116,7 @@ except CamouChatError as e:
 | `MessageListEmptyError` | `MessageProcessor.sort_messages()` | Empty list passed. |
 | `MessageProcessorError` | `MessageProcessor._get_wrapped_Messages()` | Extraction failed after all retries. |
 | `LoginError` | `Login.login()`, `Login.is_login_successful()` | Any login flow failure (timeout, bad method, missing country, etc.). |
-| `ReplyCapableError` | `ReplyCapable.reply()`, `_side_edge_click()` | Missing `data_id`, DOM not found after 20 retries, or reply timeout. |
+| `InteractionControllerError` | `InteractionController.reply()`, `_side_edge_click()` | Missing `data_id`, DOM not found after 20 retries, or reply timeout. |
 | `MediaCapableError` | `MediaCapable.add_media()`, `menu_clicker()` | Invalid file path, menu/attachment timeout. |
 | `MenuError` | `MediaCapable.menu_clicker()` | The `+` attachment icon locator returned `None`. |
 

@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.6.6,<0.7.0"]
+build-backend = "uv_build"
 
 [project]
-name = "camouchat"
-version = "0.6.1"
+name = "camouchat-core"
+version = "0.7.0"
 description = "CamouChat: Stealth-aware WhatsApp automation SDK. Standardized, async, and encrypted by design."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -57,17 +57,10 @@ classifiers = [
 ]
 
 dependencies = [
-    "playwright>=1.40.0",
-    "camoufox[geoip]>=0.3.0",
-    "pyperclip>=1.8.2",
     "cryptography>=41.0.0",
     "colorlog>=6.10.1",
-    "sqlalchemy>=2.0.36",
-    "aiosqlite>=0.19.0",
-    "browserforge>=1.2.4",
-    "platformdirs>=4.0.0",
-    "filelock>=3.25.2",
     "concurrent-log-handler>=0.9.29",
+    "platformdirs>=4.9.4",
 ]
 
 [project.optional-dependencies]
@@ -94,8 +87,6 @@ Repository = "https://github.com/BITS-Rohit/camouchat"
 "Bug Tracker" = "https://github.com/BITS-Rohit/camouchat/issues"
 Changelog = "https://github.com/BITS-Rohit/camouchat/releases"
 
-[tool.setuptools.packages.find]
-include = ["camouchat*"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

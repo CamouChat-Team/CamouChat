@@ -52,7 +52,7 @@ The primary typing method. Types text into the browser with human-like behavior,
 ```python
 msg_box_handle = await ui_config.message_box().element_handle(timeout=1000)
 
-success = await humanizer.typing(
+success = await humanizer.type_text(
     text="Hello from CamouChat! 🤖",
     source=msg_box_handle,
 )
@@ -133,6 +133,6 @@ The dual-lock system prevents this:
 
 ## 💡 Pro Tips
 
-- **Always pass `source`**: The `source` kwarg is required — without it, `ElementNotFoundError` is raised immediately. Get it via `element_handle()` on a locator (as `ReplyCapable.reply()` does) or pass the `Locator` directly.
+- **Always pass `source`**: The `source` kwarg is required — without it, `ElementNotFoundError` is raised immediately. Get it via `element_handle()` on a locator (as `InteractionController.reply()` does) or pass the `Locator` directly.
 - **Long messages**: For messages over 50 characters, the clipboard paste strategy is used automatically. You don't need to worry about this — the strategy selection is internal.
-- **`ReplyCapable` already handles this**: When you call `reply_handler.reply(..., humanize=humanizer, text="...")`, the humanizer's `typing()` is called internally. You don't need to call `humanizer.typing()` separately for replies.
+- **`InteractionController` already handles this**: When you call `reply_handler.reply(..., humanize=humanizer, text="...")`, the humanizer's `typing()` is called internally. You don't need to call `humanizer.typing()` separately for replies.
