@@ -93,6 +93,14 @@ python -m camoufox fetch
 
 ---
 
+## ⚖️ Security & Ethics
+
+CamouChat provides powerful browser automation and stealth infrastructure. With this power comes the responsibility to use it ethically and in compliance with the rules of the platforms you interact with. 
+
+Please read our mandatory **[Security & Ethics Guidelines](https://github.com/CamouChat-Team/CamouChat/blob/main/SECURITY.md)** regarding acceptable use, anti-spam policies, and anti-detection disclaimers before utilizing the ecosystem.
+
+---
+
 ## 🤝 Community & Support
 
 * [Code of Conduct](https://github.com/CamouChat-Team/camouchat-core/blob/main/CODE_OF_CONDUCT.md)
