@@ -1,19 +1,59 @@
 <div align="center">
-  <h1>🦊 CamouChat Ecosystem</h1>
-  <p><b>The High-Performance, Stealth-Aware Automation Framework</b></p>
+  <h1>⚠️ tweakio-sdk — DEPRECATED</h1>
+  <p><b>This package has been rebranded. Please migrate to CamouChat.</b></p>
 </div>
 
-<p align= "center">
-  <a href="https://github.com/CamouChat-Team/camouchat-core">
-      <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg" alt="Status" />
+<p align="center">
+  <a href="https://pypi.org/project/camouchat-whatsapp/">
+      <img src="https://img.shields.io/badge/Migrate%20To-camouchat--whatsapp-orange?style=for-the-badge" />
   </a>
   <a href="https://pypi.org/project/camouchat/">
-      <img src="https://img.shields.io/pypi/v/camouchat?label=camouchat-core&color=blue" />
+      <img src="https://img.shields.io/badge/Umbrella-camouchat-blue?style=for-the-badge" />
   </a>
   <a href="https://opensource.org/licenses/MIT">
       <img src="https://img.shields.io/badge/License-MIT-yellow.svg" />
   </a>
 </p>
+
+---
+
+> [!CAUTION]
+> **`tweakio-sdk` is officially deprecated and will no longer receive updates.**
+> This package has been fully rebranded and evolved into the **CamouChat Plugin Ecosystem**.
+>
+> **Please migrate immediately:**
+>
+> | Old | New |
+> |---|---|
+> | `pip install tweakio-sdk` | `pip install camouchat-whatsapp` |
+>
+> Full documentation, changelogs, and API references are available at the new locations listed below.
+
+---
+
+## 📦 New Package Locations
+
+| Package | Role | PyPI |
+|---|---|---|
+| [`camouchat`](https://pypi.org/project/camouchat/) | Umbrella entry point (installs all plugins) | [![PyPI](https://img.shields.io/pypi/v/camouchat?color=blue)](https://pypi.org/project/camouchat/) |
+| [`camouchat-core`](https://pypi.org/project/camouchat-core/) | Core SDK — protocols, logging, encrypted storage | [![PyPI](https://img.shields.io/pypi/v/camouchat-core?color=blue)](https://pypi.org/project/camouchat-core/) |
+| [`camouchat-browser`](https://pypi.org/project/camouchat-browser/) | Stealth browser engine (Camoufox + BrowserForge) | [![PyPI](https://img.shields.io/pypi/v/camouchat-browser?color=blue)](https://pypi.org/project/camouchat-browser/) |
+| [`camouchat-whatsapp`](https://pypi.org/project/camouchat-whatsapp/) | WhatsApp automation plugin (wa-js, multi-account) | [![PyPI](https://img.shields.io/pypi/v/camouchat-whatsapp?color=blue)](https://pypi.org/project/camouchat-whatsapp/) |
+
+## 📚 Documentation
+
+* 🏠 **Ecosystem Hub**: [github.com/CamouChat-Team/CamouChat](https://github.com/CamouChat-Team/CamouChat)
+* 📖 **Core Architecture**: [camouchat-core/docs](https://github.com/CamouChat-Team/camouchat-core/tree/main/docs)
+* 📖 **Browser Configuration**: [camouchat-browser/docs](https://github.com/CamouChat-Team/camouchat-browser/tree/main/docs)
+* 📖 **WhatsApp API & Models**: [camouchat-whatsapp/docs](https://github.com/CamouChat-Team/camouchat-whatsapp/tree/main/docs)
+
+---
+
+## Historical README (v0.6.1)
+
+> The content below is the original tweakio-sdk / CamouChat v0.6 README, preserved for reference only.
+
+---
 
 ---
 

@@ -3,9 +3,9 @@ requires = ["uv_build>=0.6.6,<0.7.0"]
 build-backend = "uv_build"
 
 [project]
-name = "camouchat"
-version = "0.7.0"
-description = "High-performance, stealth-aware WhatsApp automation SDK. One install for the entire CamouChat plugin ecosystem."
+name = "tweakio-sdk"
+version = "0.7.1"
+description = "[DEPRECATED] tweakio-sdk has been rebranded to CamouChat. Install camouchat-whatsapp instead."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -45,30 +45,20 @@ keywords = [
 ]
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 7 - Inactive",
     "Intended Audience :: Developers",
     "Topic :: Communications :: Chat",
-    "Topic :: Internet :: WWW/HTTP :: Browsers",
-    "Topic :: Security :: Cryptography",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.14",
-    "Framework :: AsyncIO",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Natural Language :: English",
 ]
 
-# Meta-package: pulls in the full ecosystem
-dependencies = [
-    "camouchat-core>=0.7.0",
-    "camouchat-browser>=0.7.0",
-    "camouchat-whatsapp>=0.7.1",
-    "camoufox[geoip]>=0.4.11",
-]
+# Tombstone: no runtime deps, just redirects via README
+dependencies = []
 
 [project.urls]
-Homepage      = "https://github.com/CamouChat-Team/CamouChat"
+Homepage      = "https://pypi.org/project/camouchat-whatsapp/"
 Repository    = "https://github.com/CamouChat-Team/CamouChat"
 "Bug Tracker" = "https://github.com/CamouChat-Team/CamouChat/issues"
 Changelog     = "https://github.com/CamouChat-Team/CamouChat/releases"
