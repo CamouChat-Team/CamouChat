@@ -25,6 +25,9 @@ It provides a standardized framework incorporating **end-to-end encrypted local 
 
 This repository serves as the central hub and entry point for the entire CamouChat plugin ecosystem.
 
+> [!IMPORTANT]
+> **v0.7.0 Update** — CamouChat is now a decoupled plugin ecosystem. The `camouchat` package on PyPI is the umbrella entry point. WhatsApp automation lives in **[`camouchat-whatsapp`](https://pypi.org/project/camouchat-whatsapp/)** — install that for full functionality. Existing users of the old monolithic `camouchat` package: no API changes, just point your install to `camouchat-whatsapp` going forward.
+
 ---
 
 ## Why CamouChat?
@@ -44,19 +47,19 @@ Before building CamouChat, maintaining reliable web automation pipelines across 
 
 Starting from `v0.7.0`, CamouChat has been strictly decoupled into specialized plugins. You install exactly what you need.
 
-### 1. [camouchat-core](https://github.com/CamouChat-Team/camouchat-core) — The Foundation
+### 1. [camouchat-core](https://github.com/CamouChat-Team/camouchat-core) — The Foundation &nbsp; [![PyPI](https://img.shields.io/pypi/v/camouchat-core?color=blue)](https://pypi.org/project/camouchat-core/)
 The required central SDK interface. Provides the foundational structures:
 - Standardized `typing.Protocol` contracts for interoperability.
 - Asynchronous Logging Engine (`concurrent-log-handler`).
 - Strict AES-GCM-256 Storage & Metadata interfaces.
 
-### 2. [camouchat-browser](https://github.com/CamouChat-Team/camouchat-browser) — The Engine
+### 2. [camouchat-browser](https://github.com/CamouChat-Team/camouchat-browser) — The Engine &nbsp; [![PyPI](https://img.shields.io/pypi/v/camouchat-browser?color=blue)](https://pypi.org/project/camouchat-browser/)
 The stealth browser layer built for Web interactions.
 - Embeds [Camoufox](https://camoufox.com/) for deep connection and JS fingerprint spoofing.
 - Generates dynamic hardware profiles via `browserforge`.
 - Automated OS-aware profile sandboxing and encryption.
 
-### 3. [camouchat-whatsapp](https://github.com/CamouChat-Team/camouchat-whatsapp) — The implementation
+### 3. [camouchat-whatsapp](https://github.com/CamouChat-Team/camouchat-whatsapp) — The Implementation &nbsp; [![PyPI](https://img.shields.io/pypi/v/camouchat-whatsapp?color=blue)](https://pypi.org/project/camouchat-whatsapp/)
 A platform-specific plugin leveraging the Core and Browser ecosystems to automate WhatsApp Web perfectly.
 - Complete internal API bridge using [wa-js](https://github.com/wppconnect-team/wa-js) natively.
 - Zero DOM Scraping — Event-driven interaction.
@@ -65,6 +68,8 @@ A platform-specific plugin leveraging the Core and Browser ecosystems to automat
 ---
 
 ## 🚀 Quick Install
+
+> 📦 **Full WhatsApp plugin → [`camouchat-whatsapp` on PyPI](https://pypi.org/project/camouchat-whatsapp/)** — detailed docs, changelog, and API reference live there.
 
 To build a full, automated WhatsApp agent utilizing the Camoufox engine, install the ecosystem via `uv` or `pip`:
 
