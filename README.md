@@ -1,4 +1,8 @@
 <div align="center">
+  <img src="./assets/text.png" alt="CamouChat" />
+</div>
+
+<div align="center">
   <h1>🦊 CamouChat Ecosystem</h1>
   <p><b>The High-Performance, Stealth-Aware Automation Framework</b></p>
 </div>
