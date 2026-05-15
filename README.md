@@ -110,6 +110,33 @@ Please read our mandatory **[Security & Ethics Guidelines](https://github.com/Ca
 
 ---
 
+
+## 🧭 Contributor Navigation
+
+CamouChat follows a modular ecosystem architecture. Contributors should work in the appropriate repository depending on the feature, plugin, or platform integration.
+
+| Repository | Purpose |
+|------------|---------|
+| [camouchat-core](https://github.com/CamouChat-Team/camouchat-core) | Core SDK and shared interfaces |
+| [camouchat-browser](https://github.com/CamouChat-Team/camouchat-browser) | Browser automation engine |
+| [camouchat-whatsapp](https://github.com/CamouChat-Team/camouchat-whatsapp) | WhatsApp platform implementation |
+
+### Contribution Flow
+
+1. Explore the ecosystem structure
+2. Identify the correct repository
+3. Review contribution guidelines
+4. Follow the Code of Conduct
+5. Create issues and PRs in the appropriate repository
+
+### Contributor Resources
+
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
+- [Security Policy](./SECURITY.md)
+- Plugin-specific repositories under the CamouChat-Team organization
+
+---
+
 ## 🤝 Community & Support
 
 * [Code of Conduct](https://github.com/CamouChat-Team/camouchat-core/blob/main/CODE_OF_CONDUCT.md)
